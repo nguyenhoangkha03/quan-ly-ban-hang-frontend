@@ -2,7 +2,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
 import { useAuthStore } from "@/stores";
-import type { LoginCredentials, LoginResponse, AuthUser, ApiResponse } from "@/types";
+import type {
+  LoginCredentials,
+  LoginResponse,
+  AuthUser,
+  ApiResponse,
+  OTPRequiredResponse,
+  VerifyOTPRequest,
+  ResendOTPResponse,
+} from "@/types";
 import { toast } from "react-hot-toast";
 
 /**
@@ -14,34 +22,105 @@ export const authKeys = {
 };
 
 /**
- * Login Mutation
+ * Login Mutation (Step 1: Email + Password)
+ * Returns either OTP required or direct login (tokens)
  */
 export function useLogin() {
-  const router = useRouter();
-  const { login } = useAuthStore();
-
   return useMutation({
     mutationFn: async (credentials: LoginCredentials) => {
-      const response = await api.post<ApiResponse<LoginResponse>>(
+      const response = await api.post<ApiResponse<LoginResponse | OTPRequiredResponse>>(
         "/auth/login",
         credentials
       );
       return response.data;
     },
+    onError: (error: any) => {
+      // error có thể có nhiều cấu trúc:
+      // - { error: { message: "..." } } - từ backend error handler
+      // - { error: "..." } - từ backend simple error
+      // - { message: "..." } - từ axios
+      // - string - plain error
+    //   console.log(error);
+      const message =
+        error?.error?.message ||
+        error?.error ||
+        error?.message ||
+        (typeof error === 'string' ? error : null) ||
+        "Đăng nhập thất bại!";
+
+      toast.error(message);
+    },
+  });
+}
+
+/**
+ * Verify OTP Mutation (Step 2: Verify OTP code)
+ */
+export function useVerifyOTP() {
+  const router = useRouter();
+  const { login } = useAuthStore();
+
+  return useMutation({
+    mutationFn: async (data: VerifyOTPRequest) => {
+      const response = await api.post<ApiResponse<LoginResponse>>(
+        "/auth/verify-otp",
+        data
+      );
+      return response.data;
+    },
     onSuccess: (data) => {
+      // Backend trả về: { user, tokens: { accessToken, refreshToken } }
+      const { user, tokens } = data;
+      const { accessToken, refreshToken } = tokens;
+
       // Lưu vào store
-      login(data.user as AuthUser, data.accessToken, data.refreshToken);
+      login(user as AuthUser, accessToken, refreshToken);
 
-      // Lưu vào cookie để middleware dùng
-      document.cookie = `accessToken=${data.accessToken}; path=/; max-age=86400`; // 1 day
+      // Lưu cookie
+      document.cookie = `accessToken=${accessToken}; path=/; max-age=86400; SameSite=Lax`;
 
-      toast.success("Đăng nhập thành công!");
+      toast.success("Xác thực thành công!");
 
       // Redirect về dashboard
       router.push("/");
     },
     onError: (error: any) => {
-      toast.error(error?.error?.message || "Đăng nhập thất bại!");
+      const message =
+        error?.error?.message ||
+        error?.error ||
+        error?.message ||
+        (typeof error === "string" ? error : null) ||
+        "Mã xác thực không đúng!";
+
+      toast.error(message);
+    },
+  });
+}
+
+/**
+ * Resend OTP Mutation
+ */
+export function useResendOTP() {
+  return useMutation({
+    mutationFn: async (email: string) => {
+      const response = await api.post<ApiResponse<ResendOTPResponse>>(
+        "/auth/resend-otp",
+        { email }
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success("Mã xác thực mới đã được gửi đến email của bạn!");
+    },
+    onError: (error: any) => {
+      const message =
+        error?.error?.message ||
+        error?.error ||
+        error?.message ||
+        (typeof error === "string" ? error : null) ||
+        "Không thể gửi lại mã xác thực!";
+
+      toast.error(message);
     },
   });
 }
@@ -118,7 +197,8 @@ export function useForgotPassword() {
       toast.success("Email khôi phục mật khẩu đã được gửi!");
     },
     onError: (error: any) => {
-      toast.error(error?.error?.message || "Gửi email thất bại!");
+      const message = error?.error || error?.message || error || "Gửi email thất bại!";
+      toast.error(typeof message === 'string' ? message : "Gửi email thất bại!");
     },
   });
 }
@@ -148,7 +228,8 @@ export function useResetPassword() {
       router.push("/login");
     },
     onError: (error: any) => {
-      toast.error(error?.error?.message || "Đặt lại mật khẩu thất bại!");
+      const message = error?.error || error?.message || error || "Đặt lại mật khẩu thất bại!";
+      toast.error(typeof message === 'string' ? message : "Đặt lại mật khẩu thất bại!");
     },
   });
 }
@@ -175,7 +256,8 @@ export function useChangePassword() {
       toast.success("Đổi mật khẩu thành công!");
     },
     onError: (error: any) => {
-      toast.error(error?.error?.message || "Đổi mật khẩu thất bại!");
+      const message = error?.error || error?.message || error || "Đổi mật khẩu thất bại!";
+      toast.error(typeof message === 'string' ? message : "Đổi mật khẩu thất bại!");
     },
   });
 }

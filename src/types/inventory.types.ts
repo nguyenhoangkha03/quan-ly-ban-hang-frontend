@@ -20,14 +20,14 @@ export type TransferStatus = "pending" | "in_transit" | "completed" | "cancelled
 
 // Warehouse
 export interface Warehouse extends EntityWithUser {
-  warehouse_code: string;
-  warehouse_name: string;
-  warehouse_type: WarehouseType;
+  warehouseCode: string;
+  warehouseName: string;
+  warehouseType: WarehouseType;
   address?: string;
   city?: string;
   region?: string;
   description?: string;
-  manager_id?: number;
+  managerId?: number;
   manager?: User;
   capacity?: number;
   status: Status;

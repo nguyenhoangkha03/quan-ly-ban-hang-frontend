@@ -10,7 +10,7 @@ import type { NextRequest } from "next/server";
 const publicRoutes = ["/login", "/signup", "/forgot-password", "/reset-password", "/error-404"];
 
 // Routes chỉ dành cho guest (đã login thì không vào được)
-const guestOnlyRoutes = ["/login", "/signup"];
+const guestOnlyRoutes = ["/login"];
 
 // Routes cần authentication
 const protectedRoutes = [
@@ -36,6 +36,8 @@ export function middleware(request: NextRequest) {
   // Note: localStorage không accessible trong middleware, nên dùng cookie
   const token = request.cookies.get("accessToken")?.value;
   const isAuthenticated = !!token;
+
+//   console.log("🔒 Middleware:", { pathname, hasToken: !!token });
 
   // Check nếu là public route
   const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));

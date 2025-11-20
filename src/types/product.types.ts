@@ -12,10 +12,10 @@ export type PackagingType = "bottle" | "box" | "bag" | "label" | "other";
 
 // Category
 export interface Category extends BaseEntity {
-  category_code: string;
-  category_name: string;
+  categoryCode: string;
+  categoryName: string;
   slug: string;
-  parent_id?: number;
+  parentId?: number;
   parent?: Category;
   children?: Category[];
   description?: string;
@@ -24,15 +24,15 @@ export interface Category extends BaseEntity {
 
 // Supplier
 export interface Supplier extends EntityWithUser {
-  supplier_code: string;
-  supplier_name: string;
-  supplier_type: "local" | "foreign";
-  contact_name?: string;
+  supplierCode: string;
+  supplierName: string;
+  supplierType: "local" | "foreign";
+  contactName?: string;
   phone?: string;
   email?: string;
   address?: string;
-  tax_code?: string;
-  payment_terms?: string;
+  taxCode?: string;
+  paymentTerms?: string;
   notes?: string;
   status: Status;
 }
@@ -41,60 +41,60 @@ export interface Supplier extends EntityWithUser {
 export interface Product extends EntityWithUser {
   sku: string;
   slug: string;
-  product_name: string;
-  product_type: ProductType;
-  packaging_type?: PackagingType;
-  category_id?: number;
+  productName: string;
+  productType: ProductType;
+  packagingType?: PackagingType;
+  categoryId?: number;
   category?: Category;
-  supplier_id?: number;
+  supplierId?: number;
   supplier?: Supplier;
   unit: string;
   barcode?: string;
   weight?: number;
   dimensions?: string;
   description?: string;
-  purchase_price?: number;
-  selling_price_retail?: number;
-  selling_price_wholesale?: number;
-  selling_price_vip?: number;
-  tax_rate?: number;
-  min_stock_level?: number;
-  expiry_date?: string;
+  purchasePrice?: number;
+  sellingPriceRetail?: number;
+  sellingPriceWholesale?: number;
+  sellingPriceVip?: number;
+  taxRate?: number;
+  minStockLevel?: number;
+  expiryDate?: string;
   status: Status;
   images?: ProductImage[];
 }
 
 // Product Image
 export interface ProductImage extends BaseEntity {
-  product_id: number;
-  image_url: string;
-  image_type: "thumbnail" | "gallery" | "main";
-  alt_text?: string;
-  is_primary: boolean;
-  display_order: number;
-  uploaded_by?: number;
+  productId: number;
+  imageUrl: string;
+  imageType: "thumbnail" | "gallery" | "main";
+  altText?: string;
+  isPrimary: boolean;
+  displayOrder: number;
+  uploadedBy?: number;
 }
 
 // Product Create DTO
 export interface CreateProductDto {
   sku?: string;
-  product_name: string;
-  product_type: ProductType;
-  packaging_type?: PackagingType;
-  category_id?: number;
-  supplier_id?: number;
+  productName: string;
+  productType: ProductType;
+  packagingType?: PackagingType;
+  categoryId?: number;
+  supplierId?: number;
   unit: string;
   barcode?: string;
   weight?: number;
   dimensions?: string;
   description?: string;
-  purchase_price?: number;
-  selling_price_retail?: number;
-  selling_price_wholesale?: number;
-  selling_price_vip?: number;
-  tax_rate?: number;
-  min_stock_level?: number;
-  expiry_date?: string;
+  purchasePrice?: number;
+  sellingPriceRetail?: number;
+  sellingPriceWholesale?: number;
+  sellingPriceVip?: number;
+  taxRate?: number;
+  minStockLevel?: number;
+  expiryDate?: string;
   status?: Status;
 }
 
@@ -103,22 +103,22 @@ export interface UpdateProductDto extends Partial<CreateProductDto> {}
 
 // Product Filters
 export interface ProductFilters {
-  product_type?: ProductType | ProductType[];
-  packaging_type?: PackagingType;
-  category_id?: number;
-  supplier_id?: number;
+  productType?: ProductType | ProductType[];
+  packagingType?: PackagingType;
+  categoryId?: number;
+  supplierId?: number;
   status?: Status;
-  low_stock?: boolean;
-  expiring_soon?: boolean;
-  price_min?: number;
-  price_max?: number;
+  lowStock?: boolean;
+  expiringSoon?: boolean;
+  priceMin?: number;
+  priceMax?: number;
 }
 
 // Product với tồn kho
 export interface ProductWithInventory extends Product {
-  total_quantity?: number;
-  available_quantity?: number;
-  reserved_quantity?: number;
+  totalQuantity?: number;
+  availableQuantity?: number;
+  reservedQuantity?: number;
 }
 
 // Category Tree

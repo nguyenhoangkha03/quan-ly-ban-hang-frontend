@@ -20,3 +20,6 @@ export * from "./useSales";
 
 // Customers
 export * from "./useCustomers";
+
+// Dashboard
+export * from "./useDashboard";

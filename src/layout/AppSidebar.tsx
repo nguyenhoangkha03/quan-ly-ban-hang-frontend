@@ -6,15 +6,20 @@ import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import {
   BoxCubeIcon,
+  BoxIconLine,
   CalenderIcon,
   ChevronDownIcon,
+  DollarLineIcon,
   GridIcon,
+  GroupIcon,
   HorizontaLDots,
   ListIcon,
   PageIcon,
   PieChartIcon,
   PlugInIcon,
+  ShootingStarIcon,
   TableIcon,
+  TaskIcon,
   UserCircleIcon,
 } from "../icons/index";
 
@@ -29,35 +34,62 @@ const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
     name: "Dashboard",
-    subItems: [{ name: "Ecommerce", path: "/", pro: false }],
+    path: "/",
   },
   {
-    icon: <CalenderIcon />,
-    name: "Calendar",
-    path: "/calendar",
-  },
-  {
-    icon: <UserCircleIcon />,
-    name: "User Profile",
-    path: "/profile",
-  },
-
-  {
-    name: "Forms",
-    icon: <ListIcon />,
-    subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
-  },
-  {
-    name: "Tables",
-    icon: <TableIcon />,
-    subItems: [{ name: "Basic Tables", path: "/basic-tables", pro: false }],
-  },
-  {
-    name: "Pages",
-    icon: <PageIcon />,
+    icon: <BoxCubeIcon />,
+    name: "Kho hàng",
     subItems: [
-      { name: "Blank Page", path: "/blank", pro: false },
-      { name: "404 Error", path: "/error-404", pro: false },
+      { name: "Quản lý kho", path: "/warehouses", pro: false },
+      { name: "Tồn kho", path: "/inventory", pro: false },
+      { name: "Nhập kho", path: "/inventory/stock-in", pro: false },
+      { name: "Xuất kho", path: "/inventory/stock-out", pro: false },
+      { name: "Chuyển kho", path: "/inventory/transfer", pro: false },
+    ],
+  },
+  {
+    icon: <BoxIconLine />,
+    name: "Sản phẩm",
+    subItems: [
+      { name: "Danh sách sản phẩm", path: "/products", pro: false },
+      { name: "Danh mục", path: "/categories", pro: false },
+      { name: "Nhà cung cấp", path: "/suppliers", pro: false },
+    ],
+  },
+  {
+    icon: <TaskIcon />,
+    name: "Sản xuất",
+    subItems: [
+      { name: "Công thức (BOM)", path: "/production/bom", pro: false },
+      { name: "Lệnh sản xuất", path: "/production/orders", pro: false },
+      { name: "Báo cáo sản xuất", path: "/production/reports", pro: false },
+    ],
+  },
+  {
+    icon: <ShootingStarIcon />,
+    name: "Bán hàng",
+    subItems: [
+      { name: "Đơn hàng", path: "/sales/orders", pro: false },
+      { name: "Khách hàng", path: "/customers", pro: false },
+      { name: "Giao hàng", path: "/sales/deliveries", pro: false },
+    ],
+  },
+  {
+    icon: <DollarLineIcon />,
+    name: "Tài chính",
+    subItems: [
+      { name: "Phiếu thu", path: "/finance/receipts", pro: false },
+      { name: "Phiếu chi", path: "/finance/vouchers", pro: false },
+      { name: "Đối chiếu công nợ", path: "/finance/debt-reconciliation", pro: false },
+    ],
+  },
+  {
+    icon: <GroupIcon />,
+    name: "Nhân sự",
+    subItems: [
+      { name: "Nhân viên", path: "/users", pro: false },
+      { name: "Chấm công", path: "/hr/attendance", pro: false },
+      { name: "Lương", path: "/hr/salary", pro: false },
     ],
   },
 ];
@@ -65,30 +97,22 @@ const navItems: NavItem[] = [
 const othersItems: NavItem[] = [
   {
     icon: <PieChartIcon />,
-    name: "Charts",
+    name: "Báo cáo",
     subItems: [
-      { name: "Line Chart", path: "/line-chart", pro: false },
-      { name: "Bar Chart", path: "/bar-chart", pro: false },
-    ],
-  },
-  {
-    icon: <BoxCubeIcon />,
-    name: "UI Elements",
-    subItems: [
-      { name: "Alerts", path: "/alerts", pro: false },
-      { name: "Avatar", path: "/avatars", pro: false },
-      { name: "Badge", path: "/badge", pro: false },
-      { name: "Buttons", path: "/buttons", pro: false },
-      { name: "Images", path: "/images", pro: false },
-      { name: "Videos", path: "/videos", pro: false },
+      { name: "Doanh thu", path: "/reports/revenue", pro: false },
+      { name: "Tồn kho", path: "/reports/inventory", pro: false },
+      { name: "Bán hàng", path: "/reports/sales", pro: false },
+      { name: "Sản xuất", path: "/reports/production", pro: false },
+      { name: "Tài chính", path: "/reports/financial", pro: false },
     ],
   },
   {
     icon: <PlugInIcon />,
-    name: "Authentication",
+    name: "Cài đặt",
     subItems: [
-      { name: "Sign In", path: "/signin", pro: false },
-      { name: "Sign Up", path: "/signup", pro: false },
+      { name: "Hồ sơ cá nhân", path: "/profile", pro: false },
+      { name: "Vai trò & Quyền", path: "/settings/roles", pro: false },
+      { name: "Cấu hình hệ thống", path: "/settings/system", pro: false },
     ],
   },
 ];
@@ -232,8 +256,14 @@ const AppSidebar: React.FC = () => {
   );
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // const isActive = (path: string) => path === pathname;
-   const isActive = useCallback((path: string) => path === pathname, [pathname]);
+  // Check if route is active (exact match or starts with path for nested routes)
+  const isActive = useCallback((path: string) => {
+    if (path === pathname) return true;
+    // Check if current path starts with menu path (for nested routes)
+    // But exclude root path to avoid matching everything
+    if (path !== '/' && pathname.startsWith(path + '/')) return true;
+    return false;
+  }, [pathname]);
 
   useEffect(() => {
     // Check if the current path matches any submenu item

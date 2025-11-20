@@ -1,5 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { API_URL } from "./constants";
+import { useAuthStore } from "@/stores";
 
 /**
  * Axios instance với interceptors cho authentication và error handling
@@ -18,17 +19,12 @@ const api = axios.create({
  */
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Lấy token từ localStorage (sẽ dùng Zustand store sau)
-    const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+    // Lấy token từ Zustand store (theo ROADMAP Phase 0.2)
+    // Dùng getState() để đọc trực tiếp từ store, không phải từ localStorage
+    const token = useAuthStore.getState().token;
 
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
-    }
-
-    // Lấy CSRF token nếu có
-    const csrfToken = typeof window !== "undefined" ? localStorage.getItem("csrfToken") : null;
-    if (csrfToken && config.headers) {
-      config.headers["X-CSRF-Token"] = csrfToken;
     }
 
     return config;
@@ -50,42 +46,57 @@ api.interceptors.response.use(
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
     // Handle 401 - Token expired
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // KHÔNG redirect nếu đang ở trang login (đăng nhập sai)
+    const isLoginRequest = originalRequest.url?.includes("/auth/login");
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isLoginRequest) {
       originalRequest._retry = true;
 
       try {
-        // Gọi API refresh token
-        const refreshToken = typeof window !== "undefined" ? localStorage.getItem("refreshToken") : null;
+        // Gọi API refresh token (đọc từ Zustand store)
+        const refreshToken = useAuthStore.getState().refreshToken;
 
         if (!refreshToken) {
           throw new Error("No refresh token available");
         }
 
-        const { data } = await axios.post(`${API_URL}/auth/refresh-token`, {
+        // Dùng axios thô để tránh vòng lặp interceptor
+        const response = await axios.post(`${API_URL}/auth/refresh-token`, {
           refreshToken,
         });
 
-        // Lưu token mới
-        if (typeof window !== "undefined") {
-          localStorage.setItem("accessToken", data.accessToken);
-          localStorage.setItem("refreshToken", data.refreshToken);
+        // Response structure: { data: { success, data: { accessToken, expiresIn }, timestamp } }
+        const newAccessToken = response.data?.data?.accessToken;
+
+        if (!newAccessToken) {
+          throw new Error("No access token in refresh response");
         }
+
+        // Backend chỉ trả về accessToken mới, KHÔNG trả refreshToken mới
+        // Nên giữ nguyên refreshToken cũ để tránh ghi đè thành undefined
+        const newRefreshToken = response.data?.data?.refreshToken || refreshToken;
+
+        // Lưu token mới vào Zustand store (sẽ tự động sync vào localStorage)
+        useAuthStore.getState().setTokens(newAccessToken, newRefreshToken);
 
         // Retry request gốc với token mới
         if (originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         }
 
         return api(originalRequest);
       } catch (refreshError) {
         // Refresh token thất bại -> Logout user
-        if (typeof window !== "undefined") {
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("refreshToken");
-          localStorage.removeItem("user");
+        useAuthStore.getState().logout();
 
-          // Redirect to login
-          window.location.href = "/login";
+        // Chỉ redirect nếu không phải đang ở trang login và chưa bị redirect
+        if (typeof window !== "undefined") {
+          const currentPath = window.location.pathname;
+          if (!currentPath.includes("/login") && !currentPath.includes("/forgot-password")) {
+            // Redirect với query param để tránh loop
+            const redirectUrl = encodeURIComponent(currentPath);
+            window.location.href = `/login?redirect=${redirectUrl}`;
+          }
         }
 
         return Promise.reject(refreshError);

@@ -22,3 +22,6 @@ export * from "./customer.types";
 
 // Sales Types
 export * from "./sales.types";
+
+// Dashboard Types
+export * from "./dashboard.types";

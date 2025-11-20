@@ -37,7 +37,7 @@ export function useWarehouse(id: number, enabled = true) {
     queryKey: warehouseKeys.detail(id),
     queryFn: async () => {
       const response = await api.get<ApiResponse<Warehouse>>(`/warehouses/${id}`);
-      return response.data;
+      return response;
     },
     enabled: enabled && !!id,
   });

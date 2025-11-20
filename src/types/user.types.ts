@@ -89,11 +89,32 @@ export interface LoginCredentials {
   remember_me?: boolean;
 }
 
-// Login Response
+// Login Response (với OTP)
 export interface LoginResponse {
   user: User;
-  accessToken: string;
-  refreshToken: string;
+  tokens: {
+    accessToken: string;
+    refreshToken: string;
+  };
+}
+
+// OTP Required Response
+export interface OTPRequiredResponse {
+  requireOTP: true;
+  email: string;
+  expiresIn: number;
+  code?: string; // Only in development
+}
+
+// Verify OTP Request
+export interface VerifyOTPRequest {
+  email: string;
+  code: string;
+}
+
+// Resend OTP Response
+export interface ResendOTPResponse {
+  expiresIn: number;
 }
 
 // Auth User (User hiện tại đang login)
