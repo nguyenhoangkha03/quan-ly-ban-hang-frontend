@@ -1,108 +1,187 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { useProducts, useDeleteProduct } from "@/hooks/api";
-import { Can } from "@/components/auth";
+import * as XLSX from "xlsx";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import Badge from "@/components/ui/badge/Badge";
+  useProducts,
+  useBulkDeleteProducts,
+  useBulkUpdateProductStatus,
+} from "@/hooks/api";
+import { Can } from "@/components/auth";
+import { ProductTable } from "@/components/products";
 import Button from "@/components/ui/button/Button";
-import { Product, ProductType } from "@/types";
-import { formatCurrency } from "@/lib/utils";
+import { ProductType } from "@/types";
+import { Download, Trash2, CheckCircle, XCircle } from "lucide-react";
 
 /**
  * Products List Page
- * Quản lý danh sách sản phẩm
+ * Quản lý danh sách sản phẩm với TanStack Table, Bulk Actions, và Export Excel
  */
 export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<ProductType | "all">("all");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive" | "discontinued">("all");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "active" | "inactive" | "discontinued"
+  >("all");
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   // Fetch products
   const { data: response, isLoading, error } = useProducts();
-  const deleteProduct = useDeleteProduct();
+  const bulkDelete = useBulkDeleteProducts();
+  const bulkUpdateStatus = useBulkUpdateProductStatus();
 
   // Filter products
-  const products = React.useMemo(() => {
+  const products = useMemo(() => {
     if (!response?.data) return [];
 
     return response.data.filter((product) => {
       const matchesSearch =
-        (product.productName?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+        (product.productName?.toLowerCase() || "").includes(
+          searchTerm.toLowerCase()
+        ) ||
         (product.sku?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-        (product.barcode?.toLowerCase() || "").includes(searchTerm.toLowerCase());
+        (product.barcode?.toLowerCase() || "").includes(
+          searchTerm.toLowerCase()
+        );
 
-      const matchesType = typeFilter === "all" || product.productType === typeFilter;
-      const matchesStatus = statusFilter === "all" || product.status === statusFilter;
+      const matchesType =
+        typeFilter === "all" || product.productType === typeFilter;
+      const matchesStatus =
+        statusFilter === "all" || product.status === statusFilter;
 
       return matchesSearch && matchesType && matchesStatus;
     });
   }, [response?.data, searchTerm, typeFilter, statusFilter]);
 
-  const handleDelete = async (id: number, name: string) => {
-    if (window.confirm(`Bạn có chắc chắn muốn xóa sản phẩm "${name}"?`)) {
-      try {
-        await deleteProduct.mutateAsync(id);
-      } catch (error) {
-        console.error("Delete product failed:", error);
-      }
+  // Handle bulk delete
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) {
+      alert("Vui lòng chọn ít nhất một sản phẩm!");
+      return;
+    }
+
+    if (
+      !window.confirm(
+        `Bạn có chắc chắn muốn xóa ${selectedIds.length} sản phẩm đã chọn?`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await bulkDelete.mutateAsync(selectedIds);
+      setSelectedIds([]);
+    } catch (error) {
+      console.error("Bulk delete failed:", error);
     }
   };
 
-  // Product type labels
-  const getTypeLabel = (type: ProductType) => {
-    const labels: Record<ProductType, string> = {
-      raw_material: "Nguyên liệu",
-      packaging: "Bao bì",
-      finished_product: "Thành phẩm",
-      goods: "Hàng hóa",
-    };
-    return labels[type];
-  };
+  // Handle bulk update status
+  const handleBulkUpdateStatus = async (
+    status: "active" | "inactive" | "discontinued"
+  ) => {
+    if (selectedIds.length === 0) {
+      alert("Vui lòng chọn ít nhất một sản phẩm!");
+      return;
+    }
 
-  // Product type badge colors
-  const getTypeBadgeColor = (type: ProductType) => {
-    const colors: Record<ProductType, string> = {
-      raw_material: "blue",
-      packaging: "yellow",
-      finished_product: "green",
-      goods: "purple",
-    };
-    return colors[type];
-  };
-
-  // Status badge colors
-  const getStatusBadgeColor = (status: string) => {
-    const colors: Record<string, string> = {
-      active: "green",
-      inactive: "gray",
-      discontinued: "red",
-    };
-    return colors[status] || "gray";
-  };
-
-  const getStatusLabel = (status: string) => {
-    const labels: Record<string, string> = {
+    const statusLabels = {
       active: "Hoạt động",
       inactive: "Tạm ngưng",
       discontinued: "Ngừng kinh doanh",
     };
-    return labels[status] || status;
+
+    if (
+      !window.confirm(
+        `Bạn có chắc chắn muốn cập nhật ${selectedIds.length} sản phẩm thành "${statusLabels[status]}"?`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await bulkUpdateStatus.mutateAsync({ ids: selectedIds, status });
+      setSelectedIds([]);
+    } catch (error) {
+      console.error("Bulk update status failed:", error);
+    }
+  };
+
+  // Export to Excel
+  const handleExportExcel = () => {
+    if (products.length === 0) {
+      alert("Không có dữ liệu để xuất!");
+      return;
+    }
+
+    // Prepare data for export
+    const exportData = products.map((product) => ({
+      SKU: product.sku,
+      "Tên sản phẩm": product.productName,
+      "Loại sản phẩm":
+        product.productType === "raw_material"
+          ? "Nguyên liệu"
+          : product.productType === "packaging"
+          ? "Bao bì"
+          : product.productType === "finished_product"
+          ? "Thành phẩm"
+          : "Hàng hóa",
+      "Danh mục": product.category?.categoryName || "",
+      "Nhà cung cấp": product.supplier?.supplierName || "",
+      "Đơn vị": product.unit,
+      Barcode: product.barcode || "",
+      "Giá nhập": product.purchasePrice || 0,
+      "Giá bán lẻ": product.sellingPriceRetail || 0,
+      "Giá bán sỉ": product.sellingPriceWholesale || 0,
+      "Giá VIP": product.sellingPriceVip || 0,
+      "Tồn tối thiểu": product.minStockLevel || 0,
+      "Trạng thái":
+        product.status === "active"
+          ? "Hoạt động"
+          : product.status === "inactive"
+          ? "Tạm ngưng"
+          : "Ngừng kinh doanh",
+    }));
+
+    // Create worksheet
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+
+    // Set column widths
+    const columnWidths = [
+      { wch: 15 }, // SKU
+      { wch: 30 }, // Tên sản phẩm
+      { wch: 15 }, // Loại sản phẩm
+      { wch: 20 }, // Danh mục
+      { wch: 20 }, // Nhà cung cấp
+      { wch: 10 }, // Đơn vị
+      { wch: 15 }, // Barcode
+      { wch: 12 }, // Giá nhập
+      { wch: 12 }, // Giá bán lẻ
+      { wch: 12 }, // Giá bán sỉ
+      { wch: 12 }, // Giá VIP
+      { wch: 12 }, // Tồn tối thiểu
+      { wch: 15 }, // Trạng thái
+    ];
+    worksheet["!cols"] = columnWidths;
+
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sản phẩm");
+
+    // Export file
+    const fileName = `Danh_sach_san_pham_${
+      new Date().toISOString().split("T")[0]
+    }.xlsx`;
+    XLSX.writeFile(workbook, fileName);
   };
 
   if (error) {
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/10">
         <p className="text-red-800 dark:text-red-200">
-          Lỗi khi tải danh sách sản phẩm: {(error as any)?.message || "Unknown error"}
+          Lỗi khi tải danh sách sản phẩm:{" "}
+          {(error as any)?.message || "Unknown error"}
         </p>
       </div>
     );
@@ -121,26 +200,39 @@ export default function ProductsPage() {
           </p>
         </div>
 
-        <Can permission="create_products">
-          <Link href="/products/create">
-            <Button variant="primary">
-              <svg
-                className="mr-2 h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              Thêm sản phẩm
-            </Button>
-          </Link>
-        </Can>
+        <div className="flex items-center gap-3">
+          {/* Export Excel */}
+          <Button
+            variant="outline"
+            onClick={handleExportExcel}
+            disabled={products.length === 0}
+          >
+            <Download className="mr-2 h-5 w-5" />
+            Xuất Excel
+          </Button>
+
+          {/* Add Product */}
+          <Can permission="create_products">
+            <Link href="/products/create">
+              <Button variant="primary">
+                <svg
+                  className="mr-2 h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                Thêm sản phẩm
+              </Button>
+            </Link>
+          </Can>
+        </div>
       </div>
 
       {/* Filters */}
@@ -175,7 +267,9 @@ export default function ProductsPage() {
             <select
               id="type"
               value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value as ProductType | "all")}
+              onChange={(e) =>
+                setTypeFilter(e.target.value as ProductType | "all")
+              }
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
             >
               <option value="all">Tất cả</option>
@@ -197,7 +291,11 @@ export default function ProductsPage() {
             <select
               id="status"
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+              onChange={(e) =>
+                setStatusFilter(
+                  e.target.value as "all" | "active" | "inactive" | "discontinued"
+                )
+              }
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
             >
               <option value="all">Tất cả</option>
@@ -209,227 +307,59 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableCell header>Hình ảnh</TableCell>
-                <TableCell header>SKU</TableCell>
-                <TableCell header>Tên sản phẩm</TableCell>
-                <TableCell header>Loại</TableCell>
-                <TableCell header>Danh mục</TableCell>
-                <TableCell header>Giá bán lẻ</TableCell>
-                <TableCell header>Đơn vị</TableCell>
-                <TableCell header>Trạng thái</TableCell>
-                <TableCell header>Hành động</TableCell>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8">
-                    <div className="flex items-center justify-center">
-                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-brand-500 border-t-transparent"></div>
-                      <span className="ml-3 text-gray-600 dark:text-gray-400">
-                        Đang tải...
-                      </span>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : products.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8">
-                    <p className="text-gray-500 dark:text-gray-400">
-                      Không tìm thấy sản phẩm nào
-                    </p>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                products.map((product) => (
-                  <TableRow key={product.id}>
-                    {/* Image */}
-                    <TableCell>
-                      <div className="h-12 w-12 overflow-hidden rounded-md border border-gray-200 dark:border-gray-700">
-                        {product.images && product.images.length > 0 ? (
-                          <Image
-                            src={product.images[0].imageUrl}
-                            alt={product.productName}
-                            width={48}
-                            height={48}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center bg-gray-100 dark:bg-gray-800">
-                            <svg
-                              className="h-6 w-6 text-gray-400"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                              />
-                            </svg>
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
+      {/* Bulk Actions */}
+      {selectedIds.length > 0 && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/10">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+              Đã chọn {selectedIds.length} sản phẩm
+            </span>
+            <div className="flex items-center gap-2">
+              {/* Bulk Update Status */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleBulkUpdateStatus("active")}
+                disabled={bulkUpdateStatus.isPending}
+              >
+                <CheckCircle className="mr-1 h-4 w-4" />
+                Hoạt động
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleBulkUpdateStatus("inactive")}
+                disabled={bulkUpdateStatus.isPending}
+              >
+                <XCircle className="mr-1 h-4 w-4" />
+                Tạm ngưng
+              </Button>
 
-                    {/* SKU */}
-                    <TableCell>
-                      <span className="font-mono text-sm font-medium">
-                        {product.sku}
-                      </span>
-                    </TableCell>
-
-                    {/* Product Name */}
-                    <TableCell>
-                      <Link
-                        href={`/products/${product.id}`}
-                        className="font-medium text-gray-900 hover:text-brand-600 dark:text-white dark:hover:text-brand-400"
-                      >
-                        {product.productName}
-                      </Link>
-                      {product.barcode && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Barcode: {product.barcode}
-                        </p>
-                      )}
-                    </TableCell>
-
-                    {/* Type */}
-                    <TableCell>
-                      <Badge color={getTypeBadgeColor(product.productType)}>
-                        {getTypeLabel(product.productType)}
-                      </Badge>
-                    </TableCell>
-
-                    {/* Category */}
-                    <TableCell>
-                      {product.category ? (
-                        <span className="text-sm">
-                          {product.category.categoryName}
-                        </span>
-                      ) : (
-                        <span className="text-sm text-gray-400">-</span>
-                      )}
-                    </TableCell>
-
-                    {/* Price */}
-                    <TableCell>
-                      {product.sellingPriceRetail ? (
-                        <span className="font-medium text-green-600 dark:text-green-400">
-                          {formatCurrency(product.sellingPriceRetail)}
-                        </span>
-                      ) : (
-                        <span className="text-sm text-gray-400">-</span>
-                      )}
-                    </TableCell>
-
-                    {/* Unit */}
-                    <TableCell>
-                      <span className="text-sm">{product.unit}</span>
-                    </TableCell>
-
-                    {/* Status */}
-                    <TableCell>
-                      <Badge color={getStatusBadgeColor(product.status)}>
-                        {getStatusLabel(product.status)}
-                      </Badge>
-                    </TableCell>
-
-                    {/* Actions */}
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Link href={`/products/${product.id}`}>
-                          <Button variant="ghost" size="sm">
-                            <svg
-                              className="h-4 w-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                              />
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                              />
-                            </svg>
-                          </Button>
-                        </Link>
-
-                        <Can permission="update_products">
-                          <Link href={`/products/${product.id}/edit`}>
-                            <Button variant="ghost" size="sm">
-                              <svg
-                                className="h-4 w-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                />
-                              </svg>
-                            </Button>
-                          </Link>
-                        </Can>
-
-                        <Can permission="delete_products">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(product.id, product.productName)}
-                            disabled={deleteProduct.isPending}
-                          >
-                            <svg
-                              className="h-4 w-4 text-red-600"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              />
-                            </svg>
-                          </Button>
-                        </Can>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-
-        {/* Pagination Info */}
-        {products.length > 0 && (
-          <div className="border-t border-gray-200 px-4 py-3 dark:border-gray-800">
-            <p className="text-sm text-gray-700 dark:text-gray-300">
-              Hiển thị <span className="font-medium">{products.length}</span> sản phẩm
-            </p>
+              {/* Bulk Delete */}
+              <Can permission="delete_products">
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={handleBulkDelete}
+                  disabled={bulkDelete.isPending}
+                  isLoading={bulkDelete.isPending}
+                >
+                  <Trash2 className="mr-1 h-4 w-4" />
+                  Xóa
+                </Button>
+              </Can>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Product Table */}
+      <ProductTable
+        data={products}
+        isLoading={isLoading}
+        onSelectionChange={setSelectedIds}
+        enableSelection={true}
+      />
     </div>
   );
 }

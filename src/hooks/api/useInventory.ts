@@ -40,35 +40,64 @@ export function useInventory(params?: InventoryFilters & PaginationParams) {
 }
 
 /**
- * Get Inventory by Warehouse & Product
+ * Get Inventory by Warehouse
  */
-export function useInventoryByWarehouseProduct(
-  warehouseId: number,
-  productId: number,
-  enabled = true
-) {
+export function useInventoryByWarehouse(warehouseId: number, enabled = true) {
   return useQuery({
-    queryKey: [...inventoryKeys.all, "warehouse", warehouseId, "product", productId],
+    queryKey: [...inventoryKeys.all, "warehouse", warehouseId],
     queryFn: async () => {
-      const response = await api.get<ApiResponse<Inventory>>(
-        `/inventory/warehouse/${warehouseId}/product/${productId}`
+      const response = await api.get<ApiResponse<Inventory[]>>(
+        `/inventory/warehouse/${warehouseId}`
       );
-      return response.data;
+      return response;
     },
-    enabled: enabled && !!warehouseId && !!productId,
+    enabled: enabled && !!warehouseId,
   });
 }
 
 /**
- * Get Stock Transactions
+ * Get Inventory by Product (across all warehouses)
  */
-export function useStockTransactions(params?: PaginationParams) {
+export function useInventoryByProduct(productId: number, enabled = true) {
   return useQuery({
-    queryKey: inventoryKeys.transactions(),
+    queryKey: [...inventoryKeys.all, "product", productId],
     queryFn: async () => {
-      const response = await api.get<ApiResponse<StockTransaction[]>>(
-        "/inventory/transactions",
-        { params }
+      const response = await api.get<ApiResponse<Inventory[]>>(
+        `/inventory/product/${productId}`
+      );
+      return response;
+    },
+    enabled: enabled && !!productId,
+  });
+}
+
+/**
+ * Get Inventory Alerts (low stock)
+ */
+export function useInventoryAlerts(warehouseId?: number) {
+  return useQuery({
+    queryKey: [...inventoryKeys.all, "alerts", warehouseId],
+    queryFn: async () => {
+      const response = await api.get<ApiResponse<LowStockAlert[]>>(
+        "/inventory/alerts",
+        { params: { warehouseId } }
+      );
+      return response;
+    },
+    refetchInterval: 60000, // Refetch every 1 minute
+  });
+}
+
+/**
+ * Get Inventory Value Report
+ */
+export function useInventoryValueReport(warehouseId?: number) {
+  return useQuery({
+    queryKey: [...inventoryKeys.all, "value-report", warehouseId],
+    queryFn: async () => {
+      const response = await api.get<ApiResponse<any>>(
+        "/inventory/value-report",
+        { params: { warehouseId } }
       );
       return response;
     },
@@ -76,106 +105,112 @@ export function useStockTransactions(params?: PaginationParams) {
 }
 
 /**
- * Get Stock Transaction by ID
+ * Check Inventory Availability
  */
-export function useStockTransaction(id: number, enabled = true) {
-  return useQuery({
-    queryKey: inventoryKeys.transaction(id),
-    queryFn: async () => {
-      const response = await api.get<ApiResponse<StockTransaction>>(
-        `/inventory/transactions/${id}`
+export function useCheckInventoryAvailability() {
+  return useMutation({
+    mutationFn: async (items: Array<{ warehouseId: number; productId: number; quantity: number }>) => {
+      const response = await api.post<ApiResponse<any>>(
+        "/inventory/check",
+        { items }
       );
       return response.data;
     },
-    enabled: enabled && !!id,
   });
 }
 
 /**
- * Get Low Stock Alerts
+ * Update Inventory (Manual update - Admin only)
  */
-export function useLowStockAlerts() {
-  return useQuery({
-    queryKey: inventoryKeys.lowStock(),
-    queryFn: async () => {
-      const response = await api.get<ApiResponse<LowStockAlert[]>>(
-        "/inventory/low-stock-alerts"
-      );
-      return response.data;
-    },
-    refetchInterval: 60000, // Refetch mỗi 1 phút
-  });
-}
-
-/**
- * Create Stock Transaction (Import/Export/Transfer)
- */
-export function useCreateStockTransaction() {
+export function useUpdateInventory() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: CreateTransactionDto) => {
-      const response = await api.post<ApiResponse<StockTransaction>>(
-        "/inventory/transactions",
+    mutationFn: async (data: { warehouseId: number; productId: number; quantity: number; reservedQuantity?: number }) => {
+      const response = await api.put<ApiResponse<Inventory>>(
+        "/inventory/update",
         data
       );
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: inventoryKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: inventoryKeys.transactions() });
-      toast.success("Tạo giao dịch kho thành công!");
+      toast.success("Cập nhật tồn kho thành công!");
     },
     onError: (error: any) => {
-      toast.error(error?.error?.message || "Tạo giao dịch kho thất bại!");
+      toast.error(error?.error?.message || "Cập nhật tồn kho thất bại!");
     },
   });
 }
 
 /**
- * Approve Stock Transaction
+ * Adjust Inventory (Increase/Decrease)
  */
-export function useApproveStockTransaction() {
+export function useAdjustInventory() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: number) => {
-      const response = await api.patch<ApiResponse<StockTransaction>>(
-        `/inventory/transactions/${id}/approve`
+    mutationFn: async (data: { warehouseId: number; productId: number; quantityChange: number; reason: string; notes?: string }) => {
+      const response = await api.post<ApiResponse<Inventory>>(
+        "/inventory/adjust",
+        data
       );
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: inventoryKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: inventoryKeys.transactions() });
-      toast.success("Phê duyệt giao dịch thành công!");
+      toast.success("Điều chỉnh tồn kho thành công!");
     },
     onError: (error: any) => {
-      toast.error(error?.error?.message || "Phê duyệt giao dịch thất bại!");
+      toast.error(error?.error?.message || "Điều chỉnh tồn kho thất bại!");
     },
   });
 }
 
 /**
- * Cancel Stock Transaction
+ * Reserve Inventory (for orders)
  */
-export function useCancelStockTransaction() {
+export function useReserveInventory() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, reason }: { id: number; reason?: string }) => {
-      const response = await api.patch<ApiResponse<StockTransaction>>(
-        `/inventory/transactions/${id}/cancel`,
-        { reason }
+    mutationFn: async (data: { items: Array<{ warehouseId: number; productId: number; quantity: number }>; referenceType: string; referenceId: number }) => {
+      const response = await api.post<ApiResponse<any>>(
+        "/inventory/reserve",
+        data
       );
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: inventoryKeys.transactions() });
-      toast.success("Hủy giao dịch thành công!");
+      queryClient.invalidateQueries({ queryKey: inventoryKeys.lists() });
+      toast.success("Đặt giữ hàng thành công!");
     },
     onError: (error: any) => {
-      toast.error(error?.error?.message || "Hủy giao dịch thất bại!");
+      toast.error(error?.error?.message || "Đặt giữ hàng thất bại!");
+    },
+  });
+}
+
+/**
+ * Release Reserved Inventory
+ */
+export function useReleaseReservedInventory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { items: Array<{ warehouseId: number; productId: number; quantity: number }>; referenceType: string; referenceId: number }) => {
+      const response = await api.post<ApiResponse<any>>(
+        "/inventory/release-reserved",
+        data
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: inventoryKeys.lists() });
+      toast.success("Hủy đặt giữ hàng thành công!");
+    },
+    onError: (error: any) => {
+      toast.error(error?.error?.message || "Hủy đặt giữ hàng thất bại!");
     },
   });
 }

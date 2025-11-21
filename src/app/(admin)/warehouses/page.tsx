@@ -229,6 +229,9 @@ export default function WarehousesPage() {
                   Loại
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                  Quản lý
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
                   Địa chỉ
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
@@ -257,6 +260,20 @@ export default function WarehousesPage() {
                     <Badge color={getTypeBadgeColor(warehouse.warehouseType)}>
                       {getTypeLabel(warehouse.warehouseType)}
                     </Badge>
+                  </TableCell>
+                  <TableCell className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                    {warehouse.manager ? (
+                      <div>
+                        <div className="font-medium text-gray-900 dark:text-white">
+                          {warehouse.manager.fullName}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {warehouse.manager.employeeCode}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400">—</span>
+                    )}
                   </TableCell>
                   <TableCell className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
                     {warehouse.address ? (

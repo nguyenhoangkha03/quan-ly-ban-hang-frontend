@@ -1,12 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useCreateWarehouse } from "@/hooks/api";
+import { useCreateWarehouse, useUsers } from "@/hooks/api";
 import { warehouseSchema, type WarehouseFormData } from "@/lib/validations/warehouse.schema";
+import { useDebounce } from "@/hooks";
 
 /**
  * Create Warehouse Page
@@ -15,10 +16,14 @@ import { warehouseSchema, type WarehouseFormData } from "@/lib/validations/wareh
 export default function CreateWarehousePage() {
   const router = useRouter();
   const createWarehouse = useCreateWarehouse();
+  const [managerSearch, setManagerSearch] = useState("");
+  const debouncedSearch = useDebounce(managerSearch, 300);
 
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<WarehouseFormData>({
     resolver: zodResolver(warehouseSchema),
@@ -26,6 +31,21 @@ export default function CreateWarehousePage() {
       status: "active",
     },
   });
+
+  const selectedManagerId = watch("managerId");
+
+  // Fetch users for manager selector (only active users with warehouse management roles)
+  const { data: usersResponse, isLoading: isLoadingUsers } = useUsers({
+    search: debouncedSearch,
+    status: "active",
+    limit: "20", // Increase limit to show more results
+  });
+
+  // Filter users by allowed roles (admin, warehouse_manager, warehouse_staff)
+  const allowedRoleKeys = ["admin", "warehouse_manager", "warehouse_staff"];
+  const filteredUsers = usersResponse?.data?.filter(
+    (user) => user.role && allowedRoleKeys.includes(user.role.roleKey)
+  ) || [];
 
   const onSubmit = async (data: WarehouseFormData) => {
     try {
@@ -163,6 +183,81 @@ export default function CreateWarehousePage() {
               {errors.status && (
                 <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                   {errors.status.message}
+                </p>
+              )}
+            </div>
+
+            {/* Manager Selector */}
+            <div className="sm:col-span-2">
+              <label
+                htmlFor="managerId"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
+                Quản lý kho
+              </label>
+              <div className="mt-1 relative">
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm người quản lý..."
+                  value={managerSearch}
+                  onChange={(e) => setManagerSearch(e.target.value)}
+                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
+                />
+                {isLoadingUsers && (
+                  <div className="absolute right-3 top-2.5">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"></div>
+                  </div>
+                )}
+                {filteredUsers && filteredUsers.length > 0 && managerSearch && (
+                  <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-300 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-700">
+                    <ul className="max-h-60 overflow-auto py-1">
+                      {filteredUsers.map((user) => (
+                        <li
+                          key={user.id}
+                          onClick={() => {
+                            setValue("managerId", user.id);
+                            setManagerSearch(user.fullName);
+                          }}
+                          className="cursor-pointer px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600"
+                        >
+                          <div className="font-medium text-gray-900 dark:text-white">
+                            {user.fullName}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {user.employeeCode} • {user.email}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+              {selectedManagerId && (
+                <div className="mt-2 rounded-lg border border-blue-200 bg-blue-50 p-2 dark:border-blue-800 dark:bg-blue-900/20">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm">
+                      <span className="font-medium text-blue-900 dark:text-blue-200">
+                        Đã chọn: {filteredUsers.find(u => u.id === selectedManagerId)?.fullName || managerSearch}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setValue("managerId", undefined);
+                        setManagerSearch("");
+                      }}
+                      className="text-blue-600 hover:text-blue-800 dark:text-blue-400"
+                    >
+                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              )}
+              {errors.managerId && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {errors.managerId.message}
                 </p>
               )}
             </div>

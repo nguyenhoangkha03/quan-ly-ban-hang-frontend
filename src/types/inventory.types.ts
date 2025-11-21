@@ -200,3 +200,25 @@ export interface LowStockAlert {
   min_stock_level: number;
   shortage: number;
 }
+
+// Warehouse Statistics
+export interface WarehouseStatistics {
+  warehouseId: number;
+  warehouseName: string;
+  warehouseType: WarehouseType;
+  inventory: {
+    totalProducts: number;
+    totalQuantity: number;
+    reservedQuantity: number;
+    availableQuantity: number;
+  };
+  transactions: {
+    last30Days: Record<string, number>;
+  };
+  capacity: {
+    total: number | null;
+    used: number;
+    available: number | null;
+    utilizationPercent: number | null;
+  };
+}

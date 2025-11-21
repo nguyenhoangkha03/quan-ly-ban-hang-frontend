@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import type {
   Product,
+  ProductImage,
   CreateProductDto,
   UpdateProductDto,
   ProductFilters,
@@ -131,6 +132,158 @@ export function useToggleProductStatus() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
       toast.success("Cập nhật trạng thái thành công!");
+    },
+    onError: (error: any) => {
+      toast.error(error?.error?.message || "Cập nhật trạng thái thất bại!");
+    },
+  });
+}
+
+/**
+ * Upload Product Images
+ * Max 5 images per product
+ */
+export function useUploadProductImages() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      productId,
+      files,
+      metadata
+    }: {
+      productId: number;
+      files: File[];
+      metadata?: Array<{
+        imageType?: "thumbnail" | "gallery" | "main";
+        altText?: string;
+        isPrimary?: boolean;
+        displayOrder?: number;
+      }>;
+    }) => {
+      const formData = new FormData();
+
+      // Append files
+      files.forEach((file) => {
+        formData.append("images", file);
+      });
+
+      // Append metadata if provided
+      if (metadata) {
+        formData.append("images", JSON.stringify(metadata));
+      }
+
+      const response = await api.post<ApiResponse<ProductImage[]>>(
+        `/products/${productId}/images`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      return response.data;
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: productKeys.detail(variables.productId) });
+      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      toast.success("Tải ảnh lên thành công!");
+    },
+    onError: (error: any) => {
+      toast.error(error?.error?.message || "Tải ảnh lên thất bại!");
+    },
+  });
+}
+
+/**
+ * Delete Product Image
+ */
+export function useDeleteProductImage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ productId, imageId }: { productId: number; imageId: number }) => {
+      const response = await api.delete<ApiResponse<void>>(
+        `/products/${productId}/images/${imageId}`
+      );
+      return response;
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: productKeys.detail(variables.productId) });
+      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      toast.success("Xóa ảnh thành công!");
+    },
+    onError: (error: any) => {
+      toast.error(error?.error?.message || "Xóa ảnh thất bại!");
+    },
+  });
+}
+
+/**
+ * Bulk Delete Products
+ */
+export function useBulkDeleteProducts() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (ids: number[]) => {
+      // Delete products sequentially
+      const results = await Promise.allSettled(
+        ids.map((id) => api.delete<ApiResponse<void>>(`/products/${id}`))
+      );
+
+      const successful = results.filter((r) => r.status === "fulfilled").length;
+      const failed = results.filter((r) => r.status === "rejected").length;
+
+      return { successful, failed, total: ids.length };
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+
+      if (result.failed === 0) {
+        toast.success(`Đã xóa ${result.successful} sản phẩm thành công!`);
+      } else {
+        toast.success(
+          `Đã xóa ${result.successful}/${result.total} sản phẩm. ${result.failed} sản phẩm thất bại.`
+        );
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error?.error?.message || "Xóa sản phẩm thất bại!");
+    },
+  });
+}
+
+/**
+ * Bulk Update Product Status
+ */
+export function useBulkUpdateProductStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ ids, status }: { ids: number[]; status: "active" | "inactive" | "discontinued" }) => {
+      // Update products sequentially
+      const results = await Promise.allSettled(
+        ids.map((id) =>
+          api.patch<ApiResponse<Product>>(`/products/${id}`, { status })
+        )
+      );
+
+      const successful = results.filter((r) => r.status === "fulfilled").length;
+      const failed = results.filter((r) => r.status === "rejected").length;
+
+      return { successful, failed, total: ids.length };
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+
+      if (result.failed === 0) {
+        toast.success(`Đã cập nhật ${result.successful} sản phẩm thành công!`);
+      } else {
+        toast.success(
+          `Đã cập nhật ${result.successful}/${result.total} sản phẩm. ${result.failed} sản phẩm thất bại.`
+        );
+      }
     },
     onError: (error: any) => {
       toast.error(error?.error?.message || "Cập nhật trạng thái thất bại!");

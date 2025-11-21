@@ -339,25 +339,35 @@ const AppSidebar: React.FC = () => {
       >
         <Link href="/">
           {isExpanded || isHovered || isMobileOpen ? (
-            <>
-              <Image
-                className="dark:hidden"
-                src="/images/logo/logo.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-              <Image
-                className="hidden dark:block"
-                src="/images/logo/logo-dark.svg"
-                alt="Logo"
-                width={150}
-                height={40}
-              />
-            </>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-3">
+                <Image
+                  className="dark:hidden"
+                  src="/images/logo/logo-nobackground.png"
+                  alt="Logo"
+                  width={80}
+                  height={48}
+                />
+                <Image
+                  className="hidden dark:block"
+                  src="/images/logo/logo-nobackground.png"
+                  alt="Logo"
+                  width={48}
+                  height={48}
+                />
+                <div className="flex flex-col">
+                  <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
+                    Quản Lý ERP
+                  </h1>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Sản xuất & Bán hàng
+                  </p>
+                </div>
+              </div>
+            </div>
           ) : (
             <Image
-              src="/images/logo/logo-icon.svg"
+              src="/images/logo/logo-nobackground.png"
               alt="Logo"
               width={32}
               height={32}

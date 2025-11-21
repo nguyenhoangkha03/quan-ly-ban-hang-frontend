@@ -10,6 +10,7 @@ import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Select from "@/components/form/select/SelectField";
+import { ProductImageManager } from "@/components/products";
 
 /**
  * Edit Product Page
@@ -373,6 +374,15 @@ export default function EditProductPage() {
               </Select>
             </div>
           </div>
+        </div>
+
+        {/* Images */}
+        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <ProductImageManager
+            productId={productId}
+            images={product.images || []}
+            maxImages={5}
+          />
         </div>
 
         {/* Actions */}

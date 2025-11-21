@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
-import type { Warehouse, ApiResponse, PaginationParams } from "@/types";
+import type { Warehouse, WarehouseStatistics, ApiResponse, PaginationParams } from "@/types";
 import { toast } from "react-hot-toast";
 
 /**
@@ -12,6 +12,7 @@ export const warehouseKeys = {
   list: (params?: PaginationParams) => [...warehouseKeys.lists(), params] as const,
   details: () => [...warehouseKeys.all, "detail"] as const,
   detail: (id: number) => [...warehouseKeys.details(), id] as const,
+  statistics: (id: number) => [...warehouseKeys.all, "statistics", id] as const,
 };
 
 /**
@@ -55,7 +56,11 @@ export function useCreateWarehouse() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: warehouseKeys.lists() });
+      // Invalidate và refetch ngay lập tức
+      queryClient.invalidateQueries({
+        queryKey: warehouseKeys.lists(),
+        refetchType: 'active',
+      });
       toast.success("Tạo kho thành công!");
     },
     onError: (error: any) => {
@@ -76,8 +81,15 @@ export function useUpdateWarehouse() {
       return response.data;
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: warehouseKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: warehouseKeys.detail(variables.id) });
+      // Invalidate và refetch ngay lập tức
+      queryClient.invalidateQueries({
+        queryKey: warehouseKeys.lists(),
+        refetchType: 'active',
+      });
+      queryClient.invalidateQueries({
+        queryKey: warehouseKeys.detail(variables.id),
+        refetchType: 'active',
+      });
       toast.success("Cập nhật kho thành công!");
     },
     onError: (error: any) => {
@@ -98,11 +110,29 @@ export function useDeleteWarehouse() {
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: warehouseKeys.lists() });
+      // Invalidate và refetch ngay lập tức
+      queryClient.invalidateQueries({
+        queryKey: warehouseKeys.lists(),
+        refetchType: 'active', // Refetch các queries đang active
+      });
       toast.success("Xóa kho thành công!");
     },
     onError: (error: any) => {
       toast.error(error?.error?.message || "Xóa kho thất bại!");
     },
+  });
+}
+
+/**
+ * Get Warehouse Statistics
+ */
+export function useWarehouseStatistics(id: number, enabled = true) {
+  return useQuery({
+    queryKey: warehouseKeys.statistics(id),
+    queryFn: async () => {
+      const response = await api.get<ApiResponse<WarehouseStatistics>>(`/warehouses/${id}/statistics`);
+      return response;
+    },
+    enabled: enabled && !!id,
   });
 }

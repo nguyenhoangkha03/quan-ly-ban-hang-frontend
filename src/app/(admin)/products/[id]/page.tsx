@@ -4,10 +4,16 @@ import React from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { useProduct, useDeleteProduct } from "@/hooks/api";
+import {
+  useProduct,
+  useDeleteProduct,
+  useInventoryByProduct,
+  useStockTransactions,
+} from "@/hooks/api";
 import { Can } from "@/components/auth";
 import Button from "@/components/ui/button/Button";
 import Badge from "@/components/ui/badge/Badge";
+import { InventoryTable } from "@/components/inventory/InventoryTable";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { ProductType } from "@/types";
 
@@ -20,6 +26,13 @@ export default function ProductDetailPage() {
   const productId = Number(params.id);
 
   const { data: product, isLoading, error } = useProduct(productId);
+  const { data: inventoryResponse, isLoading: inventoryLoading } = useInventoryByProduct(productId);
+  const { data: transactionsResponse, isLoading: transactionsLoading } = useStockTransactions({
+    product_id: productId,
+    limit: 10,
+    sortBy: "created_at",
+    sortOrder: "desc",
+  });
   const deleteProduct = useDeleteProduct();
 
   const handleDelete = async () => {
@@ -409,6 +422,182 @@ export default function ProductDetailPage() {
             </dl>
           </div>
         </div>
+      </div>
+
+      {/* Image Gallery */}
+      {product.images && product.images.length > 0 && (
+        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+            Hình ảnh sản phẩm
+          </h2>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            {product.images
+              .sort((a, b) => a.displayOrder - b.displayOrder)
+              .map((image, index) => (
+                <div key={image.id} className="group relative aspect-square">
+                  <img
+                    src={image.imageUrl}
+                    alt={image.altText || `Product image ${index + 1}`}
+                    className="h-full w-full rounded-lg object-cover border-2 border-gray-200 dark:border-gray-700"
+                  />
+                  {image.isPrimary && (
+                    <div className="absolute left-2 top-2 rounded bg-yellow-500 px-2 py-1 text-xs font-medium text-white">
+                      Chính
+                    </div>
+                  )}
+                  <div className="absolute bottom-2 right-2 rounded bg-black/50 px-2 py-1 text-xs text-white">
+                    {index + 1}/{product.images.length}
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {/* Inventory by Warehouse */}
+      <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Tồn kho theo kho
+          </h2>
+          <Link
+            href={`/inventory?product=${productId}`}
+            className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+          >
+            Xem tất cả →
+          </Link>
+        </div>
+        <InventoryTable
+          inventory={inventoryResponse?.data || []}
+          isLoading={inventoryLoading}
+          showWarehouse={true}
+        />
+      </div>
+
+      {/* Transaction History */}
+      <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Lịch sử giao dịch
+          </h2>
+          <Link
+            href={`/stock-transactions?product=${productId}`}
+            className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+          >
+            Xem tất cả →
+          </Link>
+        </div>
+
+        {transactionsLoading ? (
+          <div className="flex h-32 items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
+          </div>
+        ) : transactionsResponse?.data && transactionsResponse.data.length > 0 ? (
+          <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-900">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Mã giao dịch
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Loại
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Kho
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Số lượng
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Trạng thái
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                    Ngày tạo
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
+                {transactionsResponse.data.map((transaction) => {
+                  // Find the detail for this product
+                  const detail = transaction.details?.find(d => d.product_id === productId);
+                  const quantity = detail?.quantity || 0;
+
+                  const getTypeLabel = (type: string) => {
+                    const labels: Record<string, string> = {
+                      import: "Nhập kho",
+                      export: "Xuất kho",
+                      transfer: "Chuyển kho",
+                      disposal: "Hủy hàng",
+                      stocktake: "Kiểm kê",
+                    };
+                    return labels[type] || type;
+                  };
+
+                  const getStatusInfo = (status: string) => {
+                    const info: Record<string, { label: string; color: string }> = {
+                      draft: { label: "Nháp", color: "gray" },
+                      pending: { label: "Chờ duyệt", color: "yellow" },
+                      approved: { label: "Đã duyệt", color: "blue" },
+                      completed: { label: "Hoàn thành", color: "green" },
+                      cancelled: { label: "Đã hủy", color: "red" },
+                    };
+                    return info[status] || { label: status, color: "gray" };
+                  };
+
+                  const statusInfo = getStatusInfo(transaction.status);
+
+                  return (
+                    <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                        <Link
+                          href={`/stock-transactions/${transaction.id}`}
+                          className="hover:text-blue-600 dark:hover:text-blue-400"
+                        >
+                          {transaction.transaction_code}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                        {getTypeLabel(transaction.transaction_type)}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                        {transaction.warehouse?.warehouseName || transaction.source_warehouse?.warehouseName || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white">
+                        {quantity.toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <Badge color={statusInfo.color}>{statusInfo.label}</Badge>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                        {new Date(transaction.created_at).toLocaleDateString("vi-VN")}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-8 text-center dark:border-gray-700 dark:bg-gray-800/50">
+            <svg
+              className="mx-auto h-12 w-12 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              Chưa có giao dịch nào
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
