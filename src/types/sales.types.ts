@@ -2,7 +2,7 @@
  * Sales Types - Dựa trên database schema
  */
 
-import type { BaseEntity, EntityWithUser } from "./common.types";
+import type { BaseEntity } from "./common.types";
 import type { Customer } from "./customer.types";
 import type { Product } from "./product.types";
 import type { User } from "./user.types";
@@ -20,128 +20,175 @@ export type OrderStatus = "pending" | "approved" | "in_progress" | "completed" |
 // Delivery Status
 export type DeliveryStatus = "pending" | "in_transit" | "delivered" | "failed" | "returned";
 
+// Settlement Status
+export type SettlementStatus = "pending" | "settled";
+
 // Sales Channel
-export type SalesChannel = "store" | "online" | "phone" | "social_media" | "distributor";
+export type SalesChannel = "retail" | "wholesale" | "online" | "distributor";
 
 // Sales Order
-export interface SalesOrder extends EntityWithUser {
-  order_code: string;
-  customer_id: number;
+export interface SalesOrder extends BaseEntity {
+  orderCode: string;
+  customerId: number;
   customer?: Customer;
-  warehouse_id?: number;
+  warehouseId?: number;
   warehouse?: Warehouse;
-  order_date: string;
-  sales_channel: SalesChannel;
-  delivery_address?: string;
-  delivery_city?: string;
-  delivery_region?: string;
-  subtotal_amount: number;
-  discount_amount: number;
-  tax_amount: number;
-  shipping_fee: number;
-  total_amount: number;
-  payment_method: PaymentMethod;
-  payment_status: PaymentStatus;
-  paid_amount: number;
-  debt_amount: number;
-  status: OrderStatus;
+  orderDate: string;
+  salesChannel: SalesChannel;
+  totalAmount: number;
+  discountAmount: number;
+  taxAmount: number;
+  shippingFee: number;
+  paidAmount: number;
+  paymentMethod: PaymentMethod;
+  paymentStatus: PaymentStatus;
+  orderStatus: OrderStatus;
+  deliveryAddress?: string;
   notes?: string;
-  approved_by?: number;
+  createdBy: number;
+  creator?: User;
+  approvedBy?: number;
   approver?: User;
-  cancelled_by?: number;
+  cancelledBy?: number;
   canceller?: User;
-  approved_at?: string;
-  cancelled_at?: string;
+  approvedAt?: string;
+  completedAt?: string;
+  cancelledAt?: string;
   details?: SalesOrderDetail[];
-  delivery?: Delivery;
+  deliveries?: Delivery[];
+  paymentReceipts?: PaymentReceipt[];
 }
 
 // Sales Order Detail
 export interface SalesOrderDetail extends BaseEntity {
-  order_id: number;
+  orderId: number;
   order?: SalesOrder;
-  product_id: number;
+  productId: number;
   product?: Product;
+  warehouseId?: number;
+  warehouse?: Warehouse;
   quantity: number;
-  unit_price: number;
-  discount_percent: number;
-  discount_amount: number;
-  tax_rate: number;
-  tax_amount: number;
-  total_amount: number;
+  unitPrice: number;
+  discountPercent: number;
+  taxRate: number;
+  batchNumber?: string;
+  expiryDate?: string;
   notes?: string;
 }
 
 // Delivery
-export interface Delivery extends EntityWithUser {
-  order_id: number;
+export interface Delivery extends BaseEntity {
+  deliveryCode: string;
+  orderId: number;
   order?: SalesOrder;
-  delivery_staff_id?: number;
-  delivery_staff?: User;
-  delivery_date?: string;
-  delivery_address: string;
-  delivery_city?: string;
-  delivery_region?: string;
-  recipient_name?: string;
-  recipient_phone?: string;
-  status: DeliveryStatus;
-  proof_image_url?: string;
-  delivered_at?: string;
-  failed_reason?: string;
+  deliveryStaffId: number;
+  deliveryStaff?: User;
+  shippingPartner?: string;
+  deliveryDate: string;
+  deliveryStatus: DeliveryStatus;
+  deliveryCost: number;
+  codAmount: number;
+  collectedAmount: number;
+  receivedBy?: string;
+  receivedPhone?: string;
+  deliveryProof?: string;
+  failureReason?: string;
+  settlementStatus: SettlementStatus;
+  settledBy?: number;
+  settler?: User;
   notes?: string;
+  settledAt?: string;
+}
+
+// Payment Receipt
+export interface PaymentReceipt extends BaseEntity {
+  receiptCode: string;
+  orderId: number;
+  order?: SalesOrder;
+  customerId: number;
+  customer?: Customer;
+  paymentDate: string;
+  amount: number;
+  paymentMethod: PaymentMethod;
+  notes?: string;
+  createdBy: number;
+  creator?: User;
 }
 
 // Create Sales Order DTO
 export interface CreateSalesOrderDto {
-  customer_id: number;
-  warehouse_id?: number;
-  sales_channel: SalesChannel;
-  delivery_address?: string;
-  delivery_city?: string;
-  delivery_region?: string;
-  shipping_fee?: number;
-  payment_method: PaymentMethod;
-  paid_amount?: number;
+  customerId: number;
+  warehouseId?: number;
+  orderDate?: string;
+  salesChannel: SalesChannel;
+  deliveryAddress?: string;
+  shippingFee?: number;
+  paymentMethod: PaymentMethod;
+  paidAmount?: number;
   notes?: string;
   details: Array<{
-    product_id: number;
+    productId: number;
+    warehouseId?: number;
     quantity: number;
-    unit_price: number;
-    discount_percent?: number;
-    discount_amount?: number;
-    tax_rate?: number;
+    unitPrice: number;
+    discountPercent?: number;
+    taxRate?: number;
+    batchNumber?: string;
+    expiryDate?: string;
+    notes?: string;
   }>;
 }
 
 // Update Sales Order DTO
 export interface UpdateSalesOrderDto {
-  delivery_address?: string;
-  delivery_city?: string;
-  delivery_region?: string;
-  shipping_fee?: number;
-  payment_method?: PaymentMethod;
+  deliveryAddress?: string;
+  shippingFee?: number;
+  paymentMethod?: PaymentMethod;
+  notes?: string;
+  details?: Array<{
+    id?: number;
+    productId: number;
+    warehouseId?: number;
+    quantity: number;
+    unitPrice: number;
+    discountPercent?: number;
+    taxRate?: number;
+    batchNumber?: string;
+    expiryDate?: string;
+    notes?: string;
+  }>;
+}
+
+// Approve Order DTO
+export interface ApproveOrderDto {
   notes?: string;
 }
 
-// Add Payment DTO
-export interface AddPaymentDto {
-  order_id: number;
+// Cancel Order DTO
+export interface CancelOrderDto {
+  reason: string;
+}
+
+// Process Payment DTO
+export interface ProcessPaymentDto {
   amount: number;
-  payment_method: PaymentMethod;
+  paymentMethod: PaymentMethod;
+  paymentDate?: string;
   notes?: string;
 }
 
 // Sales Order Filters
 export interface SalesOrderFilters {
-  customer_id?: number;
-  status?: OrderStatus | OrderStatus[];
-  payment_status?: PaymentStatus | PaymentStatus[];
-  sales_channel?: SalesChannel;
-  payment_method?: PaymentMethod;
-  from_date?: string;
-  to_date?: string;
-  warehouse_id?: number;
-  sales_staff_id?: number;
+  customerId?: number;
+  orderStatus?: OrderStatus | OrderStatus[];
+  paymentStatus?: PaymentStatus | PaymentStatus[];
+  salesChannel?: SalesChannel;
+  paymentMethod?: PaymentMethod;
+  fromDate?: string;
+  toDate?: string;
+  warehouseId?: number;
+  createdBy?: number;
+  search?: string;
 }
 
 // Order Summary (cho cart/checkout)
@@ -155,13 +202,36 @@ export interface OrderSummary {
 
 // Cart Item (cho tạo order)
 export interface CartItem {
-  product_id: number;
+  productId: number;
   product: Product;
+  warehouseId?: number;
+  warehouse?: Warehouse;
   quantity: number;
-  unit_price: number;
-  discount_percent: number;
-  discount_amount: number;
-  tax_rate: number;
-  tax_amount: number;
-  total_amount: number;
+  unitPrice: number;
+  discountPercent: number;
+  taxRate: number;
+  batchNumber?: string;
+  expiryDate?: string;
+  notes?: string;
+}
+
+// Inventory Shortage Warning
+export interface InventoryShortage {
+  productId: number;
+  productName: string;
+  requested: number;
+  available: number;
+  shortage: number;
+}
+
+// Order Statistics
+export interface OrderStatistics {
+  totalOrders: number;
+  totalRevenue: number;
+  paidAmount: number;
+  unpaidAmount: number;
+  pendingOrders: number;
+  approvedOrders: number;
+  completedOrders: number;
+  cancelledOrders: number;
 }

@@ -1,108 +1,230 @@
+/**
+ * Customers API Hooks
+ */
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
-import type { Customer, ApiResponse, PaginationParams } from "@/types";
-import { toast } from "react-hot-toast";
+import toast from "react-hot-toast";
+import type {
+  Customer,
+  CreateCustomerDto,
+  UpdateCustomerDto,
+  UpdateCreditLimitDto,
+  UpdateCustomerStatusDto,
+  CustomerFilters,
+  CustomerDebtInfo,
+  CustomerOrderHistory,
+  ApiResponse,
+} from "@/types";
 
-/**
- * Query Keys
- */
-export const customerKeys = {
+// Query Keys
+export const CUSTOMER_KEYS = {
   all: ["customers"] as const,
-  lists: () => [...customerKeys.all, "list"] as const,
-  list: (params?: PaginationParams) => [...customerKeys.lists(), params] as const,
-  details: () => [...customerKeys.all, "detail"] as const,
-  detail: (id: number) => [...customerKeys.details(), id] as const,
+  lists: () => [...CUSTOMER_KEYS.all, "list"] as const,
+  list: (filters?: CustomerFilters) => [...CUSTOMER_KEYS.lists(), filters] as const,
+  details: () => [...CUSTOMER_KEYS.all, "detail"] as const,
+  detail: (id: number) => [...CUSTOMER_KEYS.details(), id] as const,
+  debt: (id: number) => [...CUSTOMER_KEYS.detail(id), "debt"] as const,
+  orders: (id: number) => [...CUSTOMER_KEYS.detail(id), "orders"] as const,
+  overdueDebt: () => [...CUSTOMER_KEYS.all, "overdue-debt"] as const,
 };
 
 /**
- * Get Customers List
+ * Get all customers
  */
-export function useCustomers(params?: PaginationParams) {
+export function useCustomers(filters?: CustomerFilters) {
   return useQuery({
-    queryKey: customerKeys.list(params),
+    queryKey: CUSTOMER_KEYS.list(filters),
     queryFn: async () => {
-      const response = await api.get<ApiResponse<Customer[]>>("/customers", {
-        params,
-      });
-      return response;
+      const response = await api.get("/customers", { params: filters });
+      return response as ApiResponse<Customer[]>;
     },
   });
 }
 
 /**
- * Get Single Customer
+ * Get customer by ID
  */
 export function useCustomer(id: number, enabled = true) {
   return useQuery({
-    queryKey: customerKeys.detail(id),
+    queryKey: CUSTOMER_KEYS.detail(id),
     queryFn: async () => {
-      const response = await api.get<ApiResponse<Customer>>(`/customers/${id}`);
-      return response.data;
+      const response = await api.get(`/customers/${id}`);
+      return response as ApiResponse<Customer>;
     },
     enabled: enabled && !!id,
   });
 }
 
 /**
- * Create Customer
+ * Get customer debt info
+ */
+export function useCustomerDebt(id: number, enabled = true) {
+  return useQuery({
+    queryKey: CUSTOMER_KEYS.debt(id),
+    queryFn: async () => {
+      const response = await api.get(`/customers/${id}/debt`);
+      return response as ApiResponse<CustomerDebtInfo>;
+    },
+    enabled: enabled && !!id,
+  });
+}
+
+/**
+ * Get customer order history
+ */
+export function useCustomerOrders(id: number, page = 1, limit = 20, enabled = true) {
+  return useQuery({
+    queryKey: [...CUSTOMER_KEYS.orders(id), page, limit],
+    queryFn: async () => {
+      const response = await api.get(`/customers/${id}/orders`, {
+        params: { page, limit },
+      });
+      return response as ApiResponse<CustomerOrderHistory>;
+    },
+    enabled: enabled && !!id,
+  });
+}
+
+/**
+ * Get customers with overdue debt
+ */
+export function useOverdueDebtCustomers() {
+  return useQuery({
+    queryKey: CUSTOMER_KEYS.overdueDebt(),
+    queryFn: async () => {
+      const response = await api.get("/customers/overdue-debt");
+      return response as ApiResponse<Customer[]>;
+    },
+  });
+}
+
+/**
+ * Create customer
  */
 export function useCreateCustomer() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Partial<Customer>) => {
-      const response = await api.post<ApiResponse<Customer>>("/customers", data);
-      return response.data;
+    mutationFn: async (data: CreateCustomerDto) => {
+      const response = await api.post("/customers", data);
+      return response as ApiResponse<Customer>;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: CUSTOMER_KEYS.lists() });
       toast.success("Tạo khách hàng thành công!");
     },
     onError: (error: any) => {
-      toast.error(error?.error?.message || "Tạo khách hàng thất bại!");
+      toast.error(error?.message || "Không thể tạo khách hàng");
     },
   });
 }
 
 /**
- * Update Customer
+ * Update customer
  */
 export function useUpdateCustomer() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<Customer> }) => {
-      const response = await api.put<ApiResponse<Customer>>(`/customers/${id}`, data);
-      return response.data;
+    mutationFn: async ({ id, data }: { id: number; data: UpdateCustomerDto }) => {
+      const response = await api.put(`/customers/${id}`, data);
+      return response as ApiResponse<Customer>;
     },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: customerKeys.detail(variables.id) });
+    onSuccess: (response, variables) => {
+      queryClient.invalidateQueries({ queryKey: CUSTOMER_KEYS.lists() });
+      queryClient.invalidateQueries({ queryKey: CUSTOMER_KEYS.detail(variables.id) });
       toast.success("Cập nhật khách hàng thành công!");
     },
     onError: (error: any) => {
-      toast.error(error?.error?.message || "Cập nhật khách hàng thất bại!");
+      toast.error(error?.message || "Không thể cập nhật khách hàng");
     },
   });
 }
 
 /**
- * Delete Customer
+ * Update customer credit limit
+ */
+export function useUpdateCreditLimit() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: UpdateCreditLimitDto }) => {
+      const response = await api.put(`/customers/${id}/credit-limit`, data);
+      return response as ApiResponse<Customer>;
+    },
+    onSuccess: (response, variables) => {
+      queryClient.invalidateQueries({ queryKey: CUSTOMER_KEYS.lists() });
+      queryClient.invalidateQueries({ queryKey: CUSTOMER_KEYS.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: CUSTOMER_KEYS.debt(variables.id) });
+      toast.success("Cập nhật hạn mức công nợ thành công!");
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || "Không thể cập nhật hạn mức công nợ");
+    },
+  });
+}
+
+/**
+ * Update customer status
+ */
+export function useUpdateCustomerStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: UpdateCustomerStatusDto }) => {
+      const response = await api.patch(`/customers/${id}/status`, data);
+      return response as ApiResponse<Customer>;
+    },
+    onSuccess: (response, variables) => {
+      queryClient.invalidateQueries({ queryKey: CUSTOMER_KEYS.lists() });
+      queryClient.invalidateQueries({ queryKey: CUSTOMER_KEYS.detail(variables.id) });
+      toast.success("Cập nhật trạng thái khách hàng thành công!");
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || "Không thể cập nhật trạng thái");
+    },
+  });
+}
+
+/**
+ * Delete customer
  */
 export function useDeleteCustomer() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (id: number) => {
-      const response = await api.delete<ApiResponse<void>>(`/customers/${id}`);
+      const response = await api.delete(`/customers/${id}`);
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: customerKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: CUSTOMER_KEYS.lists() });
       toast.success("Xóa khách hàng thành công!");
     },
     onError: (error: any) => {
-      toast.error(error?.error?.message || "Xóa khách hàng thất bại!");
+      toast.error(error?.message || "Không thể xóa khách hàng");
+    },
+  });
+}
+
+/**
+ * Bulk delete customers
+ */
+export function useBulkDeleteCustomers() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (ids: number[]) => {
+      const deletePromises = ids.map((id) => api.delete(`/customers/${id}`));
+      await Promise.all(deletePromises);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: CUSTOMER_KEYS.lists() });
+      toast.success("Xóa khách hàng thành công!");
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || "Không thể xóa khách hàng");
     },
   });
 }

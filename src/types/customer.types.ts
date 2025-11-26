@@ -2,7 +2,8 @@
  * Customer Types - Dựa trên database schema
  */
 
-import type { BaseEntity, Status } from "./common.types";
+import type { BaseEntity } from "./common.types";
+import type { AuthUser } from "./user.types";
 
 // Customer Type
 export type CustomerType = "individual" | "company";
@@ -10,74 +11,193 @@ export type CustomerType = "individual" | "company";
 // Customer Classification
 export type CustomerClassification = "retail" | "wholesale" | "vip" | "distributor";
 
+// Customer Status
+export type CustomerStatus = "active" | "inactive" | "blacklisted";
+
+// Gender
+export type Gender = "male" | "female" | "other";
+
 // Customer
 export interface Customer extends BaseEntity {
-  customer_code: string;
-  customer_name: string;
-  customer_type: CustomerType;
+  customerCode: string;
+  customerName: string;
+  customerType: CustomerType;
   classification: CustomerClassification;
-  contact_name?: string;
-  phone?: string;
+  gender?: Gender;
+  contactPerson?: string;
+  phone: string;
   email?: string;
+  avatarUrl?: string;
   address?: string;
-  city?: string;
-  region?: string;
-  tax_code?: string;
-  credit_limit: number;
-  current_debt: number;
+  province?: string;
+  district?: string;
+  taxCode?: string;
+  creditLimit: number;
+  currentDebt: number;
+  debtUpdatedAt?: string;
+  status: CustomerStatus;
   notes?: string;
-  status: Status;
-  created_by?: number;
-  updated_by?: number;
+  createdBy?: number;
+  creator?: AuthUser;
+  updatedBy?: number;
+  updater?: AuthUser;
 }
 
 // Create Customer DTO
 export interface CreateCustomerDto {
-  customer_name: string;
-  customer_type: CustomerType;
+  customerName: string;
+  customerType: CustomerType;
   classification: CustomerClassification;
-  contact_name?: string;
-  phone?: string;
+  gender?: Gender;
+  contactPerson?: string;
+  phone: string;
   email?: string;
   address?: string;
-  city?: string;
-  region?: string;
-  tax_code?: string;
-  credit_limit?: number;
+  province?: string;
+  district?: string;
+  taxCode?: string;
+  creditLimit?: number;
   notes?: string;
-  status?: Status;
+  status?: CustomerStatus;
 }
 
 // Update Customer DTO
 export interface UpdateCustomerDto extends Partial<CreateCustomerDto> {}
 
+// Update Credit Limit DTO
+export interface UpdateCreditLimitDto {
+  creditLimit: number;
+  reason?: string;
+}
+
+// Update Status DTO
+export interface UpdateCustomerStatusDto {
+  status: CustomerStatus;
+  reason?: string;
+}
+
 // Customer Filters
 export interface CustomerFilters {
-  customer_type?: CustomerType;
+  customerType?: CustomerType;
   classification?: CustomerClassification;
-  city?: string;
-  region?: string;
-  status?: Status;
-  has_debt?: boolean;
-  debt_overdue?: boolean;
+  province?: string;
+  district?: string;
+  status?: CustomerStatus;
+  hasDebt?: boolean;
+  search?: string;
 }
 
 // Customer with Debt Info
 export interface CustomerWithDebt extends Customer {
-  total_orders?: number;
-  total_revenue?: number;
-  last_order_date?: string;
-  debt_percentage?: number; // (current_debt / credit_limit) * 100
+  totalOrders?: number;
+  totalRevenue?: number;
+  lastOrderDate?: string;
+  debtPercentage?: number; // (currentDebt / creditLimit) * 100
 }
 
-// Debt History
-export interface DebtHistory extends BaseEntity {
-  customer_id: number;
-  customer?: Customer;
-  transaction_type: "order" | "payment" | "adjustment";
-  reference_id?: number;
-  amount: number;
-  balance_before: number;
-  balance_after: number;
-  notes?: string;
+// Customer Debt Info
+export interface CustomerDebtInfo {
+  customerId: number;
+  customerName: string;
+  customerCode: string;
+  currentDebt: number;
+  creditLimit: number;
+  debtPercentage: number;
+  availableCredit: number;
+  totalOrders: number;
+  totalRevenue: number;
+  totalPaid: number;
+  lastOrderDate?: string;
+  debtStatus: "safe" | "warning" | "danger" | "over_limit";
 }
+
+// Customer Order History
+export interface CustomerOrderHistory {
+  orders: any[]; // Will be typed properly when SalesOrder is defined
+  totalOrders: number;
+  totalRevenue: number;
+  totalDebt: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+// Customer Statistics
+export interface CustomerStatistics {
+  customerId: number;
+  totalOrders: number;
+  totalRevenue: number;
+  averageOrderValue: number;
+  lastOrderDate?: string;
+  monthlyRevenue: {
+    month: string;
+    revenue: number;
+  }[];
+}
+
+// Provinces in Vietnam (for select options)
+export const VIETNAM_PROVINCES = [
+  "Hà Nội",
+  "TP. Hồ Chí Minh",
+  "Đà Nẵng",
+  "Hải Phòng",
+  "Cần Thơ",
+  "An Giang",
+  "Bà Rịa - Vũng Tàu",
+  "Bắc Giang",
+  "Bắc Kạn",
+  "Bạc Liêu",
+  "Bắc Ninh",
+  "Bến Tre",
+  "Bình Định",
+  "Bình Dương",
+  "Bình Phước",
+  "Bình Thuận",
+  "Cà Mau",
+  "Cao Bằng",
+  "Đắk Lắk",
+  "Đắk Nông",
+  "Điện Biên",
+  "Đồng Nai",
+  "Đồng Tháp",
+  "Gia Lai",
+  "Hà Giang",
+  "Hà Nam",
+  "Hà Tĩnh",
+  "Hải Dương",
+  "Hậu Giang",
+  "Hòa Bình",
+  "Hưng Yên",
+  "Khánh Hòa",
+  "Kiên Giang",
+  "Kon Tum",
+  "Lai Châu",
+  "Lâm Đồng",
+  "Lạng Sơn",
+  "Lào Cai",
+  "Long An",
+  "Nam Định",
+  "Nghệ An",
+  "Ninh Bình",
+  "Ninh Thuận",
+  "Phú Thọ",
+  "Phú Yên",
+  "Quảng Bình",
+  "Quảng Nam",
+  "Quảng Ngãi",
+  "Quảng Ninh",
+  "Quảng Trị",
+  "Sóc Trăng",
+  "Sơn La",
+  "Tây Ninh",
+  "Thái Bình",
+  "Thái Nguyên",
+  "Thanh Hóa",
+  "Thừa Thiên Huế",
+  "Tiền Giang",
+  "Trà Vinh",
+  "Tuyên Quang",
+  "Vĩnh Long",
+  "Vĩnh Phúc",
+  "Yên Bái",
+];

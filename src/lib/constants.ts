@@ -110,6 +110,38 @@ export const CUSTOMER_CLASSIFICATION_LABELS: Record<string, string> = {
   distributor: "Đại lý",
 };
 
+// Customer Statuses
+export const CUSTOMER_STATUSES = {
+  ACTIVE: "active",
+  INACTIVE: "inactive",
+  BLACKLISTED: "blacklisted",
+} as const;
+
+export const CUSTOMER_STATUS_LABELS: Record<string, string> = {
+  active: "Hoạt động",
+  inactive: "Tạm ngưng",
+  blacklisted: "Danh sách đen",
+};
+
+export const CUSTOMER_STATUS_COLORS: Record<string, string> = {
+  active: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+  inactive: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
+  blacklisted: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+};
+
+// Gender
+export const GENDERS = {
+  MALE: "male",
+  FEMALE: "female",
+  OTHER: "other",
+} as const;
+
+export const GENDER_LABELS: Record<string, string> = {
+  male: "Nam",
+  female: "Nữ",
+  other: "Khác",
+};
+
 // Order Statuses
 export const ORDER_STATUSES = {
   PENDING: "pending",
@@ -125,6 +157,39 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
   in_progress: "Đang xử lý",
   completed: "Hoàn thành",
   cancelled: "Đã hủy",
+};
+
+// Production Statuses
+export const PRODUCTION_STATUSES = {
+  PENDING: "pending",
+  IN_PROGRESS: "in_progress",
+  COMPLETED: "completed",
+  CANCELLED: "cancelled",
+} as const;
+
+export const PRODUCTION_STATUS_LABELS: Record<string, string> = {
+  pending: "Chờ thực hiện",
+  in_progress: "Đang sản xuất",
+  completed: "Hoàn thành",
+  cancelled: "Đã hủy",
+};
+
+export const PRODUCTION_STATUS_COLORS: Record<string, string> = {
+  pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
+  in_progress: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+  completed: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+  cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+};
+
+// Material Types
+export const MATERIAL_TYPES = {
+  RAW_MATERIAL: "raw_material",
+  PACKAGING: "packaging",
+} as const;
+
+export const MATERIAL_TYPE_LABELS: Record<string, string> = {
+  raw_material: "Nguyên liệu",
+  packaging: "Bao bì",
 };
 
 // Payment Methods
@@ -153,6 +218,52 @@ export const PAYMENT_STATUS_LABELS: Record<string, string> = {
   unpaid: "Chưa thanh toán",
   partial: "Thanh toán một phần",
   paid: "Đã thanh toán",
+};
+
+export const PAYMENT_STATUS_COLORS: Record<string, string> = {
+  unpaid: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+  partial: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
+  paid: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+};
+
+// Sales Channels
+export const SALES_CHANNELS = {
+  RETAIL: "retail",
+  WHOLESALE: "wholesale",
+  ONLINE: "online",
+  DISTRIBUTOR: "distributor",
+} as const;
+
+export const SALES_CHANNEL_LABELS: Record<string, string> = {
+  retail: "Bán lẻ",
+  wholesale: "Bán sỉ",
+  online: "Trực tuyến",
+  distributor: "Đại lý",
+};
+
+// Delivery Statuses
+export const DELIVERY_STATUSES = {
+  PENDING: "pending",
+  IN_TRANSIT: "in_transit",
+  DELIVERED: "delivered",
+  FAILED: "failed",
+  RETURNED: "returned",
+} as const;
+
+export const DELIVERY_STATUS_LABELS: Record<string, string> = {
+  pending: "Chờ giao",
+  in_transit: "Đang giao",
+  delivered: "Đã giao",
+  failed: "Giao thất bại",
+  returned: "Đã trả lại",
+};
+
+export const DELIVERY_STATUS_COLORS: Record<string, string> = {
+  pending: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
+  in_transit: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+  delivered: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+  failed: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+  returned: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
 };
 
 // Roles
@@ -228,4 +339,43 @@ export const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
   material_shortage: "Thiếu nguyên liệu",
   production_completed: "Hoàn thành sản xuất",
   system: "Thông báo hệ thống",
+};
+
+// BOM Statuses
+export const BOM_STATUSES = {
+  DRAFT: "draft",
+  ACTIVE: "active",
+  INACTIVE: "inactive",
+} as const;
+
+export const BOM_STATUS_LABELS: Record<string, string> = {
+  draft: "Nháp",
+  active: "Đang sử dụng",
+  inactive: "Không sử dụng",
+};
+
+// BOM Material Types
+export const BOM_MATERIAL_TYPES = {
+  RAW_MATERIAL: "raw_material",
+  PACKAGING: "packaging",
+} as const;
+
+export const BOM_MATERIAL_TYPE_LABELS: Record<string, string> = {
+  raw_material: "Nguyên liệu",
+  packaging: "Bao bì",
+};
+
+// Production Order Statuses
+export const PRODUCTION_ORDER_STATUSES = {
+  PENDING: "pending",
+  IN_PROGRESS: "in_progress",
+  COMPLETED: "completed",
+  CANCELLED: "cancelled",
+} as const;
+
+export const PRODUCTION_ORDER_STATUS_LABELS: Record<string, string> = {
+  pending: "Chờ xử lý",
+  in_progress: "Đang sản xuất",
+  completed: "Hoàn thành",
+  cancelled: "Đã hủy",
 };

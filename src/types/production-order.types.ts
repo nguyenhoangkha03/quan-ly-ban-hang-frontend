@@ -1,0 +1,149 @@
+/**
+ * Production Order Types
+ */
+
+import type { BaseEntity } from "./common.types";
+import type { BOM } from "./bom.types";
+import type { Product } from "./product.types";
+import type { Warehouse } from "./inventory.types";
+import type { AuthUser } from "./user.types";
+
+// Production Status
+export type ProductionStatus = "pending" | "in_progress" | "completed" | "cancelled";
+
+// Material Type
+export type MaterialType = "raw_material" | "packaging";
+
+// Production Order Material
+export interface ProductionOrderMaterial extends BaseEntity {
+  productionOrderId: number;
+  materialId: number;
+  material?: Product;
+  plannedQuantity: number;
+  actualQuantity: number;
+  wastage: number;
+  unitPrice: number;
+  materialType: MaterialType;
+  stockTransactionId?: number;
+  notes?: string;
+}
+
+// Production Order
+export interface ProductionOrder extends BaseEntity {
+  orderCode: string;
+  bomId: number;
+  bom?: BOM;
+  finishedProductId: number;
+  finishedProduct?: Product;
+  warehouseId?: number;
+  warehouse?: Warehouse;
+  plannedQuantity: number;
+  actualQuantity: number;
+  productionCost: number;
+  startDate: string;
+  endDate?: string;
+  status: ProductionStatus;
+  notes?: string;
+  createdBy: number;
+  creator?: AuthUser;
+  approvedBy?: number;
+  approver?: AuthUser;
+  cancelledBy?: number;
+  canceller?: AuthUser;
+  approvedAt?: string;
+  completedAt?: string;
+  cancelledAt?: string;
+  materials?: ProductionOrderMaterial[];
+}
+
+// Create Production Order DTO
+export interface CreateProductionOrderDto {
+  bomId: number;
+  plannedQuantity: number;
+  warehouseId?: number;
+  startDate: string;
+  endDate?: string;
+  notes?: string;
+}
+
+// Update Production Order DTO
+export interface UpdateProductionOrderDto extends Partial<CreateProductionOrderDto> {}
+
+// Start Production DTO
+export interface StartProductionDto {
+  actualStartDate?: string;
+  notes?: string;
+}
+
+// Complete Production DTO
+export interface CompleteProductionDto {
+  actualQuantity: number;
+  actualMaterials?: {
+    materialId: number;
+    actualQuantity: number;
+    notes?: string;
+  }[];
+  notes?: string;
+}
+
+// Cancel Production DTO
+export interface CancelProductionDto {
+  reason: string;
+}
+
+// Production Order Filters
+export interface ProductionOrderFilters {
+  status?: ProductionStatus | ProductionStatus[];
+  bomId?: number;
+  finishedProductId?: number;
+  warehouseId?: number;
+  startDateFrom?: string;
+  startDateTo?: string;
+  endDateFrom?: string;
+  endDateTo?: string;
+}
+
+// Material Shortage Alert
+export interface MaterialShortage {
+  materialId: number;
+  materialName: string;
+  materialType: MaterialType;
+  required: number;
+  available: number;
+  shortage: number;
+  unit: string;
+}
+
+// Wastage Report
+export interface WastageReport {
+  productionOrderId: number;
+  orderCode: string;
+  finishedProduct: string;
+  plannedQuantity: number;
+  actualQuantity: number;
+  quantityDifference: number;
+  materials: {
+    materialId: number;
+    materialName: string;
+    materialType: MaterialType;
+    plannedQuantity: number;
+    actualQuantity: number;
+    wastage: number;
+    wastagePercentage: number;
+    unit: string;
+    unitPrice: number;
+    wastageValue: number;
+  }[];
+  totalWastageValue: number;
+  efficiencyRate: number;
+}
+
+// Production Timeline Event
+export interface ProductionTimelineEvent {
+  id: string;
+  type: "created" | "started" | "completed" | "cancelled" | "updated";
+  timestamp: string;
+  user?: AuthUser;
+  description: string;
+  details?: any;
+}
