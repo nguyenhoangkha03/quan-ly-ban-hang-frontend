@@ -96,21 +96,21 @@ export function InventoryTable({
       <TableBody>
         {inventory.map((item) => {
           const availableQty = item.quantity - item.reserved_quantity;
-          const minStockLevel = item.product?.min_stock_level || 0;
+          const minStockLevel = item.product?.minStockLevel || 0;
 
           return (
-            <TableRow key={`${item.warehouse_id}-${item.product_id}`}>
+            <TableRow key={`${item.warehouseId}-${item.productId}`}>
               {/* Product */}
               <TableCell className="px-6 py-4">
                 <div>
                   <Link
-                    href={`/products/${item.product_id}`}
+                    href={`/products/${item.productId}`}
                     className="font-medium text-gray-900 hover:text-blue-600 dark:text-white dark:hover:text-blue-400"
                   >
-                    {item.product?.product_name || "N/A"}
+                    {item.product?.productName || "N/A"}
                   </Link>
                   <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {item.product?.product_code || "N/A"}
+                    {item.product?.sku || "N/A"}
                   </div>
                 </div>
               </TableCell>
@@ -119,7 +119,7 @@ export function InventoryTable({
               {showWarehouse && (
                 <TableCell className="px-6 py-4">
                   <Link
-                    href={`/warehouses/${item.warehouse_id}`}
+                    href={`/warehouses/${item.warehouseId}`}
                     className="text-sm text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
                   >
                     {item.warehouse?.warehouseName || "N/A"}

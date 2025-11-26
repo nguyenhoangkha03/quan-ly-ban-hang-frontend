@@ -2,39 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import type { ApiResponse, PaginationParams } from "@/types";
 
-/**
- * User Type
- */
-export interface User {
-  id: number;
-  employeeCode: string;
-  email: string;
-  fullName: string;
-  phone?: string;
-  address?: string;
-  gender?: "male" | "female" | "other";
-  dateOfBirth?: string;
-  avatarUrl?: string;
-  roleId: number;
-  warehouseId?: number;
-  status: "active" | "inactive" | "locked";
-  role?: {
-    id: number;
-    roleKey: string;
-    roleName: string;
-  };
-  warehouse?: {
-    id: number;
-    warehouseCode: string;
-    warehouseName: string;
-  };
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-/**
- * Query Params for Users
- */
 export interface UserQueryParams extends PaginationParams {
   roleId?: number;
   warehouseId?: number;

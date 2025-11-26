@@ -2,7 +2,7 @@
  * Inventory & Warehouse Types - Dựa trên database schema
  */
 
-import type { BaseEntity, EntityWithUser, Status } from "./common.types";
+import type { BaseEntity, Status } from "./common.types";
 import type { Product } from "./product.types";
 import type { User } from "./user.types";
 
@@ -19,7 +19,7 @@ export type TransactionStatus = "draft" | "pending" | "approved" | "completed" |
 export type TransferStatus = "pending" | "in_transit" | "completed" | "cancelled";
 
 // Warehouse
-export interface Warehouse extends EntityWithUser {
+export interface Warehouse extends BaseEntity {
   warehouseCode: string;
   warehouseName: string;
   warehouseType: WarehouseType;
@@ -31,13 +31,15 @@ export interface Warehouse extends EntityWithUser {
   manager?: User;
   capacity?: number;
   status: Status;
+  created_by?: number;
+  updated_by?: number;
 }
 
 // Inventory
 export interface Inventory extends BaseEntity {
-  warehouse_id: number;
+  warehouseId: number;
   warehouse?: Warehouse;
-  product_id: number;
+  productId: number;
   product?: Product;
   quantity: number;
   reserved_quantity: number;
@@ -47,7 +49,7 @@ export interface Inventory extends BaseEntity {
 }
 
 // Stock Transaction
-export interface StockTransaction extends EntityWithUser {
+export interface StockTransaction extends BaseEntity {
   transaction_code: string;
   transaction_type: TransactionType;
   warehouse_id?: number;
@@ -69,6 +71,8 @@ export interface StockTransaction extends EntityWithUser {
   approved_at?: string;
   cancelled_at?: string;
   details?: StockTransactionDetail[];
+  created_by?: number;
+  updated_by?: number;
 }
 
 // Stock Transaction Detail
@@ -88,7 +92,7 @@ export interface StockTransactionDetail extends BaseEntity {
 }
 
 // Stock Transfer
-export interface StockTransfer extends EntityWithUser {
+export interface StockTransfer extends BaseEntity {
   transfer_code: string;
   from_warehouse_id: number;
   from_warehouse?: Warehouse;
@@ -107,6 +111,8 @@ export interface StockTransfer extends EntityWithUser {
   approved_at?: string;
   cancelled_at?: string;
   details?: StockTransferDetail[];
+  created_by?: number;
+  updated_by?: number;
 }
 
 // Stock Transfer Detail
@@ -122,7 +128,7 @@ export interface StockTransferDetail extends BaseEntity {
 }
 
 // Purchase Order
-export interface PurchaseOrder extends EntityWithUser {
+export interface PurchaseOrder extends BaseEntity {
   po_code: string;
   supplier_id: number;
   supplier?: any; // Supplier type
@@ -136,6 +142,8 @@ export interface PurchaseOrder extends EntityWithUser {
   approved_by?: number;
   approver?: User;
   details?: PurchaseOrderDetail[];
+  created_by?: number;
+  updated_by?: number;
 }
 
 // Purchase Order Detail
@@ -199,6 +207,27 @@ export interface LowStockAlert {
   current_quantity: number;
   min_stock_level: number;
   shortage: number;
+}
+
+// Inventory By Product Response
+export interface InventoryByProductResponse {
+  product: {
+    id: number;
+    sku: string;
+    productName: string;
+    productType: string;
+    unit: string;
+    minStockLevel?: number;
+  };
+  warehouses: Array<Inventory & {
+    availableQuantity: number;
+  }>;
+  summary: {
+    totalQuantity: number;
+    totalReserved: number;
+    totalAvailable: number;
+    warehouseCount: number;
+  };
 }
 
 // Warehouse Statistics

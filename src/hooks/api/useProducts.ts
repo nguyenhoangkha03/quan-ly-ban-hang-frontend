@@ -33,6 +33,7 @@ export function useProducts(params?: ProductFilters & PaginationParams) {
       const response = await api.get<ApiResponse<Product[]>>("/products", {
         params,
       });
+
       return response;
     },
   });
@@ -46,7 +47,7 @@ export function useProduct(id: number, enabled = true) {
     queryKey: productKeys.detail(id),
     queryFn: async () => {
       const response = await api.get<ApiResponse<Product>>(`/products/${id}`);
-      return response.data;
+      return response;
     },
     enabled: enabled && !!id,
   });
@@ -220,6 +221,30 @@ export function useDeleteProductImage() {
 }
 
 /**
+ * Set Primary Product Image
+ */
+export function useSetPrimaryProductImage() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ productId, imageId }: { productId: number; imageId: number }) => {
+      const response = await api.patch<ApiResponse<ProductImage>>(
+        `/products/${productId}/images/${imageId}/primary`
+      );
+      return response.data;
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: productKeys.detail(variables.productId) });
+      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      toast.success("Đặt ảnh chính thành công!");
+    },
+    onError: (error: any) => {
+      toast.error(error?.error?.message || "Đặt ảnh chính thất bại!");
+    },
+  });
+}
+
+/**
  * Bulk Delete Products
  */
 export function useBulkDeleteProducts() {
@@ -287,6 +312,108 @@ export function useBulkUpdateProductStatus() {
     },
     onError: (error: any) => {
       toast.error(error?.error?.message || "Cập nhật trạng thái thất bại!");
+    },
+  });
+}
+
+/**
+ * Upload Product Videos
+ * Max 5 videos per product
+ */
+export function useUploadProductVideos() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      productId,
+      files,
+      metadata
+    }: {
+      productId: number;
+      files: File[];
+      metadata?: Array<{
+        videoType?: "demo" | "tutorial" | "review" | "unboxing" | "promotion" | "other";
+        title?: string;
+        isPrimary?: boolean;
+        displayOrder?: number;
+      }>;
+    }) => {
+      const formData = new FormData();
+
+      files.forEach((file) => {
+        formData.append("videos", file);
+      });
+
+      if (metadata) {
+        formData.append("videos", JSON.stringify(metadata));
+      }
+
+      const response = await api.post<ApiResponse<any[]>>(
+        `/products/${productId}/videos`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      return response.data;
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: productKeys.detail(variables.productId) });
+      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      toast.success("Tải video lên thành công!");
+    },
+    onError: (error: any) => {
+      toast.error(error?.error?.message || "Tải video lên thất bại!");
+    },
+  });
+}
+
+/**
+ * Delete Product Video
+ */
+export function useDeleteProductVideo() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ productId, videoId }: { productId: number; videoId: number }) => {
+      const response = await api.delete<ApiResponse<void>>(
+        `/products/${productId}/videos/${videoId}`
+      );
+      return response;
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: productKeys.detail(variables.productId) });
+      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      toast.success("Xóa video thành công!");
+    },
+    onError: (error: any) => {
+      toast.error(error?.error?.message || "Xóa video thất bại!");
+    },
+  });
+}
+
+/**
+ * Set Primary Product Video
+ */
+export function useSetPrimaryProductVideo() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ productId, videoId }: { productId: number; videoId: number }) => {
+      const response = await api.patch<ApiResponse<any>>(
+        `/products/${productId}/videos/${videoId}/primary`
+      );
+      return response.data;
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: productKeys.detail(variables.productId) });
+      queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      toast.success("Đặt video chính thành công!");
+    },
+    onError: (error: any) => {
+      toast.error(error?.error?.message || "Đặt video chính thất bại!");
     },
   });
 }

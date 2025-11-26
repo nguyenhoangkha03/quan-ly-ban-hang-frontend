@@ -4,12 +4,12 @@ import React, { useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useProduct, useUpdateProduct } from "@/hooks/api";
+import { useProduct, useUpdateProduct, useCategories, useSuppliers } from "@/hooks/api";
 import { productSchema, type ProductFormData } from "@/lib/validations/product.schema";
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
-import Select from "@/components/form/select/SelectField";
+import Select from "@/components/form/SelectField";
 import { ProductImageManager } from "@/components/products";
 
 /**
@@ -22,6 +22,11 @@ export default function EditProductPage() {
 
   const { data: product, isLoading, error } = useProduct(productId);
   const updateProduct = useUpdateProduct();
+  const { data: categoriesResponse } = useCategories({ status: "active" });
+  const { data: suppliersResponse } = useSuppliers({ status: "active" });
+
+  const categories = categoriesResponse?.data || [];
+  const suppliers = suppliersResponse?.data || [];
 
   const {
     register,
@@ -195,6 +200,11 @@ export default function EditProductPage() {
                 error={errors.categoryId?.message}
               >
                 <option value="">-- Chọn danh mục --</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.categoryName}
+                  </option>
+                ))}
               </Select>
             </div>
 
@@ -208,6 +218,11 @@ export default function EditProductPage() {
                 error={errors.supplierId?.message}
               >
                 <option value="">-- Chọn nhà cung cấp --</option>
+                {suppliers.map((supplier) => (
+                  <option key={supplier.id} value={supplier.id}>
+                    {supplier.supplierName}
+                  </option>
+                ))}
               </Select>
             </div>
           </div>

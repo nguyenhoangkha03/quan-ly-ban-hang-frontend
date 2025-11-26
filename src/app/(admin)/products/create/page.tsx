@@ -1,22 +1,37 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCreateProduct } from "@/hooks/api";
+import { useCreateProduct, useCategories, useSuppliers } from "@/hooks/api";
 import { productSchema, type ProductFormData } from "@/lib/validations/product.schema";
+import { ProductImageManager } from "@/components/products";
+import { ProductVideoManager } from "@/components/products";
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
-import Select from "@/components/form/select/SelectField";
+import Select from "@/components/form/SelectField";
+import { Image as ImageIcon, Video as VideoIcon } from "lucide-react";
 
 /**
- * Create Product Page
+ * Create Product Page with Image & Video Upload
  */
 export default function CreateProductPage() {
   const router = useRouter();
+  const [createdProductId, setCreatedProductId] = useState<number | null>(null);
+  const [showMediaUpload, setShowMediaUpload] = useState(false);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [savingMedia, setSavingMedia] = useState(false);
+  const imageManagerRef = React.useRef<any>(null);
+  
   const createProduct = useCreateProduct();
+  const { data: categoriesResponse } = useCategories({ status: "active" });
+  const { data: suppliersResponse } = useSuppliers({ status: "active" });
+
+  const categories = categoriesResponse?.data || [];
+  const suppliers = suppliersResponse?.data || [];
 
   const {
     register,
@@ -36,8 +51,9 @@ export default function CreateProductPage() {
 
   const onSubmit = async (data: ProductFormData) => {
     try {
-      await createProduct.mutateAsync(data);
-      router.push("/products");
+      const result = await createProduct.mutateAsync(data);
+      setCreatedProductId(result.id);
+      setShowMediaUpload(true);
     } catch (error) {
       console.error("Create product error:", error);
     }
@@ -158,7 +174,11 @@ export default function CreateProductPage() {
                 error={errors.categoryId?.message}
               >
                 <option value="">-- Chọn danh mục --</option>
-                {/* TODO: Load categories from API */}
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.categoryName}
+                  </option>
+                ))}
               </Select>
             </div>
 
@@ -173,7 +193,11 @@ export default function CreateProductPage() {
                 error={errors.supplierId?.message}
               >
                 <option value="">-- Chọn nhà cung cấp --</option>
-                {/* TODO: Load suppliers from API */}
+                {suppliers.map((supplier) => (
+                  <option key={supplier.id} value={supplier.id}>
+                    {supplier.supplierName}
+                  </option>
+                ))}
               </Select>
             </div>
           </div>
@@ -384,6 +408,102 @@ export default function CreateProductPage() {
           </Button>
         </div>
       </form>
+
+      {/* Media Upload Modal - Shown after product created */}
+      {1 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white p-6 shadow-xl dark:bg-gray-900">
+            {/* Header */}
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Thêm hình ảnh & video
+              </h2>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Tải lên hình ảnh và video để hiển thị sản phẩm (tùy chọn)
+              </p>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Images Section */}
+              <div>
+                <div className="mb-3 flex items-center gap-2">
+                  <ImageIcon className="h-5 w-5 text-blue-500" />
+                  <h3 className="font-semibold text-gray-900 dark:text-white">
+                    Hình ảnh
+                  </h3>
+                </div>
+                <ProductImageManager
+                  ref={imageManagerRef}
+                  productId={createdProductId}
+                  images={[]}
+                  maxImages={5}
+                  hidePreview={true}
+                  onImagesChange={setImageFiles}
+                  className="bg-white dark:bg-gray-900"
+                />
+              </div>
+
+              {/* Videos Section */}
+              <div>
+                <div className="mb-3 flex items-center gap-2">
+                  <VideoIcon className="h-5 w-5 text-purple-500" />
+                  <h3 className="font-semibold text-gray-900 dark:text-white">
+                    Video (Tối đa 1)
+                  </h3>
+                </div>
+                <ProductVideoManager
+                  productId={createdProductId}
+                  video={undefined}
+                  onVideoChange={setVideoFile}
+                  className="bg-white dark:bg-gray-900"
+                />
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="mt-6 flex justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-700">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setShowMediaUpload(false);
+                  setCreatedProductId(null);
+                  setVideoFile(null);
+                  setImageFiles([]);
+                  router.push("/products");
+                }}
+              >
+                Bỏ qua
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                disabled={savingMedia || (imageFiles.length === 0 && !videoFile)}
+                onClick={async () => {
+                  if (imageFiles.length === 0 && !videoFile) {
+                    alert("Vui lòng chọn ít nhất một hình ảnh hoặc video!");
+                    return;
+                  }
+                  
+                  setSavingMedia(true);
+                  // Images and videos are saved automatically via onImagesChange and onVideoChange callbacks
+                  // So we just close the modal
+                  setTimeout(() => {
+                    setSavingMedia(false);
+                    setShowMediaUpload(false);
+                    setCreatedProductId(null);
+                    setVideoFile(null);
+                    setImageFiles([]);
+                    router.push(`/products/${createdProductId}`);
+                  }, 1000);
+                }}
+              >
+                {savingMedia ? "Đang lưu..." : "Lưu & Tiếp tục"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

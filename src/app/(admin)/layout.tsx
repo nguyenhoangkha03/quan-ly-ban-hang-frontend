@@ -6,6 +6,8 @@ import AppHeader from "@/layout/AppHeader";
 import AppSidebar from "@/layout/AppSidebar";
 import Backdrop from "@/layout/Backdrop";
 import React from "react";
+import { useAuthStore, useAuthHydration } from "@/stores";
+import { useMe } from "@/hooks/api";
 
 export default function AdminLayout({
   children,
@@ -13,6 +15,35 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
+  const isHydrated = useAuthHydration();
+  const { user, token } = useAuthStore();
+
+  // Tự động fetch user data khi có token (enabled trong useMe đã xử lý)
+  const { isLoading: isLoadingUser } = useMe();
+
+  // Đợi hydration hoàn thành trước khi render
+  if (!isHydrated) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
+          <p className="text-gray-600 dark:text-gray-400">Đang tải...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading khi có token nhưng chưa có user và đang fetch
+  if (token && !user && isLoadingUser) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
+          <p className="text-gray-600 dark:text-gray-400">Đang tải...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Dynamic class for main content margin based on sidebar state
   const mainContentMargin = isMobileOpen

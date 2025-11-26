@@ -5,3 +5,4 @@
 
 export * from "./ProductImageManager";
 export * from "./ProductTable";
+export * from "./ProductVideoManager";

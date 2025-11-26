@@ -7,11 +7,13 @@ import {
   useProducts,
   useBulkDeleteProducts,
   useBulkUpdateProductStatus,
+  useCategories,
+  useSuppliers,
 } from "@/hooks/api";
 import { Can } from "@/components/auth";
 import { ProductTable } from "@/components/products";
 import Button from "@/components/ui/button/Button";
-import { ProductType } from "@/types";
+import { ApiResponse, Category, Product, ProductType, Supplier } from "@/types";
 import { Download, Trash2, CheckCircle, XCircle } from "lucide-react";
 
 /**
@@ -24,12 +26,22 @@ export default function ProductsPage() {
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "inactive" | "discontinued"
   >("all");
+  const [categoryFilter, setCategoryFilter] = useState<number | "all">("all");
+  const [supplierFilter, setSupplierFilter] = useState<number | "all">("all");
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   // Fetch products
-  const { data: response, isLoading, error } = useProducts();
+  const { data, isLoading, error } = useProducts();
+  const response = data as unknown as ApiResponse<Product[]>;
+  const { data: categoriesResponse } = useCategories({ status: "active" });
+  const categoriesTemp = categoriesResponse as unknown as ApiResponse<Category[]>;
+  const { data: suppliersResponse } = useSuppliers({ status: "active" });
+  const suppliersTemp = suppliersResponse as unknown as ApiResponse<Supplier[]>;
   const bulkDelete = useBulkDeleteProducts();
   const bulkUpdateStatus = useBulkUpdateProductStatus();
+
+  const categories = categoriesTemp?.data || [];
+  const suppliers = suppliersTemp?.data || [];
 
   // Filter products
   const products = useMemo(() => {
@@ -49,10 +61,14 @@ export default function ProductsPage() {
         typeFilter === "all" || product.productType === typeFilter;
       const matchesStatus =
         statusFilter === "all" || product.status === statusFilter;
+      const matchesCategory =
+        categoryFilter === "all" || product.categoryId === categoryFilter;
+      const matchesSupplier =
+        supplierFilter === "all" || product.supplierId === supplierFilter;
 
-      return matchesSearch && matchesType && matchesStatus;
+      return matchesSearch && matchesType && matchesStatus && matchesCategory && matchesSupplier;
     });
-  }, [response?.data, searchTerm, typeFilter, statusFilter]);
+  }, [response?.data, searchTerm, typeFilter, statusFilter, categoryFilter, supplierFilter]);
 
   // Handle bulk delete
   const handleBulkDelete = async () => {
@@ -212,7 +228,7 @@ export default function ProductsPage() {
           </Button>
 
           {/* Add Product */}
-          <Can permission="create_products">
+          <Can permission="create_product">
             <Link href="/products/create">
               <Button variant="primary">
                 <svg
@@ -237,7 +253,7 @@ export default function ProductsPage() {
 
       {/* Filters */}
       <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
           {/* Search */}
           <div>
             <label
@@ -277,6 +293,56 @@ export default function ProductsPage() {
               <option value="packaging">Bao bì</option>
               <option value="finished_product">Thành phẩm</option>
               <option value="goods">Hàng hóa</option>
+            </select>
+          </div>
+
+          {/* Category Filter */}
+          <div>
+            <label
+              htmlFor="category"
+              className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Danh mục
+            </label>
+            <select
+              id="category"
+              value={categoryFilter}
+              onChange={(e) =>
+                setCategoryFilter(e.target.value === "all" ? "all" : Number(e.target.value))
+              }
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            >
+              <option value="all">Tất cả</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.categoryName}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Supplier Filter */}
+          <div>
+            <label
+              htmlFor="supplier"
+              className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Nhà cung cấp
+            </label>
+            <select
+              id="supplier"
+              value={supplierFilter}
+              onChange={(e) =>
+                setSupplierFilter(e.target.value === "all" ? "all" : Number(e.target.value))
+              }
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            >
+              <option value="all">Tất cả</option>
+              {suppliers.map((supplier) => (
+                <option key={supplier.id} value={supplier.id}>
+                  {supplier.supplierName}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -336,7 +402,7 @@ export default function ProductsPage() {
               </Button>
 
               {/* Bulk Delete */}
-              <Can permission="delete_products">
+              <Can permission="delete_product">
                 <Button
                   variant="danger"
                   size="sm"

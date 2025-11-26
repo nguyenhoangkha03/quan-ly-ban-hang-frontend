@@ -352,7 +352,7 @@ const AppSidebar: React.FC = () => {
                   className="hidden dark:block"
                   src="/images/logo/logo-nobackground.png"
                   alt="Logo"
-                  width={48}
+                  width={80}
                   height={48}
                 />
                 <div className="flex flex-col">

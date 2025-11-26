@@ -15,7 +15,7 @@ import Button from "@/components/ui/button/Button";
 import Badge from "@/components/ui/badge/Badge";
 import { InventoryTable } from "@/components/inventory/InventoryTable";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { ProductType } from "@/types";
+import { InventoryByProductResponse, Product, ProductType, StockTransaction } from "@/types";
 
 /**
  * Product Detail Page
@@ -25,14 +25,18 @@ export default function ProductDetailPage() {
   const router = useRouter();
   const productId = Number(params.id);
 
-  const { data: product, isLoading, error } = useProduct(productId);
-  const { data: inventoryResponse, isLoading: inventoryLoading } = useInventoryByProduct(productId);
-  const { data: transactionsResponse, isLoading: transactionsLoading } = useStockTransactions({
-    product_id: productId,
+  const { data: productWrapper, isLoading, error } = useProduct(productId);
+  const product = productWrapper?.data as unknown as Product;
+  const { data: inventoryWrapper, isLoading: inventoryLoading } = useInventoryByProduct(productId);
+  const inventory = inventoryWrapper?.data as unknown as InventoryByProductResponse;
+  const { data: transactionsWapper, isLoading: transactionsLoading } = useStockTransactions({
+    productId: productId,
     limit: 10,
-    sortBy: "created_at",
+    sortBy: "createdAt",
     sortOrder: "desc",
   });
+  const transaction = transactionsWapper?.data as unknown as StockTransaction[]
+  console.log('transactionsResponse', transaction);
   const deleteProduct = useDeleteProduct();
 
   const handleDelete = async () => {
@@ -56,8 +60,8 @@ export default function ProductDetailPage() {
     return labels[type];
   };
 
-  const getTypeBadgeColor = (type: ProductType) => {
-    const colors: Record<ProductType, string> = {
+  const getTypeBadgeColor = (type: ProductType): "blue" | "yellow" | "green" | "purple" => {
+    const colors: Record<ProductType, "blue" | "yellow" | "green" | "purple"> = {
       raw_material: "blue",
       packaging: "yellow",
       finished_product: "green",
@@ -66,8 +70,8 @@ export default function ProductDetailPage() {
     return colors[type];
   };
 
-  const getStatusBadgeColor = (status: string) => {
-    const colors: Record<string, string> = {
+  const getStatusBadgeColor = (status: string): "green" | "gray" | "red" => {
+    const colors: Record<string, "green" | "gray" | "red"> = {
       active: "green",
       inactive: "gray",
       discontinued: "red",
@@ -108,28 +112,35 @@ export default function ProductDetailPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {product.productName}
-            </h1>
-            <Badge color={getTypeBadgeColor(product.productType)}>
-              {getTypeLabel(product.productType)}
-            </Badge>
-            <Badge color={getStatusBadgeColor(product.status)}>
-              {getStatusLabel(product.status)}
-            </Badge>
-          </div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Chi tiết sản phẩm</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            SKU: <span className="font-mono font-semibold">{product.sku}</span>
+            {product.productName} ({product.sku})
           </p>
         </div>
 
-        <div className="flex gap-3">
-          <Can permission="update_products">
+        <div className="flex items-center gap-3">
+          {/* Back Button */}
+          <Link
+            href="/products"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
+            Quay lại
+          </Link>
+
+          {/* Edit Button */}
+          <Can permission="update_product">
             <Link href={`/products/${productId}/edit`}>
-              <Button variant="outline">
+              <button className="inline-flex items-center gap-2 rounded-lg bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
                 <svg
-                  className="mr-2 h-4 w-4"
+                  className="h-5 w-5"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -142,18 +153,19 @@ export default function ProductDetailPage() {
                   />
                 </svg>
                 Chỉnh sửa
-              </Button>
+              </button>
             </Link>
           </Can>
 
-          <Can permission="delete_products">
-            <Button
-              variant="danger"
+          {/* Delete Button */}
+          <Can permission="delete_product">
+            <button
               onClick={handleDelete}
               disabled={deleteProduct.isPending}
+              className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900"
             >
               <svg
-                className="mr-2 h-4 w-4"
+                className="h-5 w-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -166,7 +178,7 @@ export default function ProductDetailPage() {
                 />
               </svg>
               Xóa
-            </Button>
+            </button>
           </Can>
         </div>
       </div>
@@ -174,35 +186,6 @@ export default function ProductDetailPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left Column - Main Info */}
         <div className="space-y-6 lg:col-span-2">
-          {/* Product Images */}
-          {product.images && product.images.length > 0 && (
-            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-              <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-                Hình ảnh
-              </h2>
-              <div className="grid grid-cols-4 gap-4">
-                {product.images.map((image) => (
-                  <div
-                    key={image.id}
-                    className="relative aspect-square overflow-hidden rounded-md border border-gray-200 dark:border-gray-700"
-                  >
-                    <Image
-                      src={image.imageUrl}
-                      alt={image.altText || product.productName}
-                      fill
-                      className="object-cover"
-                    />
-                    {image.isPrimary && (
-                      <div className="absolute top-2 right-2">
-                        <Badge color="green">Chính</Badge>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Basic Information */}
           <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
             <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
@@ -373,6 +356,14 @@ export default function ProductDetailPage() {
             <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
               Tồn kho
             </h2>
+            <div className="mb-4 flex gap-2">
+              <Badge color={getTypeBadgeColor(product.productType)}>
+                {getTypeLabel(product.productType)}
+              </Badge>
+              <Badge color={getStatusBadgeColor(product.status)}>
+                {getStatusLabel(product.status)}
+              </Badge>
+            </div>
             <dl className="space-y-3">
               <div>
                 <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
@@ -446,7 +437,7 @@ export default function ProductDetailPage() {
                     </div>
                   )}
                   <div className="absolute bottom-2 right-2 rounded bg-black/50 px-2 py-1 text-xs text-white">
-                    {index + 1}/{product.images.length}
+                    {index + 1}/{product.images?.length}
                   </div>
                 </div>
               ))}
@@ -468,7 +459,7 @@ export default function ProductDetailPage() {
           </Link>
         </div>
         <InventoryTable
-          inventory={inventoryResponse?.data || []}
+          inventory={inventory?.warehouses || []}
           isLoading={inventoryLoading}
           showWarehouse={true}
         />
@@ -492,7 +483,7 @@ export default function ProductDetailPage() {
           <div className="flex h-32 items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
           </div>
-        ) : transactionsResponse?.data && transactionsResponse.data.length > 0 ? (
+        ) : transaction && transaction.length > 0 ? (
           <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-900">
@@ -518,7 +509,7 @@ export default function ProductDetailPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
-                {transactionsResponse.data.map((transaction) => {
+                {transaction.map((transaction) => {
                   // Find the detail for this product
                   const detail = transaction.details?.find(d => d.product_id === productId);
                   const quantity = detail?.quantity || 0;
@@ -534,8 +525,8 @@ export default function ProductDetailPage() {
                     return labels[type] || type;
                   };
 
-                  const getStatusInfo = (status: string) => {
-                    const info: Record<string, { label: string; color: string }> = {
+                  const getStatusInfo = (status: string): { label: string; color: "gray" | "yellow" | "blue" | "green" | "red" } => {
+                    const info: Record<string, { label: string; color: "gray" | "yellow" | "blue" | "green" | "red" }> = {
                       draft: { label: "Nháp", color: "gray" },
                       pending: { label: "Chờ duyệt", color: "yellow" },
                       approved: { label: "Đã duyệt", color: "blue" },
@@ -570,7 +561,7 @@ export default function ProductDetailPage() {
                         <Badge color={statusInfo.color}>{statusInfo.label}</Badge>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                        {new Date(transaction.created_at).toLocaleDateString("vi-VN")}
+                        {new Date(transaction.createdAt).toLocaleDateString("vi-VN")}
                       </td>
                     </tr>
                   );

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { useEffect, useState } from "react";
 import type { AuthUser } from "@/types";
 
 /**
@@ -11,6 +12,7 @@ interface AuthState {
   token: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
+  _hasHydrated: boolean;
 
   // Actions
   setUser: (user: AuthUser) => void;
@@ -21,6 +23,7 @@ interface AuthState {
   hasAnyPermission: (permissions: string[]) => boolean;
   hasAllPermissions: (permissions: string[]) => boolean;
   isRole: (roleKey: string) => boolean;
+  setHasHydrated: (state: boolean) => void;
 }
 
 /**
@@ -34,6 +37,12 @@ export const useAuthStore = create<AuthState>()(
       token: null,
       refreshToken: null,
       isAuthenticated: false,
+      _hasHydrated: false,
+
+      // Set Hydrated
+      setHasHydrated: (state: boolean) => {
+        set({ _hasHydrated: state });
+      },
 
       // Set User
       setUser: (user) => {
@@ -118,6 +127,39 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
+      // Sync cookie khi store được hydrate từ localStorage
+      onRehydrateStorage: () => (state) => {
+        if (typeof window !== "undefined" && state?.token) {
+          // Kiểm tra cookie hiện tại
+          const cookieToken = document.cookie
+            .split("; ")
+            .find((row) => row.startsWith("accessToken="))
+            ?.split("=")[1];
+
+          // Nếu cookie không có hoặc khác với store token -> sync lại
+          if (!cookieToken || cookieToken !== state.token) {
+            document.cookie = `accessToken=${state.token}; path=/; max-age=86400; SameSite=Lax`;
+          }
+        }
+        // Mark as hydrated
+        useAuthStore.getState().setHasHydrated(true);
+      },
     }
   )
 );
+
+/**
+ * Hook để đợi hydration hoàn thành
+ * Giải quyết vấn đề hydration mismatch
+ */
+export function useAuthHydration() {
+  const hasHydrated = useAuthStore((state) => state._hasHydrated);
+  const [isHydrated, setIsHydrated] = useState(hasHydrated);
+
+  useEffect(() => {
+    // Chạy ngay lập tức trên client
+    setIsHydrated(true);
+  }, []);
+
+  return isHydrated;
+}

@@ -1,3 +1,4 @@
+import React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
@@ -166,20 +167,26 @@ export function useLogout() {
  * Get Current User
  */
 export function useMe() {
-  const { setUser } = useAuthStore();
+  const { setUser, token } = useAuthStore();
 
-  return useQuery({
+  const query = useQuery({
     queryKey: authKeys.me(),
     queryFn: async () => {
       const response = await api.get<ApiResponse<AuthUser>>("/auth/me");
       return response.data;
     },
-    onSuccess: (data) => {
-      // Update store với fresh user data
-      setUser(data);
-    },
     retry: false,
+    enabled: !!token, // Chỉ fetch khi có token
   });
+
+  // Update store khi có data (thay thế onSuccess đã bị loại bỏ trong v5)
+  React.useEffect(() => {
+    if (query.data) {
+      setUser(query.data);
+    }
+  }, [query.data, setUser]);
+
+  return query;
 }
 
 /**

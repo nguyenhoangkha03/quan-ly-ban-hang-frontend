@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   useReactTable,
@@ -19,6 +19,24 @@ import { Product, ProductType } from "@/types";
 import Badge from "@/components/ui/badge/Badge";
 import { formatCurrency } from "@/lib/utils";
 import { ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import { getImagePath } from "@/lib/utils/imagePath";
+
+// Import BadgeColor type from Badge component
+type BadgeColor = 
+  | "primary"
+  | "success"
+  | "error"
+  | "warning"
+  | "info"
+  | "light"
+  | "dark"
+  | "blue"
+  | "green"
+  | "yellow"
+  | "orange"
+  | "purple"
+  | "red"
+  | "gray";
 
 const columnHelper = createColumnHelper<Product>();
 
@@ -66,8 +84,8 @@ export function ProductTable({
     return labels[type];
   };
 
-  const getTypeBadgeColor = (type: ProductType) => {
-    const colors: Record<ProductType, string> = {
+  const getTypeBadgeColor = (type: ProductType): BadgeColor => {
+    const colors: Record<ProductType, BadgeColor> = {
       raw_material: "blue",
       packaging: "yellow",
       finished_product: "green",
@@ -76,8 +94,8 @@ export function ProductTable({
     return colors[type];
   };
 
-  const getStatusBadgeColor = (status: string) => {
-    const colors: Record<string, string> = {
+  const getStatusBadgeColor = (status: string): BadgeColor => {
+    const colors: Record<string, BadgeColor> = {
       active: "green",
       inactive: "gray",
       discontinued: "red",
@@ -102,15 +120,25 @@ export function ProductTable({
         ? [
             columnHelper.display({
               id: "select",
-              header: ({ table }) => (
-                <input
-                  type="checkbox"
-                  checked={table.getIsAllRowsSelected()}
-                  indeterminate={table.getIsSomeRowsSelected()}
-                  onChange={table.getToggleAllRowsSelectedHandler()}
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-              ),
+              header: ({ table }) => {
+                const ref = useRef<HTMLInputElement>(null);
+
+                useEffect(() => {
+                    if(ref.current) {
+                        ref.current.indeterminate = table.getIsSomeRowsSelected();
+                    }
+                }, [table.getIsSomeRowsSelected()]);
+
+                return (
+                    <input
+                      ref={ref}
+                      type="checkbox"
+                      checked={table.getIsAllRowsSelected()}
+                      onChange={table.getToggleAllRowsSelectedHandler()}
+                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                )
+              },
               cell: ({ row }) => (
                 <input
                   type="checkbox"
@@ -132,10 +160,11 @@ export function ProductTable({
         cell: (info) => {
           const primaryImage = info.getValue()?.find((img) => img.isPrimary);
           const imageUrl = primaryImage?.imageUrl || info.getValue()?.[0]?.imageUrl;
+          const imageFullPath = getImagePath(imageUrl || "");
 
-          return imageUrl ? (
+          return imageFullPath ? (
             <img
-              src={imageUrl}
+              src={imageFullPath}
               alt={info.row.original.productName}
               className="h-12 w-12 rounded object-cover"
             />

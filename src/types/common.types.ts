@@ -1,6 +1,13 @@
-/**
- * Common Types - Định nghĩa các types dùng chung
- */
+// ------------------
+// COMMON TYPES      
+// ------------------
+
+// Status Types
+export type Status = "active" | "inactive";
+export type UserStatus = "active" | "inactive" | "locked";
+
+// Gender
+export type Gender = 'male' | 'female' | 'other';
 
 // API Response Structure
 export interface ApiResponse<T> {
@@ -46,21 +53,11 @@ export interface PaginationParams {
   search?: string;
 }
 
-// Status Types
-export type Status = "active" | "inactive";
-export type UserStatus = "active" | "inactive" | "locked";
-
 // Base Entity Interface
 export interface BaseEntity {
   id: number;
-  created_at: string;
-  updated_at: string;
-}
-
-// Base Entity với User tracking
-export interface EntityWithUser extends BaseEntity {
-  created_by?: number;
-  updated_by?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Select Option (cho dropdowns, selects)
@@ -137,3 +134,4 @@ export interface MoneyAmount {
   currency: string;
   precision?: number;
 }
+

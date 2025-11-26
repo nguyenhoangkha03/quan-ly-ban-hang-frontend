@@ -2,9 +2,9 @@
 
 import React, { useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { X, Upload, Image as ImageIcon, Star } from "lucide-react";
+import { X, Upload, Image as ImageIcon, Star, Save } from "lucide-react";
 import { ProductImage } from "@/types";
-import { useUploadProductImages, useDeleteProductImage } from "@/hooks/api";
+import { useUploadProductImages, useDeleteProductImage, useSetPrimaryProductImage } from "@/hooks/api";
 import { cn } from "@/lib/utils";
 
 interface ProductImageManagerProps {
@@ -13,12 +13,26 @@ interface ProductImageManagerProps {
   maxImages?: number;
   disabled?: boolean;
   className?: string;
+  hidePreview?: boolean;
+  onImagesChange?: (newImages: File[]) => void;
+}
+
+interface PreviewImage {
+  id: string; // Temporary ID for preview
+  file?: File;
+  preview: string; // Data URL for preview
+  altText?: string;
+  isPrimary?: boolean;
+  displayOrder: number;
+  uploaded?: boolean; // Was this from API response
+  apiImageId?: number; // If from API
 }
 
 /**
- * Product Image Manager Component
- * Manage product images: upload, delete, reorder, set primary
- * Used in Edit Product page
+ * Product Image Manager Component - REDESIGNED
+ * Step 1: Select & preview multiple images
+ * Step 2: Remove unwanted images
+ * Step 3: Save all images at once
  */
 export function ProductImageManager({
   productId,
@@ -26,52 +40,135 @@ export function ProductImageManager({
   maxImages = 5,
   disabled = false,
   className,
+  hidePreview = false,
+  onImagesChange,
 }: ProductImageManagerProps) {
+  const [previewImages, setPreviewImages] = useState<PreviewImage[]>(
+    images.map((img, idx) => ({
+      id: `api-${img.id}`,
+      preview: img.imageUrl,
+      altText: img.altText,
+      isPrimary: img.isPrimary,
+      displayOrder: idx,
+      uploaded: true,
+      apiImageId: img.id,
+    }))
+  );
   const [uploading, setUploading] = useState(false);
   const uploadImages = useUploadProductImages();
   const deleteImage = useDeleteProductImage();
+  const setPrimaryImage = useSetPrimaryProductImage();
 
-  const sortedImages = [...images].sort((a, b) => a.displayOrder - b.displayOrder);
+  const sortedImages = [...previewImages].sort((a, b) => a.displayOrder - b.displayOrder);
+  const newImages = previewImages.filter((img) => !img.uploaded && img.file);
+  const hasChanges = newImages.length > 0;
 
-  const onDrop = async (acceptedFiles: File[]) => {
+  const onDrop = (acceptedFiles: File[]) => {
     if (disabled || uploading) return;
-    if (images.length + acceptedFiles.length > maxImages) {
+    if (previewImages.length + acceptedFiles.length > maxImages) {
       alert(`Chỉ được tải tối đa ${maxImages} ảnh!`);
+      return;
+    }
+
+    // Add to preview list (don't upload yet)
+    const newPreviews = acceptedFiles.map((file, index) => ({
+      id: `temp-${Date.now()}-${index}`,
+      file,
+      preview: URL.createObjectURL(file),
+      displayOrder: previewImages.length + index,
+      isPrimary: previewImages.length === 0 && index === 0,
+      uploaded: false,
+    }));
+
+    setPreviewImages([...previewImages, ...newPreviews]);
+  };
+
+  const handleRemoveImage = (imageId: string) => {
+    if (!window.confirm("Bạn có chắc muốn xóa ảnh này?")) return;
+
+    const image = previewImages.find((img) => img.id === imageId);
+    if (!image) return;
+
+    // If it's a new preview image, just remove from preview
+    if (!image.uploaded) {
+      URL.revokeObjectURL(image.preview);
+      setPreviewImages(previewImages.filter((img) => img.id !== imageId));
+      return;
+    }
+
+    // If it's already uploaded, delete from API
+    if (image.apiImageId) {
+      handleDeleteFromAPI(image.apiImageId);
+    }
+  };
+
+  const handleDeleteFromAPI = async (imageId: number) => {
+    try {
+      await deleteImage.mutateAsync({ productId, imageId });
+      setPreviewImages(previewImages.filter((img) => img.apiImageId !== imageId));
+    } catch (error) {
+      console.error("Delete failed:", error);
+    }
+  };
+
+  const handleSetPrimary = async (imageId: string) => {
+    const image = previewImages.find((img) => img.id === imageId);
+    if (!image || !image.apiImageId) return;
+
+    try {
+      await setPrimaryImage.mutateAsync({ productId, imageId: image.apiImageId });
+      setPreviewImages(
+        previewImages.map((img) => ({
+          ...img,
+          isPrimary: img.id === imageId,
+        }))
+      );
+    } catch (error) {
+      console.error("Set primary failed:", error);
+    }
+  };
+
+  const handleSaveImages = async () => {
+    if (newImages.length === 0) {
+      alert("Không có ảnh mới để lưu!");
       return;
     }
 
     try {
       setUploading(true);
 
-      // Create metadata for each file
-      const metadata = acceptedFiles.map((_, index) => ({
+      const files = newImages.map((img) => img.file!);
+      const metadata = newImages.map((img, idx) => ({
         imageType: "gallery" as const,
-        isPrimary: images.length === 0 && index === 0, // First image is primary if no images exist
-        displayOrder: images.length + index,
+        isPrimary: img.isPrimary || false,
+        displayOrder: img.displayOrder,
       }));
 
       await uploadImages.mutateAsync({
         productId,
-        files: acceptedFiles,
+        files,
         metadata,
       });
+
+      // Clear preview after successful upload
+      const uploadedIds = newImages.map((img) => img.id);
+      setPreviewImages(
+        previewImages.filter((img) => !uploadedIds.includes(img.id))
+      );
+
+      // Notify parent of saved images
+      onImagesChange?.(files);
+
+      alert("Tải lên ảnh thành công!");
     } catch (error) {
       console.error("Upload failed:", error);
+      alert("Tải lên ảnh thất bại!");
     } finally {
       setUploading(false);
     }
   };
 
-  const handleDelete = async (imageId: number) => {
-    if (disabled) return;
-    if (!window.confirm("Bạn có chắc muốn xóa ảnh này?")) return;
-
-    try {
-      await deleteImage.mutateAsync({ productId, imageId });
-    } catch (error) {
-      console.error("Delete failed:", error);
-    }
-  };
+  const getNewImages = () => previewImages.filter((img) => !img.uploaded && img.file);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -80,10 +177,10 @@ export function ProductImageManager({
       "image/png": [".png"],
       "image/webp": [".webp"],
     },
-    maxFiles: maxImages - images.length,
-    maxSize: 5 * 1024 * 1024, // 5MB
+    maxFiles: maxImages - previewImages.length,
+    maxSize: 5 * 1024 * 1024,
     multiple: true,
-    disabled: disabled || uploading || images.length >= maxImages,
+    disabled: disabled || uploading || previewImages.length >= maxImages,
   });
 
   return (
@@ -91,52 +188,82 @@ export function ProductImageManager({
       <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
         Hình ảnh sản phẩm
         <span className="ml-2 text-xs text-gray-500">
-          ({images.length}/{maxImages})
+          ({previewImages.length}/{maxImages})
         </span>
       </label>
 
-      {/* Current Images */}
-      {sortedImages.length > 0 && (
-        <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-          {sortedImages.map((image, index) => (
-            <div key={image.id} className="group relative aspect-square">
-              <img
-                src={image.imageUrl}
-                alt={image.altText || `Product image ${index + 1}`}
-                className="h-full w-full rounded-lg object-cover border-2 border-gray-200 dark:border-gray-700"
-              />
+      {/* Preview Images */}
+      {sortedImages.length > 0 && !hidePreview && (
+        <div className="mb-4">
+          <h3 className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+            Xem trước ({sortedImages.length})
+          </h3>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+            {sortedImages.map((image, index) => (
+              <div key={image.id} className="group relative aspect-square">
+                <img
+                  src={image.preview}
+                  alt={image.altText || `Product image ${index + 1}`}
+                  className="h-full w-full rounded-lg object-cover border-2 border-gray-200 dark:border-gray-700"
+                />
 
-              {/* Primary Badge */}
-              {image.isPrimary && (
-                <div className="absolute left-2 top-2 rounded-full bg-yellow-500 px-2 py-1 text-xs font-medium text-white flex items-center gap-1">
-                  <Star className="h-3 w-3 fill-current" />
-                  Chính
+                {/* Primary Badge */}
+                {image.isPrimary && (
+                  <div className="absolute left-2 top-2 rounded-full bg-yellow-500 px-2 py-1 text-xs font-medium text-white flex items-center gap-1">
+                    <Star className="h-3 w-3 fill-current" />
+                    Chính
+                  </div>
+                )}
+
+                {/* Set Primary Button */}
+                {!disabled && !image.isPrimary && image.uploaded && (
+                  <button
+                    type="button"
+                    onClick={() => handleSetPrimary(image.id)}
+                    disabled={setPrimaryImage.isPending}
+                    className="absolute left-2 top-2 rounded-full bg-gray-800/70 px-2 py-1 text-xs font-medium text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-yellow-500 disabled:opacity-50 flex items-center gap-1"
+                    title="Đặt làm ảnh chính"
+                  >
+                    <Star className="h-3 w-3" />
+                  </button>
+                )}
+
+                {/* Delete Button */}
+                {!disabled && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(image.id)}
+                    disabled={deleteImage.isPending || uploading}
+                    className="absolute -right-2 -top-2 rounded-full bg-red-500 p-1 text-white shadow-lg opacity-0 transition-opacity group-hover:opacity-100 disabled:opacity-50"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+
+                {/* Status Badge */}
+                <div className="absolute bottom-2 right-2 rounded text-xs text-white">
+                  {image.uploaded ? (
+                    <span className="bg-green-500/80 px-2 py-1 rounded">
+                      ✓ Đã lưu
+                    </span>
+                  ) : (
+                    <span className="bg-blue-500/80 px-2 py-1 rounded">
+                      Chờ lưu
+                    </span>
+                  )}
                 </div>
-              )}
 
-              {/* Delete Button */}
-              {!disabled && (
-                <button
-                  type="button"
-                  onClick={() => handleDelete(image.id)}
-                  disabled={deleteImage.isPending}
-                  className="absolute -right-2 -top-2 rounded-full bg-red-500 p-1 text-white shadow-lg opacity-0 transition-opacity group-hover:opacity-100 disabled:opacity-50"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-
-              {/* Display Order */}
-              <div className="absolute bottom-2 right-2 rounded bg-black/50 px-2 py-1 text-xs text-white">
-                {index + 1}
+                <div className="absolute bottom-2 left-2 rounded bg-black/50 px-2 py-1 text-xs text-white">
+                  {index + 1}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
       {/* Upload Area */}
-      {images.length < maxImages && (
+      {previewImages.length < maxImages && (
         <div
           {...getRootProps()}
           className={cn(
@@ -173,7 +300,6 @@ export function ProductImageManager({
                 </p>
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   PNG, JPG, WEBP tối đa 5MB
-                  {images.length < maxImages && ` (còn ${maxImages - images.length} ảnh)`}
                 </p>
               </>
             )}
@@ -181,10 +307,22 @@ export function ProductImageManager({
         </div>
       )}
 
-      {images.length >= maxImages && (
-        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-          Đã đạt giới hạn {maxImages} ảnh. Xóa ảnh cũ để tải ảnh mới.
-        </p>
+      {/* Save Button - Only show if there are new images */}
+      {hasChanges && !hidePreview && (
+        <div className="mt-4 flex gap-2">
+          <button
+            type="button"
+            onClick={handleSaveImages}
+            disabled={uploading || newImages.length === 0}
+            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 dark:focus:ring-offset-gray-900"
+          >
+            <Save className="h-4 w-4" />
+            Lưu {newImages.length} ảnh mới
+          </button>
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            {newImages.length} ảnh chưa lưu
+          </span>
+        </div>
       )}
     </div>
   );

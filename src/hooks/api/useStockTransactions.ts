@@ -20,6 +20,7 @@ export const stockTransactionKeys = {
 export interface StockTransactionFilters extends PaginationParams {
   transactionType?: "import" | "export" | "transfer" | "disposal" | "stocktake";
   warehouseId?: number;
+  productId?: number;
   status?: "draft" | "pending" | "approved" | "completed" | "cancelled";
   fromDate?: string;
   toDate?: string;

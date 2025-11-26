@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import type {
   Inventory,
+  InventoryByProductResponse,
   StockTransaction,
   CreateTransactionDto,
   InventoryFilters,
@@ -62,7 +63,7 @@ export function useInventoryByProduct(productId: number, enabled = true) {
   return useQuery({
     queryKey: [...inventoryKeys.all, "product", productId],
     queryFn: async () => {
-      const response = await api.get<ApiResponse<Inventory[]>>(
+      const response = await api.get<ApiResponse<InventoryByProductResponse>>(
         `/inventory/product/${productId}`
       );
       return response;

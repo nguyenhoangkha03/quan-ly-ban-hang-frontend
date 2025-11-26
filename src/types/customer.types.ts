@@ -2,7 +2,7 @@
  * Customer Types - Dựa trên database schema
  */
 
-import type { BaseEntity, EntityWithUser, Status } from "./common.types";
+import type { BaseEntity, Status } from "./common.types";
 
 // Customer Type
 export type CustomerType = "individual" | "company";
@@ -11,7 +11,7 @@ export type CustomerType = "individual" | "company";
 export type CustomerClassification = "retail" | "wholesale" | "vip" | "distributor";
 
 // Customer
-export interface Customer extends EntityWithUser {
+export interface Customer extends BaseEntity {
   customer_code: string;
   customer_name: string;
   customer_type: CustomerType;
@@ -27,6 +27,8 @@ export interface Customer extends EntityWithUser {
   current_debt: number;
   notes?: string;
   status: Status;
+  created_by?: number;
+  updated_by?: number;
 }
 
 // Create Customer DTO

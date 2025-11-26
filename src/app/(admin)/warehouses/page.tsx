@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import Badge from "@/components/ui/badge/Badge";
 import { Warehouse, WarehouseType } from "@/types";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 
 /**
  * Warehouses List Page
@@ -294,26 +295,29 @@ export default function WarehousesPage() {
                     <div className="flex items-center justify-end gap-2">
                       <Link
                         href={`/warehouses/${warehouse.id}`}
-                        className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                        className="rounded p-1 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                        title="Xem"
                       >
-                        Xem
+                        <Eye className="h-4 w-4" />
                       </Link>
 
                       <Can permission="update_warehouse">
                         <Link
                           href={`/warehouses/${warehouse.id}/edit`}
-                          className="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 dark:hover:text-yellow-300"
+                          className="rounded p-1 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                          title="Sửa"
                         >
-                          Sửa
+                          <Pencil className="h-4 w-4" />
                         </Link>
                       </Can>
 
                       <Can permission="delete_warehouse">
                         <button
                           onClick={() => handleDelete(warehouse.id, warehouse.warehouseName)}
-                          className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                          className="rounded p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          title="Xóa"
                         >
-                          Xóa
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </Can>
                     </div>

@@ -1,10 +1,10 @@
-/**
- * User & Role Types - Dựa trên database schema
- */
+// USER, ROLE, PERMISSION TYPES
 
-import type { BaseEntity, EntityWithUser, Status, UserStatus } from "./common.types";
+import type { BaseEntity, Gender, Status, UserStatus } from "./common.types";
 
-// Role
+// ------------------
+// ROLES             
+// ------------------
 export interface Role extends BaseEntity {
   role_key: string;
   role_name: string;
@@ -13,7 +13,9 @@ export interface Role extends BaseEntity {
   permissions?: Permission[];
 }
 
-// Permission
+// ------------------
+// PERMISSIONS       
+// ------------------
 export interface Permission extends BaseEntity {
   permission_key: string;
   permission_name: string;
@@ -21,26 +23,34 @@ export interface Permission extends BaseEntity {
   module: string;
 }
 
-// User
-export interface User extends EntityWithUser {
+// ------------------
+// USERS             
+// ------------------
+export interface User extends BaseEntity {
   employee_code: string;
   email: string;
+  password_hash?: string;
   full_name: string;
+  cccd?: string;
+  issued_at?: string;
+  issued_by?: string;
   phone?: string;
   address?: string;
-  gender?: "male" | "female" | "other";
+  gender?: Gender;
   date_of_birth?: string;
   avatar_url?: string;
   role_id: number;
   role?: Role;
   warehouse_id?: number;
-  warehouse?: Warehouse;
+  warehouse?: WarehouseMinimal;
   status: UserStatus;
+  created_by?: number;
+  updated_by?: number;
   last_login?: string;
 }
 
 // Warehouse (minimal for user relation)
-export interface Warehouse {
+export interface WarehouseMinimal {
   id: number;
   warehouse_code: string;
   warehouse_name: string;

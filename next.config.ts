@@ -9,6 +9,18 @@ const nextConfig: NextConfig = {
     });
     return config;
   },
+  
+  // Add rewrites to proxy images from backend to avoid CORS
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: '/uploads/:path*',
+          destination: `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000'}/uploads/:path*`,
+        },
+      ],
+    };
+  },
 };
 
 export default nextConfig;

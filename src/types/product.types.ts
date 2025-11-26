@@ -2,13 +2,16 @@
  * Product Types - Dựa trên database schema
  */
 
-import type { BaseEntity, EntityWithUser, Status } from "./common.types";
+import type { BaseEntity, Status } from "./common.types";
 
 // Product Type
 export type ProductType = "raw_material" | "packaging" | "finished_product" | "goods";
 
 // Packaging Type
 export type PackagingType = "bottle" | "box" | "bag" | "label" | "other";
+
+// Video Type
+export type VideoType = "demo" | "tutorial" | "review" | "unboxing" | "promotion" | "other";
 
 // Category
 export interface Category extends BaseEntity {
@@ -23,7 +26,7 @@ export interface Category extends BaseEntity {
 }
 
 // Supplier
-export interface Supplier extends EntityWithUser {
+export interface Supplier extends BaseEntity {
   supplierCode: string;
   supplierName: string;
   supplierType: "local" | "foreign";
@@ -35,10 +38,12 @@ export interface Supplier extends EntityWithUser {
   paymentTerms?: string;
   notes?: string;
   status: Status;
+  created_by?: number;
+  updated_by?: number;
 }
 
 // Product
-export interface Product extends EntityWithUser {
+export interface Product extends BaseEntity {
   sku: string;
   slug: string;
   productName: string;
@@ -62,6 +67,9 @@ export interface Product extends EntityWithUser {
   expiryDate?: string;
   status: Status;
   images?: ProductImage[];
+  videos?: ProductVideo[];
+  createdBy?: number;
+  updatedBy?: number;
 }
 
 // Product Image
@@ -70,6 +78,21 @@ export interface ProductImage extends BaseEntity {
   imageUrl: string;
   imageType: "thumbnail" | "gallery" | "main";
   altText?: string;
+  isPrimary: boolean;
+  displayOrder: number;
+  uploadedBy?: number;
+}
+
+// Product Video
+export interface ProductVideo extends BaseEntity {
+  productId: number;
+  videoUrl: string;
+  videoType: VideoType;
+  title?: string;
+  description?: string;
+  thumbnail?: string;
+  duration?: number;
+  fileSize?: bigint;
   isPrimary: boolean;
   displayOrder: number;
   uploadedBy?: number;
