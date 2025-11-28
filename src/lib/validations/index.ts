@@ -1,11 +1,12 @@
-/**
- * Validation Schemas Index - Export tất cả schemas
- */
+// Validation Schemas Index - Export tất cả schemas
 
 export * from "./auth.schema";
+export * from "./category.schema";
+export * from "./supplier.schema";
 export * from "./product.schema";
 export * from "./customer.schema";
 export * from "./warehouse.schema";
+export * from "./promotion.schema";
 export * from "./sales.schema";
 export * from "./inventory.schema";
 export * from "./production.schema";
@@ -13,3 +14,6 @@ export * from "./finance.schema";
 export * from "./bom.validation";
 export * from "./production-order.schema";
 export * from "./sales-order.schema";
+export * from "./user.schema";
+export * from "./attendance.schema";
+export * from "./salary.schema";

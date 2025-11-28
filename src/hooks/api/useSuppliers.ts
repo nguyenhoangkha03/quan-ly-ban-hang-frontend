@@ -2,10 +2,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import type { Supplier, ApiResponse, PaginationParams } from "@/types";
 import { toast } from "react-hot-toast";
+import { SupplierFilterData, SupplierFormData } from "@/lib/validations";
 
-/**
- * Query Keys
- */
+// Query Keys
 export const supplierKeys = {
   all: ["suppliers"] as const,
   lists: () => [...supplierKeys.all, "list"] as const,
@@ -15,19 +14,8 @@ export const supplierKeys = {
   statistics: (id: number) => [...supplierKeys.all, "statistics", id] as const,
 };
 
-/**
- * Supplier Filters
- */
-export interface SupplierFilters {
-  status?: "active" | "inactive";
-  supplierType?: "local" | "foreign";
-  search?: string;
-}
-
-/**
- * Get Suppliers List
- */
-export function useSuppliers(params?: SupplierFilters & PaginationParams) {
+// Get Suppliers List
+export function useSuppliers(params?: SupplierFilterData & PaginationParams) {
   return useQuery({
     queryKey: supplierKeys.list(params),
     queryFn: async () => {
@@ -39,9 +27,7 @@ export function useSuppliers(params?: SupplierFilters & PaginationParams) {
   });
 }
 
-/**
- * Get Single Supplier by ID
- */
+// Get Single Supplier by ID
 export function useSupplier(id: number, enabled = true) {
   return useQuery({
     queryKey: supplierKeys.detail(id),
@@ -53,9 +39,7 @@ export function useSupplier(id: number, enabled = true) {
   });
 }
 
-/**
- * Get Supplier Statistics
- */
+// Get Supplier Statistics
 export function useSupplierStatistics(id: number, enabled = true) {
   return useQuery({
     queryKey: supplierKeys.statistics(id),
@@ -67,31 +51,12 @@ export function useSupplierStatistics(id: number, enabled = true) {
   });
 }
 
-/**
- * Create Supplier DTO
- */
-export interface CreateSupplierDto {
-  supplierCode?: string;
-  supplierName: string;
-  supplierType?: "local" | "foreign";
-  contactName?: string;
-  phone?: string;
-  email?: string;
-  address?: string;
-  taxCode?: string;
-  paymentTerms?: string;
-  notes?: string;
-  status?: "active" | "inactive";
-}
-
-/**
- * Create Supplier Mutation
- */
+// Create Supplier Mutation
 export function useCreateSupplier() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: CreateSupplierDto) => {
+    mutationFn: async (data: SupplierFormData) => {
       const response = await api.post<ApiResponse<Supplier>>("/suppliers", data);
       return response.data;
     },
@@ -105,14 +70,12 @@ export function useCreateSupplier() {
   });
 }
 
-/**
- * Update Supplier Mutation
- */
+// Update Supplier Mutation
 export function useUpdateSupplier() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<CreateSupplierDto> }) => {
+    mutationFn: async ({ id, data }: { id: number; data: Partial<SupplierFormData> }) => {
       const response = await api.put<ApiResponse<Supplier>>(`/suppliers/${id}`, data);
       return response.data;
     },
@@ -127,9 +90,7 @@ export function useUpdateSupplier() {
   });
 }
 
-/**
- * Delete Supplier Mutation
- */
+// Delete Supplier Mutation
 export function useDeleteSupplier() {
   const queryClient = useQueryClient();
 

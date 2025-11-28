@@ -235,3 +235,71 @@ export interface OrderStatistics {
   completedOrders: number;
   cancelledOrders: number;
 }
+
+// =====================================================
+// DELIVERY DTOs
+// =====================================================
+
+// Create Delivery DTO
+export interface CreateDeliveryDto {
+  orderId: number;
+  deliveryStaffId: number;
+  shippingPartner?: string;
+  deliveryDate: string;
+  deliveryCost?: number;
+  codAmount?: number;
+  notes?: string;
+}
+
+// Update Delivery DTO
+export interface UpdateDeliveryDto {
+  deliveryStaffId?: number;
+  shippingPartner?: string;
+  deliveryDate?: string;
+  deliveryCost?: number;
+  codAmount?: number;
+  notes?: string;
+}
+
+// Update Delivery Status DTO
+export interface UpdateDeliveryStatusDto {
+  deliveryStatus: DeliveryStatus;
+  receivedBy?: string;
+  receivedPhone?: string;
+  collectedAmount?: number;
+  failureReason?: string;
+  notes?: string;
+}
+
+// Upload Delivery Proof DTO
+export interface UploadDeliveryProofDto {
+  proof: File;
+}
+
+// Settle Delivery DTO
+export interface SettleDeliveryDto {
+  notes?: string;
+}
+
+// Delivery Filters
+export interface DeliveryFilters {
+  orderId?: number;
+  deliveryStaffId?: number;
+  deliveryStatus?: DeliveryStatus | DeliveryStatus[];
+  settlementStatus?: SettlementStatus | SettlementStatus[];
+  fromDate?: string;
+  toDate?: string;
+  search?: string;
+}
+
+// Delivery Statistics
+export interface DeliveryStatistics {
+  totalDeliveries: number;
+  pendingDeliveries: number;
+  inTransitDeliveries: number;
+  deliveredDeliveries: number;
+  failedDeliveries: number;
+  totalCOD: number;
+  collectedCOD: number;
+  pendingSettlement: number;
+}

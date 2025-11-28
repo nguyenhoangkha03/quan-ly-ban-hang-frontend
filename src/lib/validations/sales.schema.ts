@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { updateSalesOrderSchema } from "./sales-order.schema";
 
 /**
  * Sales Order Schema
@@ -37,14 +38,14 @@ export type SalesOrderFormData = z.infer<typeof salesOrderSchema>;
 /**
  * Update Sales Order Schema (chỉ cho phép sửa một số field)
  */
-export const updateSalesOrderSchema = z.object({
-  delivery_address: z.string().max(255).optional(),
-  delivery_city: z.string().max(100).optional(),
-  delivery_region: z.string().max(100).optional(),
-  shipping_fee: z.number().min(0).optional(),
-  payment_method: z.enum(["cash", "bank_transfer", "credit", "cod"]).optional(),
-  notes: z.string().max(500).optional(),
-});
+// export const updateSalesOrderSchema = z.object({
+//   delivery_address: z.string().max(255).optional(),
+//   delivery_city: z.string().max(100).optional(),
+//   delivery_region: z.string().max(100).optional(),
+//   shipping_fee: z.number().min(0).optional(),
+//   payment_method: z.enum(["cash", "bank_transfer", "credit", "cod"]).optional(),
+//   notes: z.string().max(500).optional(),
+// });
 
 export type UpdateSalesOrderFormData = z.infer<typeof updateSalesOrderSchema>;
 

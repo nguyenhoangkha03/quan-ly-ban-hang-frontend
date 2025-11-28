@@ -3,17 +3,15 @@ import api from "@/lib/axios";
 import type {
   Product,
   ProductImage,
-  CreateProductDto,
   UpdateProductDto,
   ProductFilters,
   ApiResponse,
   PaginationParams,
 } from "@/types";
 import { toast } from "react-hot-toast";
+import { type ProductFormData } from "@/lib/validations";
 
-/**
- * Query Keys
- */
+// Query Keys
 export const productKeys = {
   all: ["products"] as const,
   lists: () => [...productKeys.all, "list"] as const,
@@ -23,9 +21,7 @@ export const productKeys = {
   detail: (id: number) => [...productKeys.details(), id] as const,
 };
 
-/**
- * Get Products List với filters & pagination
- */
+// Get Products List với filters & pagination
 export function useProducts(params?: ProductFilters & PaginationParams) {
   return useQuery({
     queryKey: productKeys.list(params),
@@ -39,9 +35,7 @@ export function useProducts(params?: ProductFilters & PaginationParams) {
   });
 }
 
-/**
- * Get Single Product by ID
- */
+// Get Single Product by ID
 export function useProduct(id: number, enabled = true) {
   return useQuery({
     queryKey: productKeys.detail(id),
@@ -53,14 +47,12 @@ export function useProduct(id: number, enabled = true) {
   });
 }
 
-/**
- * Create Product Mutation
- */
+// Create Product Mutation
 export function useCreateProduct() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: CreateProductDto) => {
+    mutationFn: async (data: ProductFormData) => {
       const response = await api.post<ApiResponse<Product>>("/products", data);
       return response.data;
     },
@@ -74,9 +66,7 @@ export function useCreateProduct() {
   });
 }
 
-/**
- * Update Product Mutation
- */
+// Update Product Mutation
 export function useUpdateProduct() {
   const queryClient = useQueryClient();
 
@@ -96,9 +86,7 @@ export function useUpdateProduct() {
   });
 }
 
-/**
- * Delete Product Mutation
- */
+// Delete Product Mutation
 export function useDeleteProduct() {
   const queryClient = useQueryClient();
 
@@ -117,9 +105,7 @@ export function useDeleteProduct() {
   });
 }
 
-/**
- * Toggle Product Status
- */
+// Toggle Product Status
 export function useToggleProductStatus() {
   const queryClient = useQueryClient();
 
@@ -140,10 +126,8 @@ export function useToggleProductStatus() {
   });
 }
 
-/**
- * Upload Product Images
- * Max 5 images per product
- */
+// Upload Product Images
+// Max 5 images per product
 export function useUploadProductImages() {
   const queryClient = useQueryClient();
 
@@ -196,9 +180,7 @@ export function useUploadProductImages() {
   });
 }
 
-/**
- * Delete Product Image
- */
+// Delete Product Image
 export function useDeleteProductImage() {
   const queryClient = useQueryClient();
 
@@ -220,9 +202,7 @@ export function useDeleteProductImage() {
   });
 }
 
-/**
- * Set Primary Product Image
- */
+// Set Primary Product Image
 export function useSetPrimaryProductImage() {
   const queryClient = useQueryClient();
 
@@ -244,9 +224,7 @@ export function useSetPrimaryProductImage() {
   });
 }
 
-/**
- * Bulk Delete Products
- */
+// Bulk Delete Products
 export function useBulkDeleteProducts() {
   const queryClient = useQueryClient();
 
@@ -279,9 +257,7 @@ export function useBulkDeleteProducts() {
   });
 }
 
-/**
- * Bulk Update Product Status
- */
+// Bulk Update Product Status
 export function useBulkUpdateProductStatus() {
   const queryClient = useQueryClient();
 
@@ -316,10 +292,8 @@ export function useBulkUpdateProductStatus() {
   });
 }
 
-/**
- * Upload Product Videos
- * Max 5 videos per product
- */
+// Upload Product Videos
+// Max 5 videos per product
 export function useUploadProductVideos() {
   const queryClient = useQueryClient();
 
@@ -370,9 +344,7 @@ export function useUploadProductVideos() {
   });
 }
 
-/**
- * Delete Product Video
- */
+// Delete Product Video
 export function useDeleteProductVideo() {
   const queryClient = useQueryClient();
 
@@ -394,9 +366,7 @@ export function useDeleteProductVideo() {
   });
 }
 
-/**
- * Set Primary Product Video
- */
+// Set Primary Product Video
 export function useSetPrimaryProductVideo() {
   const queryClient = useQueryClient();
 

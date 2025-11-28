@@ -85,6 +85,27 @@ export interface UpdateUserDto {
   status?: UserStatus;
 }
 
+// Update User Status DTO
+export interface UpdateUserStatusDto {
+  status: UserStatus;
+}
+
+// Upload Avatar Response
+export interface UploadAvatarResponse {
+  avatarUrl: string;
+}
+
+// User Filters
+export interface UserFilters {
+  search?: string;
+  roleId?: number;
+  warehouseId?: number;
+  status?: UserStatus;
+  gender?: Gender;
+  page?: number;
+  limit?: number;
+}
+
 // Change Password DTO
 export interface ChangePasswordDto {
   current_password: string;

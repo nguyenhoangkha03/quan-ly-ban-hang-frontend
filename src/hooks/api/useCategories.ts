@@ -2,10 +2,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import type { Category, CategoryTree, ApiResponse, PaginationParams } from "@/types";
 import { toast } from "react-hot-toast";
+import { CategoryFormData, FilterCategoriesData } from "@/lib/validations";
 
-/**
- * Query Keys
- */
+// Query Keys
 export const categoryKeys = {
   all: ["categories"] as const,
   lists: () => [...categoryKeys.all, "list"] as const,
@@ -15,19 +14,8 @@ export const categoryKeys = {
   detail: (id: number) => [...categoryKeys.details(), id] as const,
 };
 
-/**
- * Category Filters
- */
-export interface CategoryFilters {
-  status?: "active" | "inactive";
-  parentId?: number;
-  search?: string;
-}
-
-/**
- * Get Categories List
- */
-export function useCategories(params?: CategoryFilters & PaginationParams) {
+// Get Categories List
+export function useCategories(params?: FilterCategoriesData & PaginationParams) {
   return useQuery({
     queryKey: categoryKeys.list(params),
     queryFn: async () => {
@@ -36,12 +24,10 @@ export function useCategories(params?: CategoryFilters & PaginationParams) {
       });
       return response;
     },
-  });
-}
+  }) ;
+} 
 
-/**
- * Get Category Tree (hierarchical structure)
- */
+// Get Category Tree (hierarchical structure)
 export function useCategoryTree() {
   return useQuery({
     queryKey: categoryKeys.tree(),
@@ -52,9 +38,7 @@ export function useCategoryTree() {
   });
 }
 
-/**
- * Get Single Category by ID
- */
+// Get Single Category by ID
 export function useCategory(id: number, enabled = true) {
   return useQuery({
     queryKey: categoryKeys.detail(id),
@@ -66,25 +50,12 @@ export function useCategory(id: number, enabled = true) {
   });
 }
 
-/**
- * Create Category DTO
- */
-export interface CreateCategoryDto {
-  categoryCode?: string;
-  categoryName: string;
-  parentId?: number;
-  description?: string;
-  status?: "active" | "inactive";
-}
-
-/**
- * Create Category Mutation
- */
+// Create Category Mutation
 export function useCreateCategory() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: CreateCategoryDto) => {
+    mutationFn: async (data: CategoryFormData) => {
       const response = await api.post<ApiResponse<Category>>("/categories", data);
       return response.data;
     },
@@ -99,14 +70,12 @@ export function useCreateCategory() {
   });
 }
 
-/**
- * Update Category Mutation
- */
+// Update Category Mutation
 export function useUpdateCategory() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<CreateCategoryDto> }) => {
+    mutationFn: async ({ id, data }: { id: number; data: Partial<CategoryFormData> }) => {
       const response = await api.put<ApiResponse<Category>>(`/categories/${id}`, data);
       return response.data;
     },
@@ -122,9 +91,7 @@ export function useUpdateCategory() {
   });
 }
 
-/**
- * Delete Category Mutation
- */
+// Delete Category Mutation
 export function useDeleteCategory() {
   const queryClient = useQueryClient();
 

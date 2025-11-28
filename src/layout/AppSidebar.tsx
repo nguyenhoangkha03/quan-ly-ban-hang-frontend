@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import {
+  BellIcon,
   BoxCubeIcon,
   BoxIconLine,
   CalenderIcon,
@@ -45,6 +46,17 @@ const navItems: NavItem[] = [
       { name: "Nhập kho", path: "/inventory/stock-in", pro: false },
       { name: "Xuất kho", path: "/inventory/stock-out", pro: false },
       { name: "Chuyển kho", path: "/inventory/transfer", pro: false },
+      { name: "Xuất hủy", path: "/inventory/disposal", pro: false },
+      { name: "Kiểm kê", path: "/inventory/stocktake", pro: false },
+      { name: "Cảnh báo tồn kho", path: "/inventory/alerts", pro: false },
+    ],
+  },
+  {
+    icon: <ShootingStarIcon />,
+    name: "Mua hàng",
+    subItems: [
+      { name: "Đơn đặt hàng", path: "/purchase-orders", pro: false },
+      { name: "Nhà cung cấp", path: "/suppliers", pro: false },
     ],
   },
   {
@@ -53,7 +65,6 @@ const navItems: NavItem[] = [
     subItems: [
       { name: "Danh sách sản phẩm", path: "/products", pro: false },
       { name: "Danh mục", path: "/categories", pro: false },
-      { name: "Nhà cung cấp", path: "/suppliers", pro: false },
     ],
   },
   {
@@ -75,12 +86,21 @@ const navItems: NavItem[] = [
     ],
   },
   {
+    icon: <ShootingStarIcon />,
+    name: "Khuyến mãi",
+    subItems: [
+      { name: "Danh sách KM", path: "/promotions", pro: false },
+      { name: "KM đang chạy", path: "/promotions/active", pro: false },
+    ],
+  },
+  {
     icon: <DollarLineIcon />,
     name: "Tài chính",
     subItems: [
       { name: "Phiếu thu", path: "/finance/receipts", pro: false },
       { name: "Phiếu chi", path: "/finance/vouchers", pro: false },
       { name: "Đối chiếu công nợ", path: "/finance/debt-reconciliation", pro: false },
+      { name: "Quỹ tiền mặt", path: "/finance/cash-fund", pro: false },
     ],
   },
   {
@@ -107,11 +127,18 @@ const othersItems: NavItem[] = [
     ],
   },
   {
+    icon: <BellIcon />,
+    name: "Thông báo",
+    path: "/notifications",
+  },
+  {
     icon: <PlugInIcon />,
     name: "Cài đặt",
     subItems: [
       { name: "Hồ sơ cá nhân", path: "/profile", pro: false },
       { name: "Vai trò & Quyền", path: "/settings/roles", pro: false },
+      { name: "Thông tin công ty", path: "/settings/company", pro: false },
+      { name: "Cài đặt thông báo", path: "/settings/notifications", pro: false },
       { name: "Cấu hình hệ thống", path: "/settings/system", pro: false },
     ],
   },

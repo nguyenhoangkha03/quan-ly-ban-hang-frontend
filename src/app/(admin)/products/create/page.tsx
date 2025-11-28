@@ -13,10 +13,8 @@ import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Select from "@/components/form/SelectField";
 import { Image as ImageIcon, Video as VideoIcon } from "lucide-react";
+import { Category, Product, Supplier } from "@/types";
 
-/**
- * Create Product Page with Image & Video Upload
- */
 export default function CreateProductPage() {
   const router = useRouter();
   const [createdProductId, setCreatedProductId] = useState<number | null>(null);
@@ -30,15 +28,15 @@ export default function CreateProductPage() {
   const { data: categoriesResponse } = useCategories({ status: "active" });
   const { data: suppliersResponse } = useSuppliers({ status: "active" });
 
-  const categories = categoriesResponse?.data || [];
-  const suppliers = suppliersResponse?.data || [];
+  const categories = (categoriesResponse?.data as unknown as Category[]) || [];
+  const suppliers = (suppliersResponse?.data as unknown as Supplier[]) || [];
 
   const {
     register,
     handleSubmit,
     watch,
     formState: { errors },
-  } = useForm<ProductFormData>({
+  } = useForm({
     resolver: zodResolver(productSchema),
     defaultValues: {
       status: "active",
@@ -51,7 +49,8 @@ export default function CreateProductPage() {
 
   const onSubmit = async (data: ProductFormData) => {
     try {
-      const result = await createProduct.mutateAsync(data);
+      const result = await createProduct.mutateAsync(data) as unknown as Product;
+
       setCreatedProductId(result.id);
       setShowMediaUpload(true);
     } catch (error) {
@@ -410,7 +409,7 @@ export default function CreateProductPage() {
       </form>
 
       {/* Media Upload Modal - Shown after product created */}
-      {1 && (
+      {showMediaUpload && createdProductId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white p-6 shadow-xl dark:bg-gray-900">
             {/* Header */}

@@ -16,10 +16,6 @@ import Button from "@/components/ui/button/Button";
 import { ApiResponse, Category, Product, ProductType, Supplier } from "@/types";
 import { Download, Trash2, CheckCircle, XCircle } from "lucide-react";
 
-/**
- * Products List Page
- * Quản lý danh sách sản phẩm với TanStack Table, Bulk Actions, và Export Excel
- */
 export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<ProductType | "all">("all");
@@ -30,8 +26,8 @@ export default function ProductsPage() {
   const [supplierFilter, setSupplierFilter] = useState<number | "all">("all");
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
-  // Fetch products
-  const { data, isLoading, error } = useProducts();
+  // Fetch products (increase limit to get all products)
+  const { data, isLoading, error } = useProducts({ limit: 1000 });
   const response = data as unknown as ApiResponse<Product[]>;
   const { data: categoriesResponse } = useCategories({ status: "active" });
   const categoriesTemp = categoriesResponse as unknown as ApiResponse<Category[]>;

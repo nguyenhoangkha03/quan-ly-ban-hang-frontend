@@ -11,13 +11,11 @@ import { Can } from "@/components/auth";
 import Button from "@/components/ui/button/Button";
 import Badge from "@/components/ui/badge/Badge";
 import Pagination from "@/components/tables/Pagination";
-import { Supplier } from "@/types";
+import ConfirmDialog from "@/components/ui/modal/ConfirmDialog";
+import { ApiResponse, Supplier } from "@/types";
 import { Plus, Pencil, Trash2, X, Eye, Phone, Mail } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
 
-/**
- * Suppliers Management Page
- */
 export default function SuppliersPage() {
   // Pagination & Filter state
   const [page, setPage] = useState(1);
@@ -30,8 +28,10 @@ export default function SuppliersPage() {
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [viewingSupplier, setViewingSupplier] = useState<Supplier | null>(null);
+  const [deletingSupplier, setDeletingSupplier] = useState<Supplier | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -56,6 +56,7 @@ export default function SuppliersPage() {
     status: statusFilter,
     supplierType: typeFilter,
   });
+  const responseData = response as unknown as ApiResponse<Supplier[]>
 
   // Reset page khi filter thay đổi
   useEffect(() => {
@@ -67,8 +68,8 @@ export default function SuppliersPage() {
   const deleteSupplier = useDeleteSupplier();
 
   // Data từ response
-  const suppliers = response?.data || [];
-  const meta = response?.meta;
+  const suppliers = responseData?.data || [];
+  const meta = responseData?.meta;
 
   const openCreateModal = () => {
     setEditingSupplier(null);
@@ -154,13 +155,22 @@ export default function SuppliersPage() {
     }
   };
 
-  const handleDelete = async (supplier: Supplier) => {
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa nhà cung cấp "${supplier.supplierName}"?`)) {
-      return;
-    }
+  const openDeleteDialog = (supplier: Supplier) => {
+    setDeletingSupplier(supplier);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const closeDeleteDialog = () => {
+    setIsDeleteDialogOpen(false);
+    setDeletingSupplier(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingSupplier) return;
 
     try {
-      await deleteSupplier.mutateAsync(supplier.id);
+      await deleteSupplier.mutateAsync(deletingSupplier.id);
+      closeDeleteDialog();
     } catch (error) {
       console.error("Delete error:", error);
     }
@@ -335,7 +345,7 @@ export default function SuppliersPage() {
                         </Can>
                         <Can permission="delete_product">
                           <button
-                            onClick={() => handleDelete(supplier)}
+                            onClick={() => openDeleteDialog(supplier)}
                             className="rounded p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                             title="Xóa"
                           >
@@ -670,6 +680,19 @@ export default function SuppliersPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={closeDeleteDialog}
+        onConfirm={handleConfirmDelete}
+        title="Xác nhận xóa nhà cung cấp"
+        message={`Bạn có chắc chắn muốn xóa nhà cung cấp "${deletingSupplier?.supplierName}"? Hành động này không thể hoàn tác.`}
+        confirmText="Xóa"
+        cancelText="Hủy"
+        variant="danger"
+        isLoading={deleteSupplier.isPending}
+      />
     </div>
   );
 }

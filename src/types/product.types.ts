@@ -1,7 +1,4 @@
-/**
- * Product Types - Dựa trên database schema
- */
-
+import { ProductFormData } from "@/lib/validations";
 import type { BaseEntity, Status } from "./common.types";
 
 // Product Type
@@ -98,31 +95,8 @@ export interface ProductVideo extends BaseEntity {
   uploadedBy?: number;
 }
 
-// Product Create DTO
-export interface CreateProductDto {
-  sku?: string;
-  productName: string;
-  productType: ProductType;
-  packagingType?: PackagingType;
-  categoryId?: number;
-  supplierId?: number;
-  unit: string;
-  barcode?: string;
-  weight?: number;
-  dimensions?: string;
-  description?: string;
-  purchasePrice?: number;
-  sellingPriceRetail?: number;
-  sellingPriceWholesale?: number;
-  sellingPriceVip?: number;
-  taxRate?: number;
-  minStockLevel?: number;
-  expiryDate?: string;
-  status?: Status;
-}
-
 // Product Update DTO
-export interface UpdateProductDto extends Partial<CreateProductDto> {}
+export interface UpdateProductDto extends Partial<ProductFormData> {}
 
 // Product Filters
 export interface ProductFilters {

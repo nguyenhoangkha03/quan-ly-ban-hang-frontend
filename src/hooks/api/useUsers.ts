@@ -1,12 +1,15 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
 import api from "@/lib/axios";
-import type { ApiResponse, PaginationParams } from "@/types";
-
-export interface UserQueryParams extends PaginationParams {
-  roleId?: number;
-  warehouseId?: number;
-  status?: "active" | "inactive" | "locked";
-}
+import type {
+  ApiResponse,
+  User,
+  CreateUserDto,
+  UpdateUserDto,
+  UpdateUserStatusDto,
+  UploadAvatarResponse,
+  UserFilters,
+} from "@/types";
 
 /**
  * Query Keys
@@ -14,37 +17,190 @@ export interface UserQueryParams extends PaginationParams {
 export const userKeys = {
   all: ["users"] as const,
   lists: () => [...userKeys.all, "list"] as const,
-  list: (params?: UserQueryParams) => [...userKeys.lists(), params] as const,
+  list: (filters?: UserFilters) => [...userKeys.lists(), filters] as const,
   details: () => [...userKeys.all, "detail"] as const,
   detail: (id: number) => [...userKeys.details(), id] as const,
 };
 
 /**
- * Get Users List
- * For manager selector, typically call with status: "active"
+ * QUERY HOOKS
  */
-export function useUsers(params?: UserQueryParams) {
+
+/**
+ * Get Users List with Filters
+ */
+export function useUsers(filters?: UserFilters) {
   return useQuery({
-    queryKey: userKeys.list(params),
+    queryKey: userKeys.list(filters),
     queryFn: async () => {
       const response = await api.get<ApiResponse<User[]>>("/users", {
-        params,
+        params: filters,
       });
-      return response;
+      return response.data;
     },
   });
 }
 
 /**
- * Get Single User
+ * Get Single User by ID
  */
 export function useUser(id: number, enabled = true) {
   return useQuery({
     queryKey: userKeys.detail(id),
     queryFn: async () => {
       const response = await api.get<ApiResponse<User>>(`/users/${id}`);
-      return response;
+      return response.data;
     },
     enabled: enabled && !!id,
+  });
+}
+
+/**
+ * MUTATION HOOKS
+ */
+
+/**
+ * Create New User
+ */
+export function useCreateUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: CreateUserDto) => {
+      const response = await api.post<ApiResponse<User>>("/users", data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      toast.success("Tạo nhân viên thành công!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error?.message || "Tạo nhân viên thất bại!");
+    },
+  });
+}
+
+/**
+ * Update User
+ */
+export function useUpdateUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: UpdateUserDto }) => {
+      const response = await api.put<ApiResponse<User>>(`/users/${id}`, data);
+      return response.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: userKeys.detail(variables.id) });
+      toast.success("Cập nhật thông tin nhân viên thành công!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error?.message || "Cập nhật thông tin thất bại!");
+    },
+  });
+}
+
+/**
+ * Update User Status (Lock/Unlock/Deactivate)
+ */
+export function useUpdateUserStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: UpdateUserStatusDto }) => {
+      const response = await api.patch<ApiResponse<User>>(`/users/${id}/status`, data);
+      return response.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: userKeys.detail(variables.id) });
+      const statusLabels = {
+        active: "kích hoạt",
+        inactive: "vô hiệu hóa",
+        locked: "khóa",
+      };
+      toast.success(`Đã ${statusLabels[variables.data.status]} tài khoản!`);
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error?.message || "Cập nhật trạng thái thất bại!");
+    },
+  });
+}
+
+/**
+ * Delete User
+ */
+export function useDeleteUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const response = await api.delete<ApiResponse<void>>(`/users/${id}`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      toast.success("Xóa nhân viên thành công!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error?.message || "Xóa nhân viên thất bại!");
+    },
+  });
+}
+
+/**
+ * Upload User Avatar
+ */
+export function useUploadAvatar() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, file }: { id: number; file: File }) => {
+      const formData = new FormData();
+      formData.append("avatar", file);
+
+      const response = await api.post<ApiResponse<UploadAvatarResponse>>(
+        `/users/${id}/avatar`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      return response.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: userKeys.detail(variables.id) });
+      toast.success("Tải ảnh đại diện thành công!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error?.message || "Tải ảnh đại diện thất bại!");
+    },
+  });
+}
+
+/**
+ * Delete User Avatar
+ */
+export function useDeleteAvatar() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const response = await api.delete<ApiResponse<void>>(`/users/${id}/avatar`);
+      return response.data;
+    },
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: userKeys.detail(id) });
+      toast.success("Xóa ảnh đại diện thành công!");
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.error?.message || "Xóa ảnh đại diện thất bại!");
+    },
   });
 }

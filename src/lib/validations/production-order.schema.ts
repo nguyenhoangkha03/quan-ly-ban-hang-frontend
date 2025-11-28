@@ -66,29 +66,29 @@ export const updateProductionOrderSchema = z.object({
 /**
  * Start Production Schema
  */
-export const startProductionSchema = z.object({
-  actualStartDate: z.string().optional(),
-  notes: z.string().max(255, "Ghi chú không được vượt quá 255 ký tự").optional(),
-});
+// export const startProductionSchema = z.object({
+//   actualStartDate: z.string().optional(),
+//   notes: z.string().max(255, "Ghi chú không được vượt quá 255 ký tự").optional(),
+// });
 
 /**
  * Complete Production Schema
  */
-export const completeProductionSchema = z.object({
-  actualQuantity: z.number({
-    required_error: "Vui lòng nhập số lượng thực tế sản xuất",
-  }).positive("Số lượng phải lớn hơn 0"),
+// export const completeProductionSchema = z.object({
+//   actualQuantity: z.number({
+//     required_error: "Vui lòng nhập số lượng thực tế sản xuất",
+//   }).positive("Số lượng phải lớn hơn 0"),
 
-  actualMaterials: z.array(
-    z.object({
-      materialId: z.number().positive(),
-      actualQuantity: z.number().nonnegative("Số lượng không được âm"),
-      notes: z.string().max(255).optional(),
-    })
-  ).optional(),
+//   actualMaterials: z.array(
+//     z.object({
+//       materialId: z.number().positive(),
+//       actualQuantity: z.number().nonnegative("Số lượng không được âm"),
+//       notes: z.string().max(255).optional(),
+//     })
+//   ).optional(),
 
-  notes: z.string().max(255, "Ghi chú không được vượt quá 255 ký tự").optional(),
-});
+//   notes: z.string().max(255, "Ghi chú không được vượt quá 255 ký tự").optional(),
+// });
 
 /**
  * Cancel Production Schema

@@ -11,13 +11,12 @@ import { Can } from "@/components/auth";
 import Button from "@/components/ui/button/Button";
 import Badge from "@/components/ui/badge/Badge";
 import Pagination from "@/components/tables/Pagination";
-import { Category } from "@/types";
+import ConfirmDialog from "@/components/ui/modal/ConfirmDialog";
+import { ApiResponse, Category } from "@/types";
 import { Plus, Pencil, Trash2, X, Eye } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
+import { generateSlug } from "@/lib/utils/categoryHelpers";
 
-/**
- * Categories Management Page
- */
 export default function CategoriesPage() {
   // Pagination & Filter state
   const [page, setPage] = useState(1);
@@ -25,12 +24,15 @@ export default function CategoriesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearch = useDebounce(searchTerm, 400);
   const [statusFilter, setStatusFilter] = useState<"active" | "inactive" | undefined>(undefined);
+  const [parentFilter, setParentFilter] = useState<number | "root" | undefined>(undefined);
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [viewingCategory, setViewingCategory] = useState<Category | null>(null);
+  const [deletingCategory, setDeletingCategory] = useState<Category | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -48,33 +50,39 @@ export default function CategoriesPage() {
     limit,
     search: debouncedSearch || undefined,
     status: statusFilter,
+    parentId: parentFilter === "root" ? ("null" as any) : parentFilter,
   });
+  const responseData = response as unknown as ApiResponse<Category[]>;
+
+  // Fetch all root categories for filter dropdown
+  const { data: rootCategoriesResponse } = useCategories({
+    page: 1,
+    limit: 100,
+    parentId: "null" as any, // Only root categories (send as string 'null')
+    status: "active",
+  });
+  const rootCategories = (rootCategoriesResponse as unknown as ApiResponse<Category[]>)?.data || [];
+
+  // Fetch ALL categories for parent select dropdown in form (no pagination)
+  const { data: allCategoriesResponse } = useCategories({
+    page: 1,
+    limit: 1000, // Get all categories
+    status: "active",
+  });
+  const allCategories = (allCategoriesResponse as unknown as ApiResponse<Category[]>)?.data || [];
 
   // Reset page khi search thay đổi
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, statusFilter]);
+  }, [debouncedSearch, statusFilter, parentFilter]);
 
   const createCategory = useCreateCategory();
   const updateCategory = useUpdateCategory();
   const deleteCategory = useDeleteCategory();
 
   // Data từ response
-  const categories = response?.data || [];
-  const meta = response?.meta;
-
-  // Helper: Generate slug from name
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
-      .replace(/đ/g, "d")
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
-      .trim();
-  };
+  const categories = responseData?.data || [];
+  const meta = responseData?.meta;
 
   const openCreateModal = () => {
     setEditingCategory(null);
@@ -135,13 +143,22 @@ export default function CategoriesPage() {
     }
   };
 
-  const handleDelete = async (category: Category) => {
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa danh mục "${category.categoryName}"?`)) {
-      return;
-    }
+  const openDeleteDialog = (category: Category) => {
+    setDeletingCategory(category);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const closeDeleteDialog = () => {
+    setIsDeleteDialogOpen(false);
+    setDeletingCategory(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingCategory) return;
 
     try {
-      await deleteCategory.mutateAsync(category.id);
+      await deleteCategory.mutateAsync(deletingCategory.id);
+      closeDeleteDialog();
     } catch (error) {
       console.error("Delete error:", error);
     }
@@ -170,7 +187,7 @@ export default function CategoriesPage() {
 
       {/* Filters */}
       <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
           {/* Search */}
           <div className="md:col-span-2">
             <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -183,6 +200,31 @@ export default function CategoriesPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
             />
+          </div>
+
+          {/* Parent Category Filter */}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Danh mục cha
+            </label>
+            <select
+              value={parentFilter === undefined ? "all" : parentFilter === "root" ? "root" : parentFilter}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === "all") setParentFilter(undefined);
+                else if (value === "root") setParentFilter("root");
+                else setParentFilter(Number(value));
+              }}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            >
+              <option value="all">Tất cả</option>
+              <option value="root">Danh mục gốc</option>
+              {rootCategories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.categoryName}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Status Filter */}
@@ -278,7 +320,7 @@ export default function CategoriesPage() {
                         </Can>
                         <Can permission="delete_product">
                           <button
-                            onClick={() => handleDelete(category)}
+                            onClick={() => openDeleteDialog(category)}
                             className="rounded p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                             title="Xóa"
                           >
@@ -314,9 +356,9 @@ export default function CategoriesPage() {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-gray-900">
-            <div className="mb-4 flex items-center justify-between">
+        <div className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md max-h-[90vh] rounded-lg bg-white shadow-xl dark:bg-gray-900 flex flex-col">
+            <div className="p-6 pb-4 flex items-center justify-between flex-shrink-0 border-b border-gray-200 dark:border-gray-700">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                 {editingCategory ? "Sửa danh mục" : "Thêm danh mục mới"}
               </h2>
@@ -328,7 +370,8 @@ export default function CategoriesPage() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+              <div className="space-y-4 p-6 overflow-y-auto flex-1">
               <div>
                 <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Mã danh mục <span className="text-red-500">*</span>
@@ -387,13 +430,14 @@ export default function CategoriesPage() {
                   value={formData.parentId || ""}
                   onChange={(e) => setFormData({ ...formData, parentId: e.target.value ? Number(e.target.value) : null })}
                   className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  size={1}
                 >
                   <option value="">-- Không có (Danh mục gốc) --</option>
-                  {response?.data
+                  {allCategories
                     ?.filter((cat) => cat.id !== editingCategory?.id) // Exclude self when editing
                     .map((cat) => (
                       <option key={cat.id} value={cat.id}>
-                        {cat.categoryName}
+                        {cat.parent?.categoryName ? `${cat.parent.categoryName} → ` : ""}{cat.categoryName}
                       </option>
                     ))}
                 </select>
@@ -426,8 +470,9 @@ export default function CategoriesPage() {
                   <option value="inactive">Không hoạt động</option>
                 </select>
               </div>
+              </div>
 
-              <div className="flex justify-end gap-3 pt-4">
+              <div className="flex justify-end gap-3 p-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <Button type="button" variant="outline" onClick={closeModal}>
                   Hủy
                 </Button>
@@ -446,8 +491,8 @@ export default function CategoriesPage() {
 
       {/* View Modal */}
       {isViewModalOpen && viewingCategory && (
-        <div className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-gray-900">
+        <div className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/50 p-4 overflow-y-auto">
+          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-gray-900 my-8">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Chi tiết danh mục
@@ -518,6 +563,19 @@ export default function CategoriesPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={closeDeleteDialog}
+        onConfirm={handleConfirmDelete}
+        title="Xác nhận xóa danh mục"
+        message={`Bạn có chắc chắn muốn xóa danh mục "${deletingCategory?.categoryName}"? Hành động này không thể hoàn tác.`}
+        confirmText="Xóa"
+        cancelText="Hủy"
+        variant="danger"
+        isLoading={deleteCategory.isPending}
+      />
     </div>
   );
 }
