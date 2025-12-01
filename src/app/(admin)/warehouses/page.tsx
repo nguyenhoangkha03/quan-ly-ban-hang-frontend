@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useWarehouses, useDeleteWarehouse } from "@/hooks/api";
+import { useWarehouses, useDeleteWarehouse, WarehouseCards, useWarehouseCards } from "@/hooks/api";
 import { Can } from "@/components/auth";
 import {
   Table,
@@ -11,48 +11,68 @@ import {
   TableHeader,
   TableRow
 } from "@/components/ui/table";
-import Badge from "@/components/ui/badge/Badge";
-import { Warehouse, WarehouseType } from "@/types";
+import Badge, { type BadgeColor } from "@/components/ui/badge/Badge";
+import WarehouseStats from "@/components/warehouses/WarehouseStats";
+import { WarehouseType, StatusCommon, ApiResponse, Warehouse } from "@/types";
 import { Eye, Pencil, Trash2 } from "lucide-react";
+import { useDebounce } from "@/hooks";
+import Pagination from "@/components/tables/Pagination";
+import ConfirmDialog from "@/components/ui/modal/ConfirmDialog";
 
-/**
- * Warehouses List Page
- * Quản lý danh sách kho
- */
 export default function WarehousesPage() {
+  // Pagination & Filters
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
   const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearch = useDebounce(searchTerm, 400);
   const [typeFilter, setTypeFilter] = useState<WarehouseType | "all">("all");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | StatusCommon>("all");
 
-  // Fetch warehouses
-  const { data: response, isLoading, error } = useWarehouses();
+  // Dialog delete
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletingWarehouse, setDeletingWarehouse] = useState<Warehouse | null>(null);
   const deleteWarehouse = useDeleteWarehouse();
 
-  // Filter warehouses
-  const warehouses = React.useMemo(() => {
-    if (!response?.data) return [];
+  // Fetch warehouses với server-side pagination
+  const { data, isLoading, error } = useWarehouses({
+    page,
+    limit,
+    ...(debouncedSearch && { search: debouncedSearch }),
+    ...(typeFilter !== "all" && { warehouseType: typeFilter }),
+    ...(statusFilter !== 'all' && { status: statusFilter }),
+  });
+  const response = data as unknown as ApiResponse<Warehouse[]>;
 
-    return response.data.filter((warehouse) => {
-      const matchesSearch =
-        (warehouse.warehouseName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-        (warehouse.warehouseCode?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+  const { data: warehouseCardsWrapper, isLoading: statsLoading } = useWarehouseCards();
+  const warehouseCards = warehouseCardsWrapper as unknown as WarehouseCards;
 
-      const matchesType = typeFilter === "all" || warehouse.warehouseType === typeFilter;
-      const matchesStatus = statusFilter === "all" || warehouse.status === statusFilter;
+  const warehouses = response?.data || [];
+  const paginationMeta = response?.meta;
 
-      return matchesSearch && matchesType && matchesStatus;
-    });
-  }, [response?.data, searchTerm, typeFilter, statusFilter]);
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, typeFilter, statusFilter]);
 
-  const handleDelete = async (id: number, name: string) => {
-    if (window.confirm(`Bạn có chắc chắn muốn xóa kho "${name}"?`)) {
-      try {
-        await deleteWarehouse.mutateAsync(id);
-      } catch (error) {
-        console.error("Delete warehouse failed:", error);
-      }
-    }
-  };
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  }
+
+  const handleDeleteClick = (warehouse: Warehouse) => {
+    setDeletingWarehouse(warehouse);
+    setIsDeleteDialogOpen(true);
+  }
+
+  const closeDeleteDialog = () => {
+    setIsDeleteDialogOpen(false);
+    setDeletingWarehouse(null);
+  }
+
+  const handleConfirmDelete = async () => {
+    if(!deletingWarehouse) return;
+    await deleteWarehouse.mutateAsync(deletingWarehouse.id);
+    setIsDeleteDialogOpen(false);
+    setDeletingWarehouse(null);
+  }
 
   // Warehouse type labels
   const getTypeLabel = (type: WarehouseType) => {
@@ -66,8 +86,8 @@ export default function WarehousesPage() {
   };
 
   // Warehouse type badge colors
-  const getTypeBadgeColor = (type: WarehouseType) => {
-    const colors: Record<WarehouseType, string> = {
+  const getTypeBadgeColor = (type: WarehouseType): BadgeColor => {
+    const colors: Record<WarehouseType, BadgeColor> = {
       raw_material: "blue",
       packaging: "yellow",
       finished_product: "green",
@@ -122,74 +142,112 @@ export default function WarehousesPage() {
         </Can>
       </div>
 
+      {/* Statistics Cards */}
+      <WarehouseStats data={warehouseCards} isLoading={statsLoading} />
+
       {/* Filters */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {/* Search */}
-        <div>
-          <label htmlFor="search" className="sr-only">
-            Tìm kiếm
-          </label>
-          <div className="relative">
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <svg
-                className="h-5 w-5 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
+      <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+            {/* Search */}
+            <div>
+                <label
+                    htmlFor="limit"
+                    className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                    Tìm kiếm
+                </label>
+                <div className="relative">
+                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <svg
+                        className="h-5 w-5 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                        />
+                    </svg>
+                    </div>
+                    <input
+                    type="text"
+                    id="search"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="block w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-3 text-sm placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
+                    placeholder="Tìm theo tên hoặc mã kho..."
+                    />
+                </div>
             </div>
-            <input
-              type="text"
-              id="search"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-3 text-sm placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
-              placeholder="Tìm theo tên hoặc mã kho..."
-            />
-          </div>
-        </div>
 
-        {/* Type Filter */}
-        <div>
-          <label htmlFor="type" className="sr-only">
-            Loại kho
-          </label>
-          <select
-            id="type"
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value as any)}
-            className="block w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-          >
-            <option value="all">Tất cả loại kho</option>
-            <option value="raw_material">Nguyên liệu</option>
-            <option value="packaging">Bao bì</option>
-            <option value="finished_product">Thành phẩm</option>
-            <option value="goods">Hàng hóa</option>
-          </select>
-        </div>
+            {/* Type Filter */}
+            <div>
+            <label
+                htmlFor="limit"
+                className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                Loại kho
+            </label>
+            <select
+                id="type"
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value as any)}
+                className="block w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            >
+                <option value="all">Tất cả loại kho</option>
+                <option value="raw_material">Nguyên liệu</option>
+                <option value="packaging">Bao bì</option>
+                <option value="finished_product">Thành phẩm</option>
+                <option value="goods">Hàng hóa</option>
+            </select>
+            </div>
 
-        {/* Status Filter */}
-        <div>
-          <label htmlFor="status" className="sr-only">
-            Trạng thái
-          </label>
-          <select
-            id="status"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
-            className="block w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-          >
-            <option value="all">Tất cả trạng thái</option>
-            <option value="active">Hoạt động</option>
-            <option value="inactive">Ngưng hoạt động</option>
-          </select>
+            {/* Status Filter */}
+            <div>
+            <label
+                htmlFor="limit"
+                className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                Trạng thái
+            </label>
+            <select
+                id="status"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as any)}
+                className="block w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            >
+                <option value="all">Tất cả trạng thái</option>
+                <option value="active">Hoạt động</option>
+                <option value="inactive">Ngưng hoạt động</option>
+            </select>
+            </div>
+
+            {/* Items per page */}
+            <div>
+                <label
+                htmlFor="limit"
+                className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                Hiển thị
+                </label>
+                <select
+                id="limit"
+                value={limit}
+                onChange={(e) => {
+                    setLimit(Number(e.target.value));
+                    setPage(1); // Reset to first page when changing limit
+                }}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                >
+                <option value={10}>10 / trang</option>
+                <option value={20}>20 / trang</option>
+                <option value={50}>50 / trang</option>
+                <option value={100}>100 / trang</option>
+                </select>
+            </div>
         </div>
       </div>
 
@@ -313,7 +371,7 @@ export default function WarehousesPage() {
 
                       <Can permission="delete_warehouse">
                         <button
-                          onClick={() => handleDelete(warehouse.id, warehouse.warehouseName)}
+                          onClick={() => handleDeleteClick(warehouse)}
                           className="rounded p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                           title="Xóa"
                         >
@@ -329,14 +387,46 @@ export default function WarehousesPage() {
         )}
       </div>
 
-      {/* Stats */}
-      {warehouses.length > 0 && (
-        <div className="text-sm text-gray-500 dark:text-gray-400">
-          Hiển thị {warehouses.length} kho
-          {(typeFilter !== "all" || statusFilter !== "all" || searchTerm) &&
-            ` (đã lọc từ ${response?.data?.length || 0} kho)`}
-        </div>
-      )}
+      {/* Pagination */}
+        {paginationMeta && paginationMeta.total > 0 && (
+            <div className="mt-6 flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            <div className="text-sm text-gray-700 dark:text-gray-300">
+                Hiển thị{" "}
+                <span className="font-medium">
+                {(paginationMeta.page - 1) * paginationMeta.limit + 1}
+                </span>{" "}
+                đến{" "}
+                <span className="font-medium">
+                {Math.min(
+                    paginationMeta.page * paginationMeta.limit,
+                    paginationMeta.total
+                )}
+                </span>{" "}
+                trong tổng số{" "}
+                <span className="font-medium">{paginationMeta.total}</span> kho
+            </div>
+            {paginationMeta.totalPages > 1 && (
+                <Pagination
+                currentPage={paginationMeta.page}
+                totalPages={paginationMeta.totalPages}
+                onPageChange={handlePageChange}
+                />
+            )}
+            </div>
+        )}
+
+        {/* Delete Confirmation Dialog */}
+        <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={closeDeleteDialog}
+        onConfirm={handleConfirmDelete}
+        title="Xóa kho hàng"
+        message={`Bạn có chắc chắn muốn xóa kho hàng "${deletingWarehouse?.warehouseName}"? Hành động này không thể hoàn tác.`}
+        confirmText="Xóa"
+        cancelText="Hủy"
+        variant="danger"
+        isLoading={deleteWarehouse.isPending}
+        />
     </div>
   );
 }

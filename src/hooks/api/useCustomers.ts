@@ -1,7 +1,3 @@
-/**
- * Customers API Hooks
- */
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
@@ -29,50 +25,42 @@ export const CUSTOMER_KEYS = {
   overdueDebt: () => [...CUSTOMER_KEYS.all, "overdue-debt"] as const,
 };
 
-/**
- * Get all customers
- */
+// Get all customers
 export function useCustomers(filters?: CustomerFilters) {
   return useQuery({
     queryKey: CUSTOMER_KEYS.list(filters),
     queryFn: async () => {
       const response = await api.get("/customers", { params: filters });
-      return response as ApiResponse<Customer[]>;
+      return response;
     },
   });
 }
 
-/**
- * Get customer by ID
- */
+// Get customer by ID
 export function useCustomer(id: number, enabled = true) {
   return useQuery({
     queryKey: CUSTOMER_KEYS.detail(id),
     queryFn: async () => {
       const response = await api.get(`/customers/${id}`);
-      return response as ApiResponse<Customer>;
+      return response;
     },
     enabled: enabled && !!id,
   });
 }
 
-/**
- * Get customer debt info
- */
+// Get customer debt info
 export function useCustomerDebt(id: number, enabled = true) {
   return useQuery({
     queryKey: CUSTOMER_KEYS.debt(id),
     queryFn: async () => {
       const response = await api.get(`/customers/${id}/debt`);
-      return response as ApiResponse<CustomerDebtInfo>;
+      return response;
     },
     enabled: enabled && !!id,
   });
 }
 
-/**
- * Get customer order history
- */
+// Get customer order history
 export function useCustomerOrders(id: number, page = 1, limit = 20, enabled = true) {
   return useQuery({
     queryKey: [...CUSTOMER_KEYS.orders(id), page, limit],
@@ -80,35 +68,31 @@ export function useCustomerOrders(id: number, page = 1, limit = 20, enabled = tr
       const response = await api.get(`/customers/${id}/orders`, {
         params: { page, limit },
       });
-      return response as ApiResponse<CustomerOrderHistory>;
+      return response;
     },
     enabled: enabled && !!id,
   });
 }
 
-/**
- * Get customers with overdue debt
- */
+// Get customers with overdue debt
 export function useOverdueDebtCustomers() {
   return useQuery({
     queryKey: CUSTOMER_KEYS.overdueDebt(),
     queryFn: async () => {
       const response = await api.get("/customers/overdue-debt");
-      return response as ApiResponse<Customer[]>;
+      return response;
     },
   });
 }
 
-/**
- * Create customer
- */
+// Create customer
 export function useCreateCustomer() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (data: CreateCustomerDto) => {
       const response = await api.post("/customers", data);
-      return response as ApiResponse<Customer>;
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: CUSTOMER_KEYS.lists() });
@@ -120,16 +104,14 @@ export function useCreateCustomer() {
   });
 }
 
-/**
- * Update customer
- */
+// Update customer
 export function useUpdateCustomer() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data: UpdateCustomerDto }) => {
       const response = await api.put(`/customers/${id}`, data);
-      return response as ApiResponse<Customer>;
+      return response;
     },
     onSuccess: (response, variables) => {
       queryClient.invalidateQueries({ queryKey: CUSTOMER_KEYS.lists() });
@@ -142,16 +124,14 @@ export function useUpdateCustomer() {
   });
 }
 
-/**
- * Update customer credit limit
- */
+// Update customer credit limit
 export function useUpdateCreditLimit() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data: UpdateCreditLimitDto }) => {
       const response = await api.put(`/customers/${id}/credit-limit`, data);
-      return response as ApiResponse<Customer>;
+      return response;
     },
     onSuccess: (response, variables) => {
       queryClient.invalidateQueries({ queryKey: CUSTOMER_KEYS.lists() });
@@ -165,16 +145,14 @@ export function useUpdateCreditLimit() {
   });
 }
 
-/**
- * Update customer status
- */
+// Update customer status
 export function useUpdateCustomerStatus() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data: UpdateCustomerStatusDto }) => {
       const response = await api.patch(`/customers/${id}/status`, data);
-      return response as ApiResponse<Customer>;
+      return response;
     },
     onSuccess: (response, variables) => {
       queryClient.invalidateQueries({ queryKey: CUSTOMER_KEYS.lists() });
@@ -187,9 +165,7 @@ export function useUpdateCustomerStatus() {
   });
 }
 
-/**
- * Delete customer
- */
+// Delete customer
 export function useDeleteCustomer() {
   const queryClient = useQueryClient();
 
@@ -208,9 +184,7 @@ export function useDeleteCustomer() {
   });
 }
 
-/**
- * Bulk delete customers
- */
+// Bulk delete customers
 export function useBulkDeleteCustomers() {
   const queryClient = useQueryClient();
 

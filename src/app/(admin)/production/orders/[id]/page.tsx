@@ -16,7 +16,7 @@ import {
   MaterialRequirements,
   WastageReport,
   ProductionTimeline,
-} from "@/components/features/production";
+} from "@/components/production";
 import {
   completeProductionSchema,
   cancelProductionSchema,

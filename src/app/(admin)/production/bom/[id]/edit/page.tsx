@@ -6,7 +6,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useBOM, useUpdateBOM, useProducts } from "@/hooks/api";
 import { Can } from "@/components/auth";
-import MaterialsTable from "@/components/features/production/MaterialsTable";
+import MaterialsTable from "@/components/production/MaterialsTable";
 import Button from "@/components/ui/button/Button";
 import { BomFormData, ProductType, ApiResponse, Product, Bom } from "@/types";
 import { updateBomSchema } from "@/lib/validations";

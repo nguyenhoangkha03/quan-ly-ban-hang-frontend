@@ -2,6 +2,7 @@
 // Salary Types & DTOs
 //----------------------------------------------
 
+import { PaymentMethod } from "./sales.types";
 import { User } from "./user.types";
 
 /**
@@ -9,15 +10,6 @@ import { User } from "./user.types";
  */
 export type SalaryStatus = "pending" | "approved" | "paid";
 
-/**
- * Payment Method Enum (for pay salary)
- */
-export type PaymentMethod = "cash" | "transfer";
-
-/**
- * Main Salary Entity
- * Represents a salary record for a user in a specific month
- */
 export interface Salary {
   id: number;
   user_id: number;
@@ -164,6 +156,8 @@ export const SALARY_STATUS_LABELS: Record<SalaryStatus, string> = {
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   cash: "Tiền mặt",
   transfer: "Chuyển khoản",
+  installment: "Trả góp", 
+  credit: "Tín dụng",
 };
 
 /**

@@ -1,13 +1,7 @@
-/**
- * Inventory & Warehouse Types - Dựa trên database schema
- */
-
-import type { BaseEntity, Status } from "./common.types";
+import type { BaseEntity } from "./common.types";
 import type { Product } from "./product.types";
 import type { User } from "./user.types";
-
-// Warehouse Type
-export type WarehouseType = "raw_material" | "packaging" | "finished_product" | "goods";
+import { Warehouse, WarehouseType } from "./warehouse.types";
 
 // Transaction Type
 export type TransactionType = "import" | "export" | "transfer" | "disposal" | "stocktake";
@@ -18,24 +12,7 @@ export type TransactionStatus = "draft" | "pending" | "approved" | "completed" |
 // Transfer Status
 export type TransferStatus = "pending" | "in_transit" | "completed" | "cancelled";
 
-// Warehouse
-export interface Warehouse extends BaseEntity {
-  warehouseCode: string;
-  warehouseName: string;
-  warehouseType: WarehouseType;
-  address?: string;
-  city?: string;
-  region?: string;
-  description?: string;
-  managerId?: number;
-  manager?: User;
-  capacity?: number;
-  status: Status;
-  created_by?: number;
-  updated_by?: number;
-}
-
-// Inventory
+// Inventory Interface
 export interface Inventory extends BaseEntity {
   warehouseId: number;
   warehouse?: Warehouse;

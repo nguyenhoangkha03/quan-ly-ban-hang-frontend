@@ -8,7 +8,7 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { useCreatePaymentVoucher } from "@/hooks/api";
-import VoucherForm from "@/components/features/finance/VoucherForm";
+import VoucherForm from "@/components/finance/VoucherForm";
 import type { CreatePaymentVoucherDto } from "@/types";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";

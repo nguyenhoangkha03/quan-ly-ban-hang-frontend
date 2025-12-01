@@ -1,14 +1,8 @@
 "use client";
 
-/**
- * Product Cart Component
- * Shopping cart style component để thêm/sửa sản phẩm trong đơn hàng
- * Với stock validation và inline editing
- */
-
 import React, { useState, useMemo } from "react";
 import { useProducts } from "@/hooks/api";
-import { Product, CartItem, ApiResponse, ProductType } from "@/types";
+import { Product, CartItem, ApiResponse } from "@/types";
 import { Search, Plus, Trash2, Package, AlertCircle } from "lucide-react";
 import Button from "@/components/ui/button/Button";
 import { formatCurrency, formatNumber } from "@/lib/utils";
@@ -41,16 +35,18 @@ export default function ProductCart({
 
   // Fetch products (finished_product và goods)
   const { data: finishedProductsData } = useProducts({
-    productType: ProductType.finished_product,
+    productType: 'finished_product',
     status: "active",
   });
   const finishedProducts = (finishedProductsData as unknown as ApiResponse<Product[]>)?.data || [];
 
   const { data: goodsData } = useProducts({
-    productType: ProductType.goods,
+    productType: 'goods',
     status: "active",
   });
   const goods = (goodsData as unknown as ApiResponse<Product[]>)?.data || [];
+
+  console.log(items);
 
   // Combine products
   const allProducts = useMemo(() => {
@@ -83,7 +79,7 @@ export default function ProductCart({
 
   // Calculate line totals
   const calculateLineTotal = (item: CartItem) => {
-    const subtotal = item.unitPrice * item.quantity;
+    const subtotal = (item.product.sellingPriceRetail || 0) * item.quantity;
     const discount = (subtotal * item.discountPercent) / 100;
     const taxableAmount = subtotal - discount;
     const tax = (taxableAmount * item.taxRate) / 100;
@@ -138,9 +134,9 @@ export default function ProductCart({
                         className="w-full border-b border-gray-200 p-3 text-left transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
                       >
                         <div className="flex items-center gap-3">
-                          {product.imageUrl ? (
+                          {product.images && product.images.length > 0 ? (
                             <img
-                              src={product.imageUrl}
+                              src={product.images[0].imageUrl}
                               alt={product.productName}
                               className="h-12 w-12 rounded object-cover"
                             />
@@ -155,10 +151,10 @@ export default function ProductCart({
                               {product.productName}
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">
-                              SKU: {product.sku} • Đơn vị: {product.unit}
+                              SKU: {product.sku} • Đơn vị: {product.unit} • Thuế: {product.taxRate || 0}%
                             </p>
                             <p className="text-sm font-semibold text-brand-600 dark:text-brand-400">
-                              {formatCurrency(product.salePrice)}
+                              {formatCurrency(product.sellingPriceRetail || 0)}
                             </p>
                           </div>
 
@@ -218,9 +214,9 @@ export default function ProductCart({
                   <tr key={item.productId}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        {item.product.imageUrl ? (
+                        {item.product.images && item.product.images.length > 0 ? (
                           <img
-                            src={item.product.imageUrl}
+                            src={item.product.images[0].imageUrl}
                             alt={item.product.productName}
                             className="h-10 w-10 rounded object-cover"
                           />
@@ -242,12 +238,12 @@ export default function ProductCart({
                     <td className="px-4 py-3 text-right">
                       {disabled ? (
                         <span className="text-sm text-gray-900 dark:text-white">
-                          {formatCurrency(item.unitPrice)}
+                          {formatCurrency(item.product.sellingPriceRetail || 0)}
                         </span>
                       ) : (
                         <input
                           type="number"
-                          value={item.unitPrice}
+                          value={item.product.sellingPriceRetail || 0}
                           onChange={(e) =>
                             onUpdatePrice(item.productId, parseFloat(e.target.value) || 0)
                           }

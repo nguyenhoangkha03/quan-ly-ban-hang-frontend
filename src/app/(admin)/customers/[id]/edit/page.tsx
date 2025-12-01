@@ -3,7 +3,7 @@
 import React from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useCustomer, useUpdateCustomer } from "@/hooks/api";
-import CustomerForm from "@/components/features/customers/CustomerForm";
+import CustomerForm from "@/components/customers/CustomerForm";
 import Button from "@/components/ui/button/Button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";

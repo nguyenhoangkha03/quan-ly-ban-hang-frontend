@@ -21,9 +21,41 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(({
   success = false,
   error,
   hint,
+  value,
   ...rest
 }, ref) => {
   const hasError = !!error;
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  // Format date value for type="date" input (requires yyyy-MM-dd format)
+  const formatDateValue = (val: any) => {
+    if (!val || type !== "date") return val;
+    
+    // If already in yyyy-MM-dd format, return as-is
+    if (typeof val === "string" && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
+      return val;
+    }
+    
+    // Convert ISO string or Date object to yyyy-MM-dd
+    try {
+      const date = new Date(val);
+      if (isNaN(date.getTime())) return val;
+      return date.toISOString().split('T')[0];
+    } catch {
+      return val;
+    }
+  };
+
+  // Use value from React Hook Form if available, otherwise defaultValue
+  const currentValue = value !== undefined ? value : defaultValue;
+  const formattedValue = formatDateValue(currentValue);
+
+  // Update the actual input value when it changes (for React Hook Form compatibility)
+  React.useEffect(() => {
+    if (inputRef.current && type === "date" && formattedValue) {
+      inputRef.current.value = formattedValue;
+    }
+  }, [formattedValue, type]);
 
   // Determine input styles based on state (disabled, success, error)
   let inputClasses = `h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 ${className}`;
@@ -42,12 +74,16 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(({
   return (
     <div className="relative">
       <input
-        ref={ref}
+        ref={(el) => {
+          inputRef.current = el;
+          if (typeof ref === 'function') ref(el);
+          else if (ref) ref.current = el;
+        }}
         type={type}
         id={id}
         name={name}
         placeholder={placeholder}
-        defaultValue={defaultValue}
+        value={formattedValue}
         onChange={onChange}
         min={min}
         max={max}

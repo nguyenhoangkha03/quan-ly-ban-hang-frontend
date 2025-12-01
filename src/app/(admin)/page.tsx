@@ -22,6 +22,8 @@ import {
 export default function Dashboard() {
   const { data: metrics, isLoading: metricsLoading } = useDashboardMetrics();
 
+  console.log(metrics);
+
   return (
     <div className="space-y-6">
       {/* Page Header */}

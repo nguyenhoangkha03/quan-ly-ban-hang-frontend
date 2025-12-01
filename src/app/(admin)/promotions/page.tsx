@@ -20,7 +20,7 @@ import PromotionStatus, {
   DiscountValueDisplay,
   DateRangeDisplay,
   UsageProgressBar,
-} from "@/components/features/promotions/PromotionStatus";
+} from "@/components/promotions/PromotionStatus";
 import Button from "@/components/ui/button/Button";
 import { Can } from "@/components/auth/Can";
 import {

@@ -13,7 +13,7 @@ import {
   useDeleteCustomer,
 } from "@/hooks/api";
 import Button from "@/components/ui/button/Button";
-import { DebtIndicator } from "@/components/features/customers/DebtIndicator";
+import { DebtIndicator } from "@/components/customers/DebtIndicator";
 import {
   updateCreditLimitSchema,
   updateCustomerStatusSchema,

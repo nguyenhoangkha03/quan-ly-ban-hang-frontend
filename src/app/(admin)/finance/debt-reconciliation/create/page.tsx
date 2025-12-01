@@ -12,7 +12,7 @@ import {
   useCreateQuarterlyReconciliation,
   useCreateYearlyReconciliation,
 } from "@/hooks/api/useDebtReconciliation";
-import ReconciliationForm from "@/components/features/finance/ReconciliationForm";
+import ReconciliationForm from "@/components/finance/ReconciliationForm";
 import type { CreateDebtReconciliationDto } from "@/types";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";

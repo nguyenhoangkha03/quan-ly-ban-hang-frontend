@@ -2,9 +2,9 @@
 
 import React, { useState } from "react";
 import { useSalesReport } from "@/hooks/api/useReports";
-import ReportCard from "@/components/features/reports/ReportCard";
-import ReportFilters from "@/components/features/reports/ReportFilters";
-import ExportButton from "@/components/features/reports/ExportButton";
+import ReportCard from "@/components/reports/ReportCard";
+import ReportFilters from "@/components/reports/ReportFilters";
+import ExportButton from "@/components/reports/ExportButton";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import {
   formatCurrencyVND,

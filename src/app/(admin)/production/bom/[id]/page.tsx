@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useBOM, useApproveBOM, useDeleteBOM, useSetBOMInactive } from "@/hooks/api";
 import { Can } from "@/components/auth";
-import BOMCalculator from "@/components/features/production/BOMCalculator";
+import BOMCalculator from "@/components/production/BOMCalculator";
 import Button from "@/components/ui/button/Button";
 import { ApiResponse, Bom } from "@/types";
 import {

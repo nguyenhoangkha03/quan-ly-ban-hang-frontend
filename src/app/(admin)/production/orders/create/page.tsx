@@ -11,7 +11,7 @@ import {
   useBOM,
 } from "@/hooks/api";
 import Button from "@/components/ui/button/Button";
-import { MaterialRequirements } from "@/components/features/production";
+import { MaterialRequirements } from "@/components/production";
 import {
   createProductionOrderSchema,
   type CreateProductionOrderInput,

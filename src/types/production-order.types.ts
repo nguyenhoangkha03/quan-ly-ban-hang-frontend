@@ -3,7 +3,7 @@
  */
 
 import type { BaseEntity } from "./common.types";
-import type { BOM } from "./bom.types";
+import type { Bom } from "./bom.types";
 import type { Product } from "./product.types";
 import type { Warehouse } from "./inventory.types";
 import type { AuthUser } from "./user.types";
@@ -32,7 +32,7 @@ export interface ProductionOrderMaterial extends BaseEntity {
 export interface ProductionOrder extends BaseEntity {
   orderCode: string;
   bomId: number;
-  bom?: BOM;
+  bom?: Bom;
   finishedProductId: number;
   finishedProduct?: Product;
   warehouseId?: number;
@@ -95,12 +95,15 @@ export interface CancelProductionDto {
 export interface ProductionOrderFilters {
   status?: ProductionStatus | ProductionStatus[];
   bomId?: number;
+  sortBy?: "startDate" | "endDate" | "createdAt";
+  limit?: number;
   finishedProductId?: number;
   warehouseId?: number;
   startDateFrom?: string;
   startDateTo?: string;
   endDateFrom?: string;
   endDateTo?: string;
+  sortOrder?: "asc" | "desc";
 }
 
 // Material Shortage Alert

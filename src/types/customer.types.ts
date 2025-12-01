@@ -2,7 +2,7 @@
  * Customer Types - Dựa trên database schema
  */
 
-import type { BaseEntity } from "./common.types";
+import type { BaseEntity, Gender } from "./common.types";
 import type { AuthUser } from "./user.types";
 
 // Customer Type
@@ -13,9 +13,6 @@ export type CustomerClassification = "retail" | "wholesale" | "vip" | "distribut
 
 // Customer Status
 export type CustomerStatus = "active" | "inactive" | "blacklisted";
-
-// Gender
-export type Gender = "male" | "female" | "other";
 
 // Customer
 export interface Customer extends BaseEntity {

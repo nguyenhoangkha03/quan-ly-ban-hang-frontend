@@ -18,28 +18,6 @@ export type ReceiptType = "sales" | "debt_collection" | "refund" | "other";
 // Payment Method (for receipts)
 export type ReceiptPaymentMethod = "cash" | "transfer" | "card";
 
-// Payment Receipt
-export interface PaymentReceipt extends BaseEntity {
-  receiptCode: string;
-  receiptType: ReceiptType;
-  customerId: number;
-  customer?: Customer;
-  orderId?: number;
-  order?: SalesOrder;
-  amount: number;
-  paymentMethod: ReceiptPaymentMethod;
-  bankName?: string;
-  transactionReference?: string;
-  receiptDate: string;
-  approvedBy?: number;
-  approver?: User;
-  approvedAt?: string;
-  isPosted: boolean;
-  notes?: string;
-  createdBy: number;
-  creator?: User;
-}
-
 // Create Payment Receipt DTO
 export interface CreatePaymentReceiptDto {
   receiptType: ReceiptType;

@@ -142,21 +142,29 @@ export const GENDER_LABELS: Record<string, string> = {
   other: "Khác",
 };
 
-// Order Statuses
+// Order Statuses - MATCH BACKEND DATABASE: pending, preparing, delivering, completed, cancelled
 export const ORDER_STATUSES = {
   PENDING: "pending",
-  APPROVED: "approved",
-  IN_PROGRESS: "in_progress",
+  PREPARING: "preparing",
+  DELIVERING: "delivering",
   COMPLETED: "completed",
   CANCELLED: "cancelled",
 } as const;
 
 export const ORDER_STATUS_LABELS: Record<string, string> = {
   pending: "Chờ xác nhận",
-  approved: "Đã duyệt",
-  in_progress: "Đang xử lý",
+  preparing: "Chuẩn bị hàng",
+  delivering: "Đang giao hàng",
   completed: "Hoàn thành",
   cancelled: "Đã hủy",
+};
+
+export const ORDER_STATUS_COLORS: Record<string, string> = {
+  pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
+  preparing: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+  delivering: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
+  completed: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+  cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
 };
 
 // Production Statuses
@@ -192,19 +200,26 @@ export const MATERIAL_TYPE_LABELS: Record<string, string> = {
   packaging: "Bao bì",
 };
 
-// Payment Methods
+// Payment Methods - MATCH BACKEND: cash, transfer, installment, credit
 export const PAYMENT_METHODS = {
   CASH: "cash",
-  BANK_TRANSFER: "bank_transfer",
+  TRANSFER: "transfer",
+  INSTALLMENT: "installment",
   CREDIT: "credit",
-  COD: "cod",
 } as const;
 
 export const PAYMENT_METHOD_LABELS: Record<string, string> = {
   cash: "Tiền mặt",
-  bank_transfer: "Chuyển khoản",
-  credit: "Trả góp/Ghi nợ",
-  cod: "COD",
+  transfer: "Chuyển khoản",
+  installment: "Trả góp",
+  credit: "Ghi nợ",
+};
+
+export const PAYMENT_METHOD_COLORS: Record<string, string> = {
+  cash: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+  transfer: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+  installment: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
+  credit: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
 };
 
 // Payment Statuses

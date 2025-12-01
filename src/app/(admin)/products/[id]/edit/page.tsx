@@ -11,22 +11,22 @@ import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Select from "@/components/form/SelectField";
 import { ProductImageManager } from "@/components/products";
+import { Category, Product, Supplier } from "@/types";
 
-/**
- * Edit Product Page
- */
 export default function EditProductPage() {
   const router = useRouter();
   const params = useParams();
   const productId = Number(params.id);
 
-  const { data: product, isLoading, error } = useProduct(productId);
+  const { data: dataWrapper, isLoading, error } = useProduct(productId);
+  const product = dataWrapper?.data as unknown as Product;
+  console.log(product);
   const updateProduct = useUpdateProduct();
   const { data: categoriesResponse } = useCategories({ status: "active" });
   const { data: suppliersResponse } = useSuppliers({ status: "active" });
 
-  const categories = categoriesResponse?.data || [];
-  const suppliers = suppliersResponse?.data || [];
+  const categories = categoriesResponse?.data as unknown as Category[] || [];
+  const suppliers = suppliersResponse?.data as unknown as Supplier[] || [];
 
   const {
     register,
@@ -34,7 +34,7 @@ export default function EditProductPage() {
     watch,
     reset,
     formState: { errors },
-  } = useForm<ProductFormData>({
+  } = useForm({
     resolver: zodResolver(productSchema),
   });
 
@@ -61,7 +61,7 @@ export default function EditProductPage() {
         sellingPriceVip: product.sellingPriceVip || undefined,
         taxRate: product.taxRate || 0,
         minStockLevel: product.minStockLevel || 0,
-        expiryDate: product.expiryDate || undefined,
+        expiryDate: product.expiryDate?.split("T")[0] || undefined,
         status: product.status,
       });
     }

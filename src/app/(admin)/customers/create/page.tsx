@@ -3,7 +3,7 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { useCreateCustomer } from "@/hooks/api";
-import CustomerForm from "@/components/features/customers/CustomerForm";
+import CustomerForm from "@/components/customers/CustomerForm";
 import Button from "@/components/ui/button/Button";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";

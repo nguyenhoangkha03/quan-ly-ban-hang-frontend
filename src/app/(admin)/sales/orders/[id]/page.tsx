@@ -13,13 +13,14 @@ import {
   useDeleteSalesOrder,
 } from "@/hooks/api";
 import Button from "@/components/ui/button/Button";
-import PaymentForm from "@/components/features/sales/PaymentForm";
-import OrderTimeline from "@/components/features/sales/OrderTimeline";
+import PaymentForm from "@/components/sales/PaymentForm";
+import OrderTimeline from "@/components/sales/OrderTimeline";
 import {
   cancelOrderSchema,
   type CancelOrderInput,
   type ProcessPaymentInput,
 } from "@/lib/validations";
+import { downloadInvoicePDF, printInvoice } from "@/lib/invoice-html";
 import { ApiResponse, SalesOrder } from "@/types";
 import {
   ArrowLeft,
@@ -33,6 +34,8 @@ import {
   DollarSign,
   Calendar,
   FileText,
+  Download,
+  Printer,
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -63,6 +66,8 @@ export default function SalesOrderDetailPage() {
   const response = data as unknown as ApiResponse<SalesOrder>;
   const order = response?.data;
 
+  console.log(order);
+
   // Mutations
   const approveOrder = useApproveSalesOrder();
   const completeOrder = useCompleteSalesOrder();
@@ -90,7 +95,7 @@ export default function SalesOrderDetailPage() {
     if (!confirmed) return;
 
     try {
-      await approveOrder.mutateAsync({ id: orderId });
+      await approveOrder.mutateAsync({ id: orderId, data: {} });
     } catch (error) {
       console.error("Failed to approve order:", error);
     }
@@ -151,6 +156,26 @@ export default function SalesOrderDetailPage() {
       router.push("/sales/orders");
     } catch (error) {
       console.error("Failed to delete order:", error);
+    }
+  };
+
+  // Handle Export PDF
+  const handleExportPDF = () => {
+    if (!order) return;
+    try {
+      downloadInvoicePDF(order);
+    } catch (error) {
+      console.error("Failed to export PDF:", error);
+    }
+  };
+
+  // Handle Print
+  const handlePrint = () => {
+    if (!order) return;
+    try {
+      printInvoice(order);
+    } catch (error) {
+      console.error("Failed to print invoice:", error);
     }
   };
 
@@ -274,6 +299,27 @@ export default function SalesOrderDetailPage() {
               </Button>
             </Can>
           )}
+
+          {/* Export & Print Buttons */}
+          <div className="border-l border-gray-300 pl-3 dark:border-gray-700">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportPDF}
+              title="Xuất hóa đơn PDF"
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrint}
+              title="In hóa đơn"
+              className="ml-2"
+            >
+              <Printer className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 

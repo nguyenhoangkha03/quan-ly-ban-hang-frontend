@@ -8,7 +8,7 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { useCreatePromotion } from "@/hooks/api/usePromotions";
-import PromotionForm from "@/components/features/promotions/PromotionForm";
+import PromotionForm from "@/components/promotions/PromotionForm";
 import type { CreatePromotionDto } from "@/types";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";

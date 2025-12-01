@@ -20,7 +20,7 @@ import Button from "@/components/ui/button/Button";
 import ReceiptStatus, {
   ReceiptTypeBadge,
   PaymentMethodBadge,
-} from "@/components/features/finance/ReceiptStatus";
+} from "@/components/finance/ReceiptStatus";
 import {
   ApiResponse,
   PaymentReceipt,

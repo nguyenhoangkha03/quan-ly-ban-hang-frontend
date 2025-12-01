@@ -3,7 +3,7 @@
 // ------------------
 
 // Status Types
-export type Status = "active" | "inactive";
+export type StatusCommon = "active" | "inactive";
 export type UserStatus = "active" | "inactive" | "locked";
 
 // Gender

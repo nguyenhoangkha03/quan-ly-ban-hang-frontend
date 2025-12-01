@@ -20,7 +20,7 @@ import UserStatusBadge, {
   GenderDisplay,
   LastLoginDisplay,
   UserAvatar,
-} from "@/components/features/users/UserStatus";
+} from "@/components/users/UserStatus";
 import type { UserStatus } from "@/types";
 import {
   ArrowLeft,

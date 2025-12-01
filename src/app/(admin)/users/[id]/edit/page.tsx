@@ -9,7 +9,7 @@ import React from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useUser, useUpdateUser } from "@/hooks/api/useUsers";
-import UserForm from "@/components/features/users/UserForm";
+import UserForm from "@/components/users/UserForm";
 import type { UpdateUserDto } from "@/types";
 import { ArrowLeft, UserCog } from "lucide-react";
 

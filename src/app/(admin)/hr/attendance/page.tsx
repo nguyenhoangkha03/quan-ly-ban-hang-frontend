@@ -1,20 +1,15 @@
 "use client";
 
-/**
- * Attendance List Page
- * Calendar view and list view for attendance records
- */
-
 import React, { useState, useMemo } from "react";
 import { useMyAttendance, useAttendance, useAttendanceStatistics } from "@/hooks/api/useAttendance";
 import { useUsers } from "@/hooks/api/useUsers";
 import { Can } from "@/components/auth";
-import AttendanceCalendar from "@/components/features/attendance/AttendanceCalendar";
+import AttendanceCalendar from "@/components/attendance/AttendanceCalendar";
 import AttendanceStatusBadge, {
   TimeDisplay,
   WorkHoursDisplay,
   LeaveTypeDisplay,
-} from "@/components/features/attendance/AttendanceStatus";
+} from "@/components/attendance/AttendanceStatus";
 import type { Attendance } from "@/types";
 import {
   Calendar,

@@ -28,10 +28,6 @@ import {
 import { format } from "date-fns";
 import { formatCurrency } from "@/lib/utils";
 
-/**
- * Sales Orders List Page
- * Danh sách đơn hàng bán với filters và statistics
- */
 export default function SalesOrdersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [orderStatusFilter, setOrderStatusFilter] = useState<OrderStatus | "all">("all");

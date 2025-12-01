@@ -8,7 +8,7 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { Can } from "@/components/auth/Can";
-import SalaryCalculator from "@/components/features/salary/SalaryCalculator";
+import SalaryCalculator from "@/components/salary/SalaryCalculator";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
 export default function CalculateSalaryPage() {

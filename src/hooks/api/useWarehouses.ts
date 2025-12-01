@@ -1,11 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
-import type { Warehouse, WarehouseStatistics, ApiResponse, PaginationParams } from "@/types";
+import type { Warehouse, WarehouseStatistics, ApiResponse, PaginationParams, WarehouseFilters } from "@/types";
 import { toast } from "react-hot-toast";
 
-/**
- * Query Keys
- */
+// Dashboard Statistics DTO
+export interface WarehouseCards {
+  totalWarehouses: number;
+  activeWarehouses: number;
+  createdThisMonth: number;
+  totalInventoryValue: number;
+}
+
+// Query Keys
 export const warehouseKeys = {
   all: ["warehouses"] as const,
   lists: () => [...warehouseKeys.all, "list"] as const,
@@ -15,10 +21,8 @@ export const warehouseKeys = {
   statistics: (id: number) => [...warehouseKeys.all, "statistics", id] as const,
 };
 
-/**
- * Get Warehouses List
- */
-export function useWarehouses(params?: PaginationParams) {
+// Get Warehouses List
+export function useWarehouses(params?: PaginationParams & WarehouseFilters) {
   return useQuery({
     queryKey: warehouseKeys.list(params),
     queryFn: async () => {
@@ -30,9 +34,7 @@ export function useWarehouses(params?: PaginationParams) {
   });
 }
 
-/**
- * Get Single Warehouse
- */
+// Get Single Warehouse
 export function useWarehouse(id: number, enabled = true) {
   return useQuery({
     queryKey: warehouseKeys.detail(id),
@@ -44,9 +46,7 @@ export function useWarehouse(id: number, enabled = true) {
   });
 }
 
-/**
- * Create Warehouse
- */
+// Create Warehouse
 export function useCreateWarehouse() {
   const queryClient = useQueryClient();
 
@@ -69,9 +69,7 @@ export function useCreateWarehouse() {
   });
 }
 
-/**
- * Update Warehouse
- */
+// Update Warehouse
 export function useUpdateWarehouse() {
   const queryClient = useQueryClient();
 
@@ -98,9 +96,7 @@ export function useUpdateWarehouse() {
   });
 }
 
-/**
- * Delete Warehouse
- */
+// Delete Warehouse
 export function useDeleteWarehouse() {
   const queryClient = useQueryClient();
 
@@ -123,9 +119,7 @@ export function useDeleteWarehouse() {
   });
 }
 
-/**
- * Get Warehouse Statistics
- */
+// Get Warehouse Statistics
 export function useWarehouseStatistics(id: number, enabled = true) {
   return useQuery({
     queryKey: warehouseKeys.statistics(id),
@@ -134,5 +128,17 @@ export function useWarehouseStatistics(id: number, enabled = true) {
       return response;
     },
     enabled: enabled && !!id,
+  });
+}
+
+// Get Dashboard Statistics (Overview for all warehouses)
+export function useWarehouseCards() {
+  return useQuery({
+    queryKey: ["warehouses", "dashboard-stats"],
+    queryFn: async () => {
+      const response = await api.get<ApiResponse<WarehouseCards>>("/warehouses/cards/view");
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }

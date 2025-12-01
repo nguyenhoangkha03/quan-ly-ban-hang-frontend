@@ -1,8 +1,10 @@
 import { ProductFormData } from "@/lib/validations";
-import type { BaseEntity, Status } from "./common.types";
+import type { BaseEntity, StatusCommon } from "./common.types";
 
 // Product Type
 export type ProductType = "raw_material" | "packaging" | "finished_product" | "goods";
+
+export type ProductStatus = "active" | "inactive" | "discontinued";
 
 // Packaging Type
 export type PackagingType = "bottle" | "box" | "bag" | "label" | "other";
@@ -19,7 +21,7 @@ export interface Category extends BaseEntity {
   parent?: Category;
   children?: Category[];
   description?: string;
-  status: Status;
+  status: StatusCommon;
 }
 
 // Supplier
@@ -34,7 +36,7 @@ export interface Supplier extends BaseEntity {
   taxCode?: string;
   paymentTerms?: string;
   notes?: string;
-  status: Status;
+  status: StatusCommon;
   created_by?: number;
   updated_by?: number;
 }
@@ -62,7 +64,7 @@ export interface Product extends BaseEntity {
   taxRate?: number;
   minStockLevel?: number;
   expiryDate?: string;
-  status: Status;
+  status: StatusCommon;
   images?: ProductImage[];
   videos?: ProductVideo[];
   createdBy?: number;
@@ -104,7 +106,7 @@ export interface ProductFilters {
   packagingType?: PackagingType;
   categoryId?: number;
   supplierId?: number;
-  status?: Status;
+  status?: ProductStatus;
   lowStock?: boolean;
   expiringSoon?: boolean;
   priceMin?: number;

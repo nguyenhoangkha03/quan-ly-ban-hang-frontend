@@ -18,8 +18,8 @@ import Button from "@/components/ui/button/Button";
 import DeliveryStatus, {
   DeliveryStatusStepper,
   DeliveryStatusSelect,
-} from "@/components/features/sales/DeliveryStatus";
-import ProofUpload, { ProofDisplay } from "@/components/features/sales/ProofUpload";
+} from "@/components/sales/DeliveryStatus";
+import ProofUpload, { ProofDisplay } from "@/components/sales/ProofUpload";
 import {
   ApiResponse,
   Delivery,

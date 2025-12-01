@@ -20,7 +20,7 @@ import type { ReconciliationType, ReconciliationStatus } from "@/types";
 import ReconciliationStatus, {
   ReconciliationTypeBadge,
   EntityTypeBadge,
-} from "@/components/features/finance/ReconciliationStatus";
+} from "@/components/finance/ReconciliationStatus";
 import Button from "@/components/ui/button/Button";
 import { Can } from "@/components/auth/Can";
 import {

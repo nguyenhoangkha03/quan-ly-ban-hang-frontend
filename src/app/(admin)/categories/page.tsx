@@ -20,7 +20,7 @@ import { generateSlug } from "@/lib/utils/categoryHelpers";
 export default function CategoriesPage() {
   // Pagination & Filter state
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit, setLimit] = useState(20);
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearch = useDebounce(searchTerm, 400);
   const [statusFilter, setStatusFilter] = useState<"active" | "inactive" | undefined>(undefined);
@@ -187,9 +187,9 @@ export default function CategoriesPage() {
 
       {/* Filters */}
       <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {/* Search */}
-          <div className="md:col-span-2">
+          <div>
             <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
               Tìm kiếm
             </label>
@@ -240,6 +240,26 @@ export default function CategoriesPage() {
               <option value="all">Tất cả</option>
               <option value="active">Hoạt động</option>
               <option value="inactive">Không hoạt động</option>
+            </select>
+          </div>
+
+          {/* Items per page */}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Hiển thị
+            </label>
+            <select
+              value={limit}
+              onChange={(e) => {
+                setLimit(Number(e.target.value));
+                setPage(1); // Reset to first page when changing limit
+              }}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            >
+              <option value={10}>10 / trang</option>
+              <option value={20}>20 / trang</option>
+              <option value={50}>50 / trang</option>
+              <option value={100}>100 / trang</option>
             </select>
           </div>
         </div>
@@ -337,7 +357,7 @@ export default function CategoriesPage() {
         )}
 
         {/* Stats & Pagination */}
-        {meta && (
+        {/* {meta && (
           <div className="flex flex-col items-center justify-between gap-4 border-t border-gray-200 px-6 py-4 sm:flex-row dark:border-gray-700">
             <div className="text-sm text-gray-500 dark:text-gray-400">
               Hiển thị {categories.length} / {meta.total} danh mục
@@ -351,8 +371,36 @@ export default function CategoriesPage() {
               />
             )}
           </div>
-        )}
+        )} */}
       </div>
+
+      {/* Pagination */}
+        {meta && meta.total > 0 && (
+        <div className="mt-6 flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            <div className="text-sm text-gray-700 dark:text-gray-300">
+            Hiển thị{" "}
+            <span className="font-medium">
+                {(meta.page - 1) * meta.limit + 1}
+            </span>{" "}
+            đến{" "}
+            <span className="font-medium">
+                {Math.min(
+                meta.page * meta.limit,
+                meta.total
+                )}
+            </span>{" "}
+            trong tổng số{" "}
+            <span className="font-medium">{meta.total}</span> danh mục
+            </div>
+            {meta.totalPages > 1 && (
+            <Pagination
+                currentPage={meta.page}
+                totalPages={meta.totalPages}
+                onPageChange={setPage}
+            />
+            )}
+        </div>
+      )}
 
       {/* Modal */}
       {isModalOpen && (

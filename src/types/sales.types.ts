@@ -8,14 +8,14 @@ import type { Product } from "./product.types";
 import type { User } from "./user.types";
 import type { Warehouse } from "./inventory.types";
 
-// Payment Method
-export type PaymentMethod = "cash" | "bank_transfer" | "credit" | "cod";
+// Payment Method - MATCH BACKEND & DATABASE
+export type PaymentMethod = "cash" | "transfer" | "installment" | "credit";
 
 // Payment Status
 export type PaymentStatus = "unpaid" | "partial" | "paid";
 
-// Order Status
-export type OrderStatus = "pending" | "approved" | "in_progress" | "completed" | "cancelled";
+// Order Status - MATCH BACKEND & DATABASE
+export type OrderStatus = "pending" | "preparing" | "delivering" | "completed" | "cancelled";
 
 // Delivery Status
 export type DeliveryStatus = "pending" | "in_transit" | "delivered" | "failed" | "returned";
@@ -126,7 +126,7 @@ export interface CreateSalesOrderDto {
   paymentMethod: PaymentMethod;
   paidAmount?: number;
   notes?: string;
-  details: Array<{
+  items: Array<{
     productId: number;
     warehouseId?: number;
     quantity: number;

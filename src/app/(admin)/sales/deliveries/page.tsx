@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useDeliveries, useDeliveryStatistics } from "@/hooks/api";
 import { Can } from "@/components/auth";
 import Button from "@/components/ui/button/Button";
-import DeliveryStatus from "@/components/features/sales/DeliveryStatus";
+import DeliveryStatus from "@/components/sales/DeliveryStatus";
 import {
   ApiResponse,
   Delivery,

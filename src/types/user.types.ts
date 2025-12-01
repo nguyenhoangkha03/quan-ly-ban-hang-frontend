@@ -1,6 +1,6 @@
 // USER, ROLE, PERMISSION TYPES
 
-import type { BaseEntity, Gender, Status, UserStatus } from "./common.types";
+import type { BaseEntity, Gender, StatusCommon, UserStatus } from "./common.types";
 
 // ------------------
 // ROLES             
@@ -9,7 +9,7 @@ export interface Role extends BaseEntity {
   role_key: string;
   role_name: string;
   description?: string;
-  status: Status;
+  status: StatusCommon;
   permissions?: Permission[];
 }
 
@@ -27,26 +27,26 @@ export interface Permission extends BaseEntity {
 // USERS             
 // ------------------
 export interface User extends BaseEntity {
-  employee_code: string;
+  employeeCode: string;
   email: string;
-  password_hash?: string;
-  full_name: string;
+  passwordHash?: string;
+  fullName: string;
   cccd?: string;
-  issued_at?: string;
-  issued_by?: string;
+  issuedAt?: string;
+  issuedBy?: string;
   phone?: string;
   address?: string;
   gender?: Gender;
-  date_of_birth?: string;
+  dateOfBirth?: string;
   avatar_url?: string;
-  role_id: number;
+  roleId: number;
   role?: Role;
-  warehouse_id?: number;
+  warehouseId?: number;
   warehouse?: WarehouseMinimal;
   status: UserStatus;
-  created_by?: number;
-  updated_by?: number;
-  last_login?: string;
+  createdBy?: number;
+  updatedBy?: number;
+  lastLogin?: string;
 }
 
 // Warehouse (minimal for user relation)

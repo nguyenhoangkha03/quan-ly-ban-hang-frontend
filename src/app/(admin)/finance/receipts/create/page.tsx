@@ -8,7 +8,7 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { useCreatePaymentReceipt } from "@/hooks/api";
-import ReceiptForm from "@/components/features/finance/ReceiptForm";
+import ReceiptForm from "@/components/finance/ReceiptForm";
 import type { CreatePaymentReceiptDto } from "@/types";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";

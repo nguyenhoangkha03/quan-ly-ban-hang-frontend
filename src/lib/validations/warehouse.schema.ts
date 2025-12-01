@@ -39,18 +39,3 @@ export type WarehouseFormData = z.infer<typeof warehouseSchema>;
 export const updateWarehouseSchema = warehouseSchema.partial();
 
 export type UpdateWarehouseFormData = z.infer<typeof updateWarehouseSchema>;
-
-/**
- * Warehouse Filter Schema
- */
-export const warehouseFilterSchema = z.object({
-  warehouseType: z
-    .enum(["raw_material", "packaging", "finished_product", "goods"])
-    .optional(),
-  status: z.enum(["active", "inactive"]).optional(),
-  city: z.string().optional(),
-  region: z.string().optional(),
-  managerId: z.number().int().positive().optional(),
-});
-
-export type WarehouseFilterFormData = z.infer<typeof warehouseFilterSchema>;

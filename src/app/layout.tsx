@@ -10,6 +10,18 @@ const outfit = Outfit({
   subsets: ["latin"],
 });
 
+
+export const metadata = {
+    title: {
+        default: 'Hệ Thống Quản Lý Nam Việt',
+        template: '%s | Nam Việt',
+    },
+    icons: {
+        icon: "/favicon.ico",
+        apple: "/apple-touch-icon.png",
+    },
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{

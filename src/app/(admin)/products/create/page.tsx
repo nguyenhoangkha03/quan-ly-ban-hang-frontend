@@ -6,8 +6,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCreateProduct, useCategories, useSuppliers } from "@/hooks/api";
 import { productSchema, type ProductFormData } from "@/lib/validations/product.schema";
-import { ProductImageManager } from "@/components/products";
-import { ProductVideoManager } from "@/components/products";
+import { ProductImageManager, type ProductImageManagerRef } from "@/components/products";
+import { ProductVideoManager, type ProductVideoManagerRef } from "@/components/products";
 import Button from "@/components/ui/button/Button";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
@@ -22,7 +22,8 @@ export default function CreateProductPage() {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [savingMedia, setSavingMedia] = useState(false);
-  const imageManagerRef = React.useRef<any>(null);
+  const imageManagerRef = React.useRef<ProductImageManagerRef>(null);
+  const videoManagerRef = React.useRef<ProductVideoManagerRef>(null);
   
   const createProduct = useCreateProduct();
   const { data: categoriesResponse } = useCategories({ status: "active" });
@@ -433,10 +434,11 @@ export default function CreateProductPage() {
                 </div>
                 <ProductImageManager
                   ref={imageManagerRef}
-                  productId={createdProductId}
+                  productId={createdProductId!}
                   images={[]}
                   maxImages={5}
-                  hidePreview={true}
+                  hidePreview={false}
+                  hideSaveButton={true}
                   onImagesChange={setImageFiles}
                   className="bg-white dark:bg-gray-900"
                 />
@@ -451,7 +453,8 @@ export default function CreateProductPage() {
                   </h3>
                 </div>
                 <ProductVideoManager
-                  productId={createdProductId}
+                  ref={videoManagerRef}
+                  productId={createdProductId!}
                   video={undefined}
                   onVideoChange={setVideoFile}
                   className="bg-white dark:bg-gray-900"
@@ -477,27 +480,34 @@ export default function CreateProductPage() {
               <Button
                 type="button"
                 variant="primary"
-                disabled={savingMedia || (imageFiles.length === 0 && !videoFile)}
+                isLoading={savingMedia}
                 onClick={async () => {
-                  if (imageFiles.length === 0 && !videoFile) {
-                    alert("Vui lòng chọn ít nhất một hình ảnh hoặc video!");
-                    return;
-                  }
-                  
-                  setSavingMedia(true);
-                  // Images and videos are saved automatically via onImagesChange and onVideoChange callbacks
-                  // So we just close the modal
-                  setTimeout(() => {
-                    setSavingMedia(false);
+                  try {
+                    setSavingMedia(true);
+
+                    // Save images if there are any
+                    if (imageManagerRef.current && imageManagerRef.current.hasUnsavedImages()) {
+                      await imageManagerRef.current.saveImages();
+                    }
+
+                    // Save video if there is any
+                    if (videoManagerRef.current && videoManagerRef.current.hasUnsavedVideo()) {
+                      await videoManagerRef.current.saveVideo();
+                    }
+
                     setShowMediaUpload(false);
                     setCreatedProductId(null);
                     setVideoFile(null);
                     setImageFiles([]);
                     router.push(`/products/${createdProductId}`);
-                  }, 1000);
+                  } catch (error) {
+                    console.error("Save media error:", error);
+                  } finally {
+                    setSavingMedia(false);
+                  }
                 }}
               >
-                {savingMedia ? "Đang lưu..." : "Lưu & Tiếp tục"}
+                {savingMedia ? "Đang lưu..." : "Lưu"}
               </Button>
             </div>
           </div>

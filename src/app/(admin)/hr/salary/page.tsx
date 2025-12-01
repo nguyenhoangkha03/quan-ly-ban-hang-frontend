@@ -18,7 +18,7 @@ import SalaryStatusBadge, {
   MonthDisplay,
   CurrencyDisplay,
   PostedStatus,
-} from "@/components/features/salary/SalaryStatus";
+} from "@/components/salary/SalaryStatus";
 import { dateToMonth, formatCurrency } from "@/types/salary.types";
 import type { SalaryStatus, SalaryFilters } from "@/types/salary.types";
 import {

@@ -18,7 +18,7 @@ import {
 import ReconciliationStatus, {
   ReconciliationTypeBadge,
   EntityTypeBadge,
-} from "@/components/features/finance/ReconciliationStatus";
+} from "@/components/finance/ReconciliationStatus";
 import Button from "@/components/ui/button/Button";
 import Modal from "@/components/ui/modal/Modal";
 import { Can } from "@/components/auth/Can";

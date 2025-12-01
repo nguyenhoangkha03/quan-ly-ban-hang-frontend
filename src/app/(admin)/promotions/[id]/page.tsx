@@ -12,7 +12,7 @@ import {
   usePromotion,
   useUpdatePromotion,
 } from "@/hooks/api/usePromotions";
-import PromotionForm from "@/components/features/promotions/PromotionForm";
+import PromotionForm from "@/components/promotions/PromotionForm";
 import type { UpdatePromotionDto } from "@/types";
 import { ArrowLeft } from "lucide-react";
 

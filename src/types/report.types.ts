@@ -2,28 +2,15 @@
 // Report Types & DTOs
 //----------------------------------------------
 
+import { InventoryByType, RevenueDataPoint, TopProduct } from "./dashboard.types";
+import { ProductType } from "./product.types";
+import { SalesChannel } from "./sales.types";
+
 /**
  * Report Group By Options
  */
 export type ReportGroupBy = "day" | "week" | "month" | "year";
 
-/**
- * Sales Channel Types
- */
-export type SalesChannel = "retail" | "wholesale" | "online" | "distributor";
-
-/**
- * Product Type (for inventory)
- */
-export type ProductType =
-  | "raw_material"
-  | "packaging"
-  | "finished_product"
-  | "goods";
-
-//----------------------------------------------
-// Revenue Report Types
-//----------------------------------------------
 
 export interface RevenueReportFilters {
   fromDate?: string;
@@ -31,13 +18,6 @@ export interface RevenueReportFilters {
   groupBy?: ReportGroupBy;
   salesChannel?: SalesChannel;
   customerId?: number;
-}
-
-export interface RevenueDataPoint {
-  date: string; // ISO date or period label
-  revenue: number;
-  orderCount: number;
-  avgOrderValue: number;
 }
 
 export interface RevenueByChannel {
@@ -90,13 +70,6 @@ export interface InventoryItem {
   value: number; // quantity * unit cost
 }
 
-export interface InventoryByType {
-  type: ProductType;
-  quantity: number;
-  value: number;
-  percentage: number;
-}
-
 export interface InventoryByWarehouse {
   warehouseId: number;
   warehouseName: string;
@@ -135,15 +108,6 @@ export interface SalesReportFilters {
   fromDate?: string;
   toDate?: string;
   limit?: number;
-}
-
-export interface TopProduct {
-  productId: number;
-  productCode: string;
-  productName: string;
-  quantitySold: number;
-  revenue: number;
-  orderCount: number;
 }
 
 export interface TopCustomer {
@@ -279,25 +243,10 @@ export interface FinancialReport {
 // Dashboard Types
 //----------------------------------------------
 
-export interface DashboardMetrics {
-  todayRevenue: number;
-  weekRevenue: number;
-  monthRevenue: number;
-  newOrders: number;
-  totalInventoryValue: number;
-  accountsReceivable: number;
-}
-
 export interface DashboardSalesChannel {
   channel: SalesChannel;
   revenue: number;
   percentage: number;
-}
-
-export interface DashboardInventoryByType {
-  type: ProductType;
-  quantity: number;
-  value: number;
 }
 
 //----------------------------------------------

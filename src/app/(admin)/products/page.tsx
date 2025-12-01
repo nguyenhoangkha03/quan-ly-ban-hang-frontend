@@ -1,18 +1,21 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import * as XLSX from "xlsx";
 import {
   useProducts,
   useBulkDeleteProducts,
   useBulkUpdateProductStatus,
+  useDeleteProduct,
   useCategories,
   useSuppliers,
 } from "@/hooks/api";
 import { Can } from "@/components/auth";
 import { ProductTable } from "@/components/products";
 import Button from "@/components/ui/button/Button";
+import Pagination from "@/components/tables/Pagination";
+import ConfirmDialog from "@/components/ui/modal/ConfirmDialog";
 import { ApiResponse, Category, Product, ProductType, Supplier } from "@/types";
 import { Download, Trash2, CheckCircle, XCircle } from "lucide-react";
 
@@ -25,9 +28,24 @@ export default function ProductsPage() {
   const [categoryFilter, setCategoryFilter] = useState<number | "all">("all");
   const [supplierFilter, setSupplierFilter] = useState<number | "all">("all");
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
+  const [isBulkUpdateDialogOpen, setIsBulkUpdateDialogOpen] = useState(false);
+  const [bulkUpdateStatusValue, setBulkUpdateStatusValue] = useState<"active" | "inactive" | "discontinued">("active");
 
-  // Fetch products (increase limit to get all products)
-  const { data, isLoading, error } = useProducts({ limit: 1000 });
+  // Fetch products with pagination
+  const { data, isLoading, error } = useProducts({
+    page,
+    limit,
+    ...(searchTerm && { search: searchTerm }),
+    ...(typeFilter !== "all" && { productType: typeFilter }),
+    ...(statusFilter !== "all" && { status: statusFilter }),
+    ...(categoryFilter !== "all" && { categoryId: categoryFilter }),
+    ...(supplierFilter !== "all" && { supplierId: supplierFilter }),
+  });
   const response = data as unknown as ApiResponse<Product[]>;
   const { data: categoriesResponse } = useCategories({ status: "active" });
   const categoriesTemp = categoriesResponse as unknown as ApiResponse<Category[]>;
@@ -35,89 +53,94 @@ export default function ProductsPage() {
   const suppliersTemp = suppliersResponse as unknown as ApiResponse<Supplier[]>;
   const bulkDelete = useBulkDeleteProducts();
   const bulkUpdateStatus = useBulkUpdateProductStatus();
+  const deleteProduct = useDeleteProduct();
 
   const categories = categoriesTemp?.data || [];
   const suppliers = suppliersTemp?.data || [];
 
-  // Filter products
-  const products = useMemo(() => {
-    if (!response?.data) return [];
+  // Products from API response (already filtered by backend)
+  const products = response?.data || [];
+  const paginationMeta = response?.meta;
 
-    return response.data.filter((product) => {
-      const matchesSearch =
-        (product.productName?.toLowerCase() || "").includes(
-          searchTerm.toLowerCase()
-        ) ||
-        (product.sku?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-        (product.barcode?.toLowerCase() || "").includes(
-          searchTerm.toLowerCase()
-        );
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, typeFilter, statusFilter, categoryFilter, supplierFilter]);
 
-      const matchesType =
-        typeFilter === "all" || product.productType === typeFilter;
-      const matchesStatus =
-        statusFilter === "all" || product.status === statusFilter;
-      const matchesCategory =
-        categoryFilter === "all" || product.categoryId === categoryFilter;
-      const matchesSupplier =
-        supplierFilter === "all" || product.supplierId === supplierFilter;
+  // Handle page change
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    setSelectedIds([]); // Clear selections when changing page
+  };
 
-      return matchesSearch && matchesType && matchesStatus && matchesCategory && matchesSupplier;
-    });
-  }, [response?.data, searchTerm, typeFilter, statusFilter, categoryFilter, supplierFilter]);
+  // Handle delete single product
+  const handleDeleteClick = (product: Product) => {
+    setDeletingProduct(product);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingProduct) return;
+    await deleteProduct.mutateAsync(deletingProduct.id);
+    setIsDeleteDialogOpen(false);
+    setDeletingProduct(null);
+  };
+
+  const closeDeleteDialog = () => {
+    setIsDeleteDialogOpen(false);
+    setDeletingProduct(null);
+  };
 
   // Handle bulk delete
-  const handleBulkDelete = async () => {
+  const handleBulkDeleteClick = () => {
     if (selectedIds.length === 0) {
       alert("Vui lòng chọn ít nhất một sản phẩm!");
       return;
     }
+    setIsBulkDeleteDialogOpen(true);
+  };
 
-    if (
-      !window.confirm(
-        `Bạn có chắc chắn muốn xóa ${selectedIds.length} sản phẩm đã chọn?`
-      )
-    ) {
-      return;
-    }
-
+  const handleConfirmBulkDelete = async () => {
     try {
       await bulkDelete.mutateAsync(selectedIds);
       setSelectedIds([]);
+      setIsBulkDeleteDialogOpen(false);
     } catch (error) {
       console.error("Bulk delete failed:", error);
     }
   };
 
+  const closeBulkDeleteDialog = () => {
+    setIsBulkDeleteDialogOpen(false);
+  };
+
   // Handle bulk update status
-  const handleBulkUpdateStatus = async (
+  const handleBulkUpdateStatusClick = (
     status: "active" | "inactive" | "discontinued"
   ) => {
     if (selectedIds.length === 0) {
       alert("Vui lòng chọn ít nhất một sản phẩm!");
       return;
     }
+    setBulkUpdateStatusValue(status);
+    setIsBulkUpdateDialogOpen(true);
+  };
 
-    const statusLabels = {
-      active: "Hoạt động",
-      inactive: "Tạm ngưng",
-      discontinued: "Ngừng kinh doanh",
-    };
-
-    if (
-      !window.confirm(
-        `Bạn có chắc chắn muốn cập nhật ${selectedIds.length} sản phẩm thành "${statusLabels[status]}"?`
-      )
-    ) {
-      return;
-    }
-
+  const handleConfirmBulkUpdateStatus = async () => {
     try {
-      await bulkUpdateStatus.mutateAsync({ ids: selectedIds, status });
+      await bulkUpdateStatus.mutateAsync({
+        ids: selectedIds,
+        status: bulkUpdateStatusValue
+      });
       setSelectedIds([]);
+      setIsBulkUpdateDialogOpen(false);
     } catch (error) {
       console.error("Bulk update status failed:", error);
     }
+  };
+
+  const closeBulkUpdateDialog = () => {
+    setIsBulkUpdateDialogOpen(false);
   };
 
   // Export to Excel
@@ -249,7 +272,7 @@ export default function ProductsPage() {
 
       {/* Filters */}
       <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
+        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
           {/* Search */}
           <div>
             <label
@@ -366,6 +389,30 @@ export default function ProductsPage() {
               <option value="discontinued">Ngừng kinh doanh</option>
             </select>
           </div>
+
+          {/* Items per page */}
+          <div>
+            <label
+              htmlFor="limit"
+              className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Hiển thị
+            </label>
+            <select
+              id="limit"
+              value={limit}
+              onChange={(e) => {
+                setLimit(Number(e.target.value));
+                setPage(1); // Reset to first page when changing limit
+              }}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            >
+              <option value={10}>10 / trang</option>
+              <option value={20}>20 / trang</option>
+              <option value={50}>50 / trang</option>
+              <option value={100}>100 / trang</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -381,7 +428,7 @@ export default function ProductsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handleBulkUpdateStatus("active")}
+                onClick={() => handleBulkUpdateStatusClick("active")}
                 disabled={bulkUpdateStatus.isPending}
               >
                 <CheckCircle className="mr-1 h-4 w-4" />
@@ -390,7 +437,7 @@ export default function ProductsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handleBulkUpdateStatus("inactive")}
+                onClick={() => handleBulkUpdateStatusClick("inactive")}
                 disabled={bulkUpdateStatus.isPending}
               >
                 <XCircle className="mr-1 h-4 w-4" />
@@ -402,7 +449,7 @@ export default function ProductsPage() {
                 <Button
                   variant="danger"
                   size="sm"
-                  onClick={handleBulkDelete}
+                  onClick={handleBulkDeleteClick}
                   disabled={bulkDelete.isPending}
                   isLoading={bulkDelete.isPending}
                 >
@@ -421,6 +468,80 @@ export default function ProductsPage() {
         isLoading={isLoading}
         onSelectionChange={setSelectedIds}
         enableSelection={true}
+        onDelete={handleDeleteClick}
+      />
+
+      {/* Pagination */}
+      {paginationMeta && paginationMeta.total > 0 && (
+        <div className="mt-6 flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="text-sm text-gray-700 dark:text-gray-300">
+            Hiển thị{" "}
+            <span className="font-medium">
+              {(paginationMeta.page - 1) * paginationMeta.limit + 1}
+            </span>{" "}
+            đến{" "}
+            <span className="font-medium">
+              {Math.min(
+                paginationMeta.page * paginationMeta.limit,
+                paginationMeta.total
+              )}
+            </span>{" "}
+            trong tổng số{" "}
+            <span className="font-medium">{paginationMeta.total}</span> sản phẩm
+          </div>
+          {paginationMeta.totalPages > 1 && (
+            <Pagination
+              currentPage={paginationMeta.page}
+              totalPages={paginationMeta.totalPages}
+              onPageChange={handlePageChange}
+            />
+          )}
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={closeDeleteDialog}
+        onConfirm={handleConfirmDelete}
+        title="Xóa sản phẩm"
+        message={`Bạn có chắc chắn muốn xóa sản phẩm "${deletingProduct?.productName}"? Hành động này không thể hoàn tác.`}
+        confirmText="Xóa"
+        cancelText="Hủy"
+        variant="danger"
+        isLoading={deleteProduct.isPending}
+      />
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isBulkDeleteDialogOpen}
+        onClose={closeBulkDeleteDialog}
+        onConfirm={handleConfirmBulkDelete}
+        title="Xóa nhiều sản phẩm"
+        message={`Bạn có chắc chắn muốn xóa ${selectedIds.length} sản phẩm đã chọn? Hành động này không thể hoàn tác.`}
+        confirmText="Xóa tất cả"
+        cancelText="Hủy"
+        variant="danger"
+        isLoading={bulkDelete.isPending}
+      />
+
+      {/* Bulk Update Status Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isBulkUpdateDialogOpen}
+        onClose={closeBulkUpdateDialog}
+        onConfirm={handleConfirmBulkUpdateStatus}
+        title="Cập nhật trạng thái"
+        message={`Bạn có chắc chắn muốn cập nhật ${selectedIds.length} sản phẩm thành "${
+          bulkUpdateStatusValue === "active"
+            ? "Hoạt động"
+            : bulkUpdateStatusValue === "inactive"
+            ? "Tạm ngưng"
+            : "Ngừng kinh doanh"
+        }"?`}
+        confirmText="Cập nhật"
+        cancelText="Hủy"
+        variant="warning"
+        isLoading={bulkUpdateStatus.isPending}
       />
     </div>
   );

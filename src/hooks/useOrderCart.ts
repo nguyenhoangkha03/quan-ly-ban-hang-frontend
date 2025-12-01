@@ -48,7 +48,7 @@ export function useOrderCart(options: UseOrderCartOptions = {}): UseOrderCartRet
         productId: product.id,
         product,
         quantity,
-        unitPrice: product.salePrice || 0,
+        unitPrice: product.sellingPriceRetail || 0,
         discountPercent: 0,
         taxRate: product.taxRate || 0,
       };

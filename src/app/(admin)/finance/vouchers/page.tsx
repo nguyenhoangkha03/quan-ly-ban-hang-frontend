@@ -19,7 +19,7 @@ import type { VoucherType, VoucherPaymentMethod } from "@/types";
 import VoucherStatus, {
   VoucherTypeBadge,
   PaymentMethodBadge,
-} from "@/components/features/finance/VoucherStatus";
+} from "@/components/finance/VoucherStatus";
 import Button from "@/components/ui/button/Button";
 import { Can } from "@/components/auth/Can";
 import {

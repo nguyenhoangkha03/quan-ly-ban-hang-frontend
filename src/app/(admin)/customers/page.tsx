@@ -5,16 +5,12 @@ import Link from "next/link";
 import { useCustomers, useDeleteCustomer, useBulkDeleteCustomers } from "@/hooks/api";
 import { Can } from "@/components/auth";
 import Button from "@/components/ui/button/Button";
-import CustomerTable from "@/components/features/customers/CustomerTable";
+import CustomerTable from "@/components/customers/CustomerTable";
 import { ApiResponse, Customer, CustomerStatus, CustomerType, CustomerClassification } from "@/types";
 import { Plus, Trash2, Users, AlertCircle, TrendingUp, DollarSign } from "lucide-react";
 import { VIETNAM_PROVINCES } from "@/types";
 import { formatCurrency } from "@/lib/utils";
 
-/**
- * Customers List Page
- * Quản lý danh sách khách hàng
- */
 export default function CustomersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [customerTypeFilter, setCustomerTypeFilter] = useState<CustomerType | "all">("all");

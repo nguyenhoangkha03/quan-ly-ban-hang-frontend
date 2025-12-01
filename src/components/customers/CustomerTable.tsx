@@ -15,8 +15,7 @@ import {
   CUSTOMER_STATUS_COLORS,
   CUSTOMER_STATUS_LABELS,
 } from "@/lib/constants";
-import { Eye, Edit, Trash2, User } from "lucide-react";
-import Button from "@/components/ui/button/Button";
+import { Eye, Pencil, Trash2, User } from "lucide-react";
 import { Can } from "@/components/auth";
 import { formatCurrency } from "@/lib/utils";
 
@@ -254,29 +253,33 @@ export default function CustomerTable({
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2">
-                      <Link href={`/customers/${customer.id}`}>
-                        <Button variant="outline" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                      <Link
+                        href={`/customers/${customer.id}`}
+                        className="rounded p-1 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                        title="Xem"
+                      >
+                        <Eye className="h-4 w-4" />
                       </Link>
 
                       <Can permission="update_customer">
-                        <Link href={`/customers/${customer.id}/edit`}>
-                          <Button variant="outline" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                        <Link
+                          href={`/customers/${customer.id}/edit`}
+                          className="rounded p-1 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                          title="Sửa"
+                        >
+                          <Pencil className="h-4 w-4" />
                         </Link>
                       </Can>
 
                       {onDelete && (
                         <Can permission="delete_customer">
-                          <Button
-                            variant="danger"
-                            size="sm"
+                          <button
                             onClick={() => onDelete(customer.id, customer.customerName)}
+                            className="rounded p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            title="Xóa"
                           >
                             <Trash2 className="h-4 w-4" />
-                          </Button>
+                          </button>
                         </Can>
                       )}
                     </div>

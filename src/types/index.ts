@@ -1,13 +1,17 @@
-//----------------------------------------------
-// Types Index - Export tất cả types
-//----------------------------------------------
+//Types Index - Export tất cả types
 
-// Common Types
 export * from "./common.types";
+
+// Warehouse Types
+export * from "./warehouse.types";
 
 // User Types
 export * from "./user.types";
+
+// Promotion Types
 export * from "./promotion.types";
+
+// Attendance Types
 export * from "./attendance.types";
 
 // Product Types

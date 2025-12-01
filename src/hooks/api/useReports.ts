@@ -78,13 +78,3 @@ export function useFinancialReport(filters?: FinancialReportFilters) {
   });
 }
 
-export function useDashboardMetrics() {
-  return useQuery({
-    queryKey: reportKeys.dashboard(),
-    queryFn: async () => {
-      const response = await api.get<ApiResponse<DashboardMetrics>>("/reports/dashboard/metrics");
-      return response.data;
-    },
-    refetchInterval: 60000, // Refetch every minute
-  });
-}

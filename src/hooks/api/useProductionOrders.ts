@@ -36,7 +36,7 @@ export function useProductionOrders(filters?: ProductionOrderFilters) {
     queryKey: PRODUCTION_ORDER_KEYS.list(filters),
     queryFn: async () => {
       const response = await api.get("/production-orders", { params: filters });
-      return response as ApiResponse<ProductionOrder[]>;
+      return response;
     },
   });
 }
@@ -49,7 +49,7 @@ export function useProductionOrder(id: number, enabled = true) {
     queryKey: PRODUCTION_ORDER_KEYS.detail(id),
     queryFn: async () => {
       const response = await api.get(`/production-orders/${id}`);
-      return response as ApiResponse<ProductionOrder>;
+      return response ;
     },
     enabled: enabled && !!id,
   });
@@ -63,7 +63,7 @@ export function useWastageReport(id: number, enabled = true) {
     queryKey: PRODUCTION_ORDER_KEYS.wastage(id),
     queryFn: async () => {
       const response = await api.get(`/production-orders/${id}/wastage`);
-      return response as ApiResponse<WastageReport>;
+      return response ;
     },
     enabled: enabled && !!id,
   });
@@ -78,7 +78,7 @@ export function useCreateProductionOrder() {
   return useMutation({
     mutationFn: async (data: CreateProductionOrderDto) => {
       const response = await api.post("/production-orders", data);
-      return response as ApiResponse<ProductionOrder>;
+      return response ;
     },
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: PRODUCTION_ORDER_KEYS.lists() });
@@ -109,7 +109,7 @@ export function useUpdateProductionOrder() {
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data: UpdateProductionOrderDto }) => {
       const response = await api.put(`/production-orders/${id}`, data);
-      return response as ApiResponse<ProductionOrder>;
+      return response ;
     },
     onSuccess: (response, variables) => {
       queryClient.invalidateQueries({ queryKey: PRODUCTION_ORDER_KEYS.lists() });
@@ -131,7 +131,7 @@ export function useStartProduction() {
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data?: StartProductionDto }) => {
       const response = await api.put(`/production-orders/${id}/start`, data || {});
-      return response as ApiResponse<ProductionOrder>;
+      return response ;
     },
     onSuccess: (response, variables) => {
       queryClient.invalidateQueries({ queryKey: PRODUCTION_ORDER_KEYS.lists() });
@@ -158,7 +158,7 @@ export function useCompleteProduction() {
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data: CompleteProductionDto }) => {
       const response = await api.put(`/production-orders/${id}/complete`, data);
-      return response as ApiResponse<ProductionOrder>;
+      return response ;
     },
     onSuccess: (response, variables) => {
       queryClient.invalidateQueries({ queryKey: PRODUCTION_ORDER_KEYS.lists() });
@@ -195,7 +195,7 @@ export function useCancelProductionOrder() {
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data: CancelProductionDto }) => {
       const response = await api.put(`/production-orders/${id}/cancel`, data);
-      return response as ApiResponse<ProductionOrder>;
+      return response ;
     },
     onSuccess: (response, variables) => {
       queryClient.invalidateQueries({ queryKey: PRODUCTION_ORDER_KEYS.lists() });
