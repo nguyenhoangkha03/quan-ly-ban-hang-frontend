@@ -14,45 +14,44 @@ import {
 import { Can } from "@/components/auth";
 import Badge from "@/components/ui/badge/Badge";
 import { InventoryTable } from "@/components/inventory/InventoryTable";
-import { WarehouseType } from "@/types";
+import { Inventory, StockTransaction, Warehouse, WarehouseStatistics, WarehouseType } from "@/types";
 import type { ApexOptions } from "apexcharts";
 
 const ReactApexChart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
-/**
- * Warehouse Detail Page
- * Trang chi tiết kho với statistics và charts
- */
 export default function WarehouseDetailPage() {
   const router = useRouter();
   const params = useParams();
   const warehouseId = Number(params.id);
 
-  const { data: response, isLoading, error } = useWarehouse(warehouseId);
-  const { data: statsResponse, isLoading: statsLoading } = useWarehouseStatistics(warehouseId);
-  const { data: inventoryResponse, isLoading: inventoryLoading } = useInventoryByWarehouse(warehouseId);
-  const { data: transactionsResponse, isLoading: transactionsLoading } = useStockTransactions({
-    warehouse_id: warehouseId,
+  const { data: responseWrapper, isLoading, error } = useWarehouse(warehouseId);
+  const response = responseWrapper?.data as unknown as Warehouse;
+  const { data: statsResponseWrapper, isLoading: statsLoading } = useWarehouseStatistics(warehouseId);
+  const statsResponse = statsResponseWrapper?.data as unknown as WarehouseStatistics;
+  const { data: inventoryResponseWrapper, isLoading: inventoryLoading } = useInventoryByWarehouse(warehouseId);
+  const inventoryResponse = inventoryResponseWrapper?.data as unknown as Inventory[];
+  const { data: transactionsResponseWrapper, isLoading: transactionsLoading } = useStockTransactions({
+    warehouseId: warehouseId,
     limit: 10,
-    sortBy: "created_at",
+    sortBy: "createdAt",
     sortOrder: "desc",
   });
+  const transactionsResponse = transactionsResponseWrapper?.data as unknown as StockTransaction[];
   const deleteWarehouse = useDeleteWarehouse();
 
   const handleDelete = async () => {
-    if (!response?.data) return;
+    if (!response) return;
 
-    if (window.confirm(`Bạn có chắc chắn muốn xóa kho "${response.data.warehouseName}"?`)) {
+    if (window.confirm(`Bạn có chắc chắn muốn xóa kho "${response.warehouseName}"?`)) {
       try {
         await deleteWarehouse.mutateAsync(warehouseId);
         router.push("/warehouses");
       } catch (error) {
-        console.error("Delete warehouse failed:", error);
+        console.error("Xóa kho không thành công:", error);
       }
     }
   };
 
-  // Warehouse type labels
   const getTypeLabel = (type: WarehouseType) => {
     const labels: Record<WarehouseType, string> = {
       raw_material: "Nguyên liệu",
@@ -63,9 +62,8 @@ export default function WarehouseDetailPage() {
     return labels[type];
   };
 
-  // Warehouse type badge colors
-  const getTypeBadgeColor = (type: WarehouseType) => {
-    const colors: Record<WarehouseType, string> = {
+  const getTypeBadgeColor = (type: WarehouseType): "blue" | "yellow" | "green" | "purple" => {
+    const colors: Record<WarehouseType, "blue" | "yellow" | "green" | "purple"> = {
       raw_material: "blue",
       packaging: "yellow",
       finished_product: "green",
@@ -74,7 +72,6 @@ export default function WarehouseDetailPage() {
     return colors[type];
   };
 
-  // Transaction type labels
   const getTransactionTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
       import: "Nhập kho",
@@ -86,9 +83,8 @@ export default function WarehouseDetailPage() {
     return labels[type] || type;
   };
 
-  // Transaction status labels and colors
-  const getTransactionStatusInfo = (status: string) => {
-    const info: Record<string, { label: string; color: string }> = {
+  const getTransactionStatusInfo = (status: string): { label: string; color: "gray" | "yellow" | "blue" | "green" | "red" } => {
+    const info: Record<string, { label: string; color: "gray" | "yellow" | "blue" | "green" | "red" }> = {
       draft: { label: "Nháp", color: "gray" },
       pending: { label: "Chờ duyệt", color: "yellow" },
       approved: { label: "Đã duyệt", color: "blue" },
@@ -98,16 +94,15 @@ export default function WarehouseDetailPage() {
     return info[status] || { label: status, color: "gray" };
   };
 
-  // Prepare transaction breakdown chart
   const transactionChartData: ApexOptions = React.useMemo(() => {
-    if (!statsResponse?.data) {
+    if (!statsResponse) {
       return {
         series: [],
         chart: { type: "donut", height: 300 },
       };
     }
 
-    const stats = statsResponse.data;
+    const stats = statsResponse;
     const transactionTypes = Object.entries(stats.transactions.last30Days);
 
     if (transactionTypes.length === 0) {
@@ -176,7 +171,7 @@ export default function WarehouseDetailPage() {
         },
       },
     };
-  }, [statsResponse?.data]);
+  }, [statsResponse]);
 
   if (isLoading) {
     return (
@@ -196,7 +191,7 @@ export default function WarehouseDetailPage() {
     );
   }
 
-  if (!response?.data) {
+  if (!response) {
     return (
       <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-900/10">
         <p className="text-yellow-800 dark:text-yellow-200">Không tìm thấy kho này</p>
@@ -204,8 +199,8 @@ export default function WarehouseDetailPage() {
     );
   }
 
-  const warehouse = response.data;
-  const stats = statsResponse?.data;
+  const warehouse = response;
+  const stats = statsResponse;
 
   return (
     <div className="space-y-6">
@@ -549,7 +544,7 @@ export default function WarehouseDetailPage() {
               </Link>
             </div>
             <InventoryTable
-              inventory={inventoryResponse?.data || []}
+              inventory={inventoryResponse || []}
               isLoading={inventoryLoading}
               showWarehouse={false}
             />
@@ -573,7 +568,7 @@ export default function WarehouseDetailPage() {
               <div className="flex h-32 items-center justify-center">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
               </div>
-            ) : transactionsResponse?.data && transactionsResponse.data.length > 0 ? (
+            ) : transactionsResponse && transactionsResponse.length > 0 ? (
               <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                   <thead className="bg-gray-50 dark:bg-gray-900">
@@ -593,7 +588,7 @@ export default function WarehouseDetailPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
-                    {transactionsResponse.data.map((transaction) => {
+                    {transactionsResponse.map((transaction) => {
                       const statusInfo = getTransactionStatusInfo(transaction.status);
                       return (
                         <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
@@ -612,7 +607,7 @@ export default function WarehouseDetailPage() {
                             <Badge color={statusInfo.color}>{statusInfo.label}</Badge>
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                            {new Date(transaction.created_at).toLocaleDateString("vi-VN")}
+                            {new Date(transaction.createdAt).toLocaleDateString("vi-VN")}
                           </td>
                         </tr>
                       );
@@ -675,8 +670,8 @@ export default function WarehouseDetailPage() {
               <div>
                 <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Ngày tạo</dt>
                 <dd className="mt-1 text-sm text-gray-900 dark:text-white">
-                  {warehouse.created_at
-                    ? new Date(warehouse.created_at).toLocaleString("vi-VN")
+                  {warehouse.createdAt
+                    ? new Date(warehouse.createdAt).toLocaleString("vi-VN")
                     : "—"}
                 </dd>
               </div>
@@ -685,8 +680,8 @@ export default function WarehouseDetailPage() {
                   Cập nhật lần cuối
                 </dt>
                 <dd className="mt-1 text-sm text-gray-900 dark:text-white">
-                  {warehouse.updated_at
-                    ? new Date(warehouse.updated_at).toLocaleString("vi-VN")
+                  {warehouse.updatedAt
+                    ? new Date(warehouse.updatedAt).toLocaleString("vi-VN")
                     : "—"}
                 </dd>
               </div>

@@ -3,31 +3,29 @@ import api from "@/lib/axios";
 import type {
   Inventory,
   InventoryByProductResponse,
-  StockTransaction,
-  CreateTransactionDto,
   InventoryFilters,
-  LowStockAlert,
+  AlertsApiResponse,
   ApiResponse,
   PaginationParams,
+  CardStat,
+  AlertFilters,
 } from "@/types";
 import { toast } from "react-hot-toast";
 
-/**
- * Query Keys
- */
 export const inventoryKeys = {
   all: ["inventory"] as const,
   lists: () => [...inventoryKeys.all, "list"] as const,
   list: (filters?: InventoryFilters & PaginationParams) =>
     [...inventoryKeys.lists(), filters] as const,
+  listAlerts: () => [...inventoryKeys.all, "alerts"] as const,
+  listAlert: (filters?: AlertFilters & PaginationParams) => 
+    [...inventoryKeys.listAlerts(), filters] as const,
   transactions: () => [...inventoryKeys.all, "transactions"] as const,
   transaction: (id: number) => [...inventoryKeys.transactions(), id] as const,
   lowStock: () => [...inventoryKeys.all, "low-stock"] as const,
 };
 
-/**
- * Get Inventory List
- */
+// Get Inventory List
 export function useInventory(params?: InventoryFilters & PaginationParams) {
   return useQuery({
     queryKey: inventoryKeys.list(params),
@@ -40,9 +38,7 @@ export function useInventory(params?: InventoryFilters & PaginationParams) {
   });
 }
 
-/**
- * Get Inventory by Warehouse
- */
+// Get Inventory by Warehouse
 export function useInventoryByWarehouse(warehouseId: number, enabled = true) {
   return useQuery({
     queryKey: [...inventoryKeys.all, "warehouse", warehouseId],
@@ -56,9 +52,7 @@ export function useInventoryByWarehouse(warehouseId: number, enabled = true) {
   });
 }
 
-/**
- * Get Inventory by Product (across all warehouses)
- */
+// Get Inventory by Product (across all warehouses)
 export function useInventoryByProduct(productId: number, enabled = true) {
   return useQuery({
     queryKey: [...inventoryKeys.all, "product", productId],
@@ -72,26 +66,36 @@ export function useInventoryByProduct(productId: number, enabled = true) {
   });
 }
 
-/**
- * Get Inventory Alerts (low stock)
- */
-export function useInventoryAlerts(warehouseId?: number) {
+// Get Cảnh Báo Tồn Kho (Tồn Thấp)
+export function useInventoryAlerts(params?: AlertFilters & PaginationParams) {
   return useQuery({
-    queryKey: [...inventoryKeys.all, "alerts", warehouseId],
+    queryKey: inventoryKeys.listAlert(params),
     queryFn: async () => {
-      const response = await api.get<ApiResponse<LowStockAlert[]>>(
+      const response = await api.get<ApiResponse<AlertsApiResponse>>(
         "/inventory/alerts",
-        { params: { warehouseId } }
+        { params }
       );
       return response;
     },
-    refetchInterval: 60000, // Refetch every 1 minute
+    refetchInterval: 60000, // Refetch mỗi 1 phút
   });
 }
 
-/**
- * Get Inventory Value Report
- */
+// Get Inventory Statistics (not affected by pagination/filters)
+export function useInventoryStats(warehouseType?: string) {
+  return useQuery({
+    queryKey: [...inventoryKeys.all, "stats", warehouseType],
+    queryFn: async () => {
+      const response = await api.get<ApiResponse<CardStat>>(
+        "/inventory/stats",
+        { params: { warehouseType } }
+      );
+      return response;
+    },
+  });
+}
+
+// Get Inventory Value Report
 export function useInventoryValueReport(warehouseId?: number) {
   return useQuery({
     queryKey: [...inventoryKeys.all, "value-report", warehouseId],
@@ -105,9 +109,7 @@ export function useInventoryValueReport(warehouseId?: number) {
   });
 }
 
-/**
- * Check Inventory Availability
- */
+// Check Inventory Availability
 export function useCheckInventoryAvailability() {
   return useMutation({
     mutationFn: async (items: Array<{ warehouseId: number; productId: number; quantity: number }>) => {
@@ -120,9 +122,7 @@ export function useCheckInventoryAvailability() {
   });
 }
 
-/**
- * Update Inventory (Manual update - Admin only)
- */
+// Update Inventory (Manual update - Admin only)
 export function useUpdateInventory() {
   const queryClient = useQueryClient();
 
@@ -144,9 +144,7 @@ export function useUpdateInventory() {
   });
 }
 
-/**
- * Adjust Inventory (Increase/Decrease)
- */
+// Adjust Inventory (Increase/Decrease)
 export function useAdjustInventory() {
   const queryClient = useQueryClient();
 
@@ -168,9 +166,7 @@ export function useAdjustInventory() {
   });
 }
 
-/**
- * Reserve Inventory (for orders)
- */
+// Reserve Inventory (for orders)
 export function useReserveInventory() {
   const queryClient = useQueryClient();
 
@@ -192,9 +188,7 @@ export function useReserveInventory() {
   });
 }
 
-/**
- * Release Reserved Inventory
- */
+// Release Reserved Inventory
 export function useReleaseReservedInventory() {
   const queryClient = useQueryClient();
 

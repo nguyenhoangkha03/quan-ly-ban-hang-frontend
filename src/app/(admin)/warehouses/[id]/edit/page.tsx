@@ -8,11 +8,8 @@ import Link from "next/link";
 import { useWarehouse, useUpdateWarehouse, useUsers } from "@/hooks/api";
 import { warehouseSchema, type WarehouseFormData } from "@/lib/validations/warehouse.schema";
 import { useDebounce } from "@/hooks";
+import { User, Warehouse } from "@/types";
 
-/**
- * Edit Warehouse Page
- * Trang chỉnh sửa thông tin kho
- */
 export default function EditWarehousePage() {
   const router = useRouter();
   const params = useParams();
@@ -20,7 +17,8 @@ export default function EditWarehousePage() {
   const [managerSearch, setManagerSearch] = useState("");
   const debouncedSearch = useDebounce(managerSearch, 300);
 
-  const { data: response, isLoading, error } = useWarehouse(warehouseId);
+  const { data: responseWrapper, isLoading, error } = useWarehouse(warehouseId);
+  const response = responseWrapper?.data as unknown as Warehouse;
   const updateWarehouse = useUpdateWarehouse();
 
   const {
@@ -36,23 +34,21 @@ export default function EditWarehousePage() {
 
   const selectedManagerId = watch("managerId");
 
-  // Fetch users for manager selector (only active users with warehouse management roles)
-  const { data: usersResponse, isLoading: isLoadingUsers } = useUsers({
+  const { data: usersResponseWrapper, isLoading: isLoadingUsers } = useUsers({
     search: debouncedSearch,
     status: "active",
-    limit: "20",
+    limit: 20,
   });
+  const usersResponse = usersResponseWrapper?.data as unknown as User[];
 
-  // Filter users by allowed roles (admin, warehouse_manager, warehouse_staff)
   const allowedRoleKeys = ["admin", "warehouse_manager", "warehouse_staff"];
-  const filteredUsers = usersResponse?.data?.filter(
+  const filteredUsers = usersResponse?.filter(
     (user) => user.role && allowedRoleKeys.includes(user.role.roleKey)
   ) || [];
 
-  // Populate form when data is loaded
   useEffect(() => {
-    if (response?.data) {
-      const warehouse = response.data;
+    if (response) {
+      const warehouse = response;
       reset({
         warehouseCode: warehouse.warehouseCode,
         warehouseName: warehouse.warehouseName,
@@ -65,7 +61,6 @@ export default function EditWarehousePage() {
         description: warehouse.description || "",
         managerId: warehouse.managerId || undefined,
       });
-      // Set initial manager search text if manager exists
       if (warehouse.manager) {
         setManagerSearch(warehouse.manager.fullName);
       }
@@ -78,7 +73,7 @@ export default function EditWarehousePage() {
       router.push("/warehouses");
     } catch (error) {
       // Error handled by mutation
-      console.error("Update warehouse failed:", error);
+      console.error("Cập nhật kho thất bại:", error);
     }
   };
 
@@ -100,7 +95,7 @@ export default function EditWarehousePage() {
     );
   }
 
-  if (!response?.data) {
+  if (!response) {
     return (
       <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-900/10">
         <p className="text-yellow-800 dark:text-yellow-200">
@@ -119,7 +114,7 @@ export default function EditWarehousePage() {
             Chỉnh sửa kho
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Cập nhật thông tin kho: {response.data.warehouseName}
+            Cập nhật thông tin kho: {response.warehouseName}
           </p>
         </div>
         <Link

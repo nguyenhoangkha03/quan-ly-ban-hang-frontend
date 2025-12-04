@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import type { Warehouse, WarehouseStatistics, ApiResponse, PaginationParams, WarehouseFilters } from "@/types";
 import { toast } from "react-hot-toast";
+import { UpdateWarehouseFormData, WarehouseFormData } from "@/lib/validations";
 
 // Dashboard Statistics DTO
 export interface WarehouseCards {
@@ -51,7 +52,7 @@ export function useCreateWarehouse() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: Partial<Warehouse>) => {
+    mutationFn: async (data: Partial<WarehouseFormData>) => {
       const response = await api.post<ApiResponse<Warehouse>>("/warehouses", data);
       return response.data;
     },
@@ -74,7 +75,7 @@ export function useUpdateWarehouse() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<Warehouse> }) => {
+    mutationFn: async ({ id, data }: { id: number; data: Partial<UpdateWarehouseFormData> }) => {
       const response = await api.put<ApiResponse<Warehouse>>(`/warehouses/${id}`, data);
       return response.data;
     },
@@ -109,7 +110,7 @@ export function useDeleteWarehouse() {
       // Invalidate và refetch ngay lập tức
       queryClient.invalidateQueries({
         queryKey: warehouseKeys.lists(),
-        refetchType: 'active', // Refetch các queries đang active
+        refetchType: 'active', 
       });
       toast.success("Xóa kho thành công!");
     },

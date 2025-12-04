@@ -1,12 +1,8 @@
-/**
- * Production Order Types
- */
-
 import type { BaseEntity } from "./common.types";
 import type { Bom } from "./bom.types";
 import type { Product } from "./product.types";
-import type { Warehouse } from "./inventory.types";
 import type { AuthUser } from "./user.types";
+import { Warehouse } from "./warehouse.types";
 
 // Production Status
 export type ProductionStatus = "pending" | "in_progress" | "completed" | "cancelled";

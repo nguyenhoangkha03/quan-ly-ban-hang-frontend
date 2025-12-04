@@ -1,8 +1,3 @@
-/**
- * Promotion Types
- * Types for promotions management
- */
-
 import type { BaseEntity } from "./common.types";
 import type { User } from "./user.types";
 import type { Product } from "./product.types";
@@ -21,10 +16,6 @@ export type ApplicableTo = "all" | "category" | "product_group" | "specific_prod
 // MAIN TYPES
 // =====================================================
 
-/**
- * Promotion Conditions
- * Stored as JSON in database
- */
 export interface PromotionConditions {
   // Time-based conditions
   daysOfWeek?: number[]; // [0-6] Sunday-Saturday
@@ -93,10 +84,6 @@ export interface Promotion extends BaseEntity {
   products?: PromotionProduct[];
 }
 
-/**
- * Promotion Product
- * Products applicable to promotion
- */
 export interface PromotionProduct {
   id: number;
   promotionId: number;
@@ -114,9 +101,6 @@ export interface PromotionProduct {
 // DTOs
 // =====================================================
 
-/**
- * Create Promotion DTO
- */
 export interface CreatePromotionDto {
   promotionCode: string;
   promotionName: string;

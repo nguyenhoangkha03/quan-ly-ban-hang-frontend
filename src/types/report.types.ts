@@ -1,14 +1,7 @@
-//----------------------------------------------
-// Report Types & DTOs
-//----------------------------------------------
-
 import { InventoryByType, RevenueDataPoint, TopProduct } from "./dashboard.types";
 import { ProductType } from "./product.types";
 import { SalesChannel } from "./sales.types";
 
-/**
- * Report Group By Options
- */
 export type ReportGroupBy = "day" | "week" | "month" | "year";
 
 

@@ -6,8 +6,8 @@ import type { BaseEntity, Gender, StatusCommon, UserStatus } from "./common.type
 // ROLES             
 // ------------------
 export interface Role extends BaseEntity {
-  role_key: string;
-  role_name: string;
+  roleKey: string;
+  roleName: string;
   description?: string;
   status: StatusCommon;
   permissions?: Permission[];
@@ -17,8 +17,8 @@ export interface Role extends BaseEntity {
 // PERMISSIONS       
 // ------------------
 export interface Permission extends BaseEntity {
-  permission_key: string;
-  permission_name: string;
+  permissionKey: string;
+  permissionName: string;
   description?: string;
   module: string;
 }
@@ -38,7 +38,7 @@ export interface User extends BaseEntity {
   address?: string;
   gender?: Gender;
   dateOfBirth?: string;
-  avatar_url?: string;
+  avatarUrl?: string;
   roleId: number;
   role?: Role;
   warehouseId?: number;
@@ -52,9 +52,9 @@ export interface User extends BaseEntity {
 // Warehouse (minimal for user relation)
 export interface WarehouseMinimal {
   id: number;
-  warehouse_code: string;
-  warehouse_name: string;
-  warehouse_type: "raw_material" | "packaging" | "finished_product" | "goods";
+  warehouseCode: string;
+  warehouseName: string;
+  warehouseType: "raw_material" | "packaging" | "finished_product" | "goods";
 }
 
 // User Create DTO

@@ -1,7 +1,3 @@
-// ------------------
-// BOM TYPES
-// ------------------
-
 import { BaseEntity } from "./common.types";
 import { Product } from "./product.types";
 import { User } from "./user.types";

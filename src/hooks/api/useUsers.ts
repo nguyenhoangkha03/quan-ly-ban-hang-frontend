@@ -11,9 +11,6 @@ import type {
   UserFilters,
 } from "@/types";
 
-/**
- * Query Keys
- */
 export const userKeys = {
   all: ["users"] as const,
   lists: () => [...userKeys.all, "list"] as const,
@@ -22,13 +19,7 @@ export const userKeys = {
   detail: (id: number) => [...userKeys.details(), id] as const,
 };
 
-/**
- * QUERY HOOKS
- */
-
-/**
- * Get Users List with Filters
- */
+// Get Users List with Filters
 export function useUsers(filters?: UserFilters) {
   return useQuery({
     queryKey: userKeys.list(filters),
@@ -36,7 +27,7 @@ export function useUsers(filters?: UserFilters) {
       const response = await api.get<ApiResponse<User[]>>("/users", {
         params: filters,
       });
-      return response.data;
+      return response;
     },
   });
 }

@@ -1,16 +1,6 @@
-/**
- * Finance Types - Payment Receipts & Vouchers
- * Phiếu thu và phiếu chi
- */
-
 import type { BaseEntity } from "./common.types";
 import type { Customer } from "./customer.types";
-import type { SalesOrder } from "./sales.types";
 import type { User } from "./user.types";
-
-// =====================================================
-// PAYMENT RECEIPTS (Phiếu thu)
-// =====================================================
 
 // Receipt Type
 export type ReceiptType = "sales" | "debt_collection" | "refund" | "other";

@@ -19,170 +19,215 @@ export interface Inventory extends BaseEntity {
   productId: number;
   product?: Product;
   quantity: number;
-  reserved_quantity: number;
-  available_quantity: number;
-  last_updated: string;
-  updated_by?: number;
+  reservedQuantity: number;
+  lastUpdated: string;
+  updatedBy?: number;
 }
 
 // Stock Transaction
 export interface StockTransaction extends BaseEntity {
-  transaction_code: string;
-  transaction_type: TransactionType;
-  warehouse_id?: number;
+  transactioncode: string;
+  transactionType: TransactionType;
+  warehouseId?: number;
   warehouse?: Warehouse;
-  source_warehouse_id?: number;
-  source_warehouse?: Warehouse;
-  destination_warehouse_id?: number;
-  destination_warehouse?: Warehouse;
-  reference_type?: string;
-  reference_id?: number;
-  total_value?: number;
+  sourceWarehouseId?: number;
+  sourceWarehouse?: Warehouse;
+  destinationWarehouseId?: number;
+  destinationWarehouse?: Warehouse;
+  referenceType?: string;
+  referenceId?: number;
+  totalValue?: number;
   reason?: string;
   notes?: string;
   status: TransactionStatus;
-  approved_by?: number;
+  approvedBy?: number;
   approver?: User;
-  cancelled_by?: number;
+  cancelledBy?: number;
   canceller?: User;
-  approved_at?: string;
-  cancelled_at?: string;
+  approvedAt?: string;
+  cancelledAt?: string;
   details?: StockTransactionDetail[];
-  created_by?: number;
-  updated_by?: number;
+  createdBy?: number;
+  updatedBy?: number;
 }
 
 // Stock Transaction Detail
 export interface StockTransactionDetail extends BaseEntity {
-  transaction_id: number;
+  transactionId: number;
   transaction?: StockTransaction;
-  product_id: number;
+  productId: number;
   product?: Product;
-  warehouse_id?: number;
+  warehouseId?: number;
   warehouse?: Warehouse;
-  batch_number?: string;
+  batchNumber?: string;
   quantity: number;
-  unit_price?: number;
-  total_price?: number;
-  expiry_date?: string;
+  unitPrice?: number;
+  totalPrice?: number;
+  expiryDate?: string;
   notes?: string;
 }
 
 // Stock Transfer
 export interface StockTransfer extends BaseEntity {
-  transfer_code: string;
-  from_warehouse_id: number;
-  from_warehouse?: Warehouse;
-  to_warehouse_id: number;
-  to_warehouse?: Warehouse;
-  transfer_date: string;
-  total_value?: number;
+  transferCode: string;
+  fromWarehouseId: number;
+  fromWarehouse?: Warehouse;
+  toWarehouseId: number;
+  toWarehouse?: Warehouse;
+  transferDate: string;
+  totalValue?: number;
   reason?: string;
   status: TransferStatus;
-  requested_by?: number;
+  requestedBy?: number;
   requester?: User;
-  approved_by?: number;
+  approvedBy?: number;
   approver?: User;
-  cancelled_by?: number;
+  cancelledBy?: number;
   canceller?: User;
-  approved_at?: string;
-  cancelled_at?: string;
+  approvedAt?: string;
+  cancelledAt?: string;
   details?: StockTransferDetail[];
-  created_by?: number;
-  updated_by?: number;
+  createdBy?: number;
+  updatedBy?: number;
 }
 
 // Stock Transfer Detail
 export interface StockTransferDetail extends BaseEntity {
-  transfer_id: number;
+  transferId: number;
   transfer?: StockTransfer;
-  product_id: number;
+  productId: number;
   product?: Product;
   quantity: number;
-  unit_price?: number;
-  total_price?: number;
+  unitPrice?: number;
+  totalPrice?: number;
   notes?: string;
 }
 
 // Purchase Order
 export interface PurchaseOrder extends BaseEntity {
-  po_code: string;
-  supplier_id: number;
-  supplier?: any; // Supplier type
-  warehouse_id: number;
+  poCode: string;
+  supplierId: number;
+  supplier?: any; 
+  warehouseId: number;
   warehouse?: Warehouse;
-  order_date: string;
-  expected_delivery_date?: string;
-  total_amount: number;
+  orderDate: string;
+  expectedDeliveryDate?: string;
+  totalAmount: number;
   status: "pending" | "approved" | "received" | "cancelled";
   notes?: string;
-  approved_by?: number;
+  approvedBy?: number;
   approver?: User;
   details?: PurchaseOrderDetail[];
-  created_by?: number;
-  updated_by?: number;
+  createdBy?: number;
+  updatedBy?: number;
 }
 
 // Purchase Order Detail
 export interface PurchaseOrderDetail extends BaseEntity {
-  po_id: number;
+  poId: number;
   po?: PurchaseOrder;
-  product_id: number;
+  productId: number;
   product?: Product;
   quantity: number;
-  unit_price: number;
-  total_price: number;
+  unitPrice: number;
+  totalPrice: number;
   notes?: string;
 }
 
 // Create Transaction DTO
 export interface CreateTransactionDto {
-  transaction_type: TransactionType;
-  warehouse_id?: number;
-  source_warehouse_id?: number;
-  destination_warehouse_id?: number;
-  reference_type?: string;
-  reference_id?: number;
+  transactionType: TransactionType;
+  warehouseId?: number;
+  sourceWarehouseId?: number;
+  destinationWarehouseId?: number;
+  referenceType?: string;
+  referenceId?: number;
   reason?: string;
   notes?: string;
   details: Array<{
-    product_id: number;
+    productId: number;
     quantity: number;
-    unit_price?: number;
-    batch_number?: string;
-    expiry_date?: string;
+    unitPrice?: number;
+    batchNumber?: string;
+    expiryDate?: string;
     notes?: string;
   }>;
 }
 
 // Inventory Adjustment DTO
 export interface InventoryAdjustmentDto {
-  warehouse_id: number;
-  product_id: number;
-  quantity_change: number;
+  warehouseId: number;
+  productId: number;
+  quantityChange: number;
   reason: string;
   notes?: string;
 }
 
 // Inventory Filters
 export interface InventoryFilters {
-  warehouse_id?: number;
-  warehouse_type?: WarehouseType;
-  product_id?: number;
-  product_type?: string;
-  category_id?: number;
-  low_stock?: boolean;
-  out_of_stock?: boolean;
+  warehouseId?: number;
+  warehouseType?: WarehouseType;
+  productId?: number;
+  productType?: string;
+  categoryId?: number;
+  lowStock?: boolean;
+  outOfStock?: boolean;
 }
 
-// Low Stock Alert
+// Inventory Alert (Low Stock) - Matches backend response exactly
+export interface InventoryAlert {
+  id: number;
+  warehouseId: number;
+  productId: number;
+  quantity: number;
+  reservedQuantity: number;
+  warehouse: {
+    id: number;
+    warehouseName: string;
+    warehouseCode: string;
+    warehouseType: WarehouseType;
+  };
+  product: {
+    id: number;
+    sku: string;
+    productName: string;
+    productType: string;
+    unit: string;
+    minStockLevel: number;
+    category?: {
+      id: number;
+      categoryName: string;
+    };
+  };
+  availableQuantity: number;  // Calculated: quantity - reservedQuantity
+  shortfall: number;          // Calculated: minStockLevel - availableQuantity
+  percentageOfMin: number;    // Calculated: (availableQuantity / minStockLevel) * 100
+}
+
+export interface AlertFilters {
+  warehouseId?: number;
+}
+
+// Alerts API Response
+export interface AlertsApiResponse {
+  alerts: InventoryAlert[];
+  summary: {
+    totalAlerts: number;
+    outOfStock: number; // availableQuantity === 0
+    critical: number;   // 0 < availableQuantity < 25%
+    warning: number;    // 25% <= percentage < 50%
+    low: number;        // 50% <= percentage < 100%
+  };
+}
+
+// Legacy type - kept for backward compatibility
 export interface LowStockAlert {
-  product_id: number;
+  productId: number;
   product: Product;
-  warehouse_id: number;
+  warehouseId: number;
   warehouse: Warehouse;
-  current_quantity: number;
-  min_stock_level: number;
+  currentQuantity: number;
+  minStockLevel: number;
   shortage: number;
 }
 
@@ -227,4 +272,11 @@ export interface WarehouseStatistics {
     available: number | null;
     utilizationPercent: number | null;
   };
+}
+
+export interface CardStat {
+    totalItems: number;
+    totalValue: number;
+    lowStockItems: number;
+    outOfStockItems: number;
 }

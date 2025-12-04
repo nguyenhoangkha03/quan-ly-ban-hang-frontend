@@ -8,11 +8,8 @@ import Link from "next/link";
 import { useCreateWarehouse, useUsers } from "@/hooks/api";
 import { warehouseSchema, type WarehouseFormData } from "@/lib/validations/warehouse.schema";
 import { useDebounce } from "@/hooks";
+import { User } from "@/types";
 
-/**
- * Create Warehouse Page
- * Trang tạo kho mới
- */
 export default function CreateWarehousePage() {
   const router = useRouter();
   const createWarehouse = useCreateWarehouse();
@@ -25,7 +22,7 @@ export default function CreateWarehousePage() {
     setValue,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm<WarehouseFormData>({
+  } = useForm({
     resolver: zodResolver(warehouseSchema),
     defaultValues: {
       status: "active",
@@ -34,16 +31,16 @@ export default function CreateWarehousePage() {
 
   const selectedManagerId = watch("managerId");
 
-  // Fetch users for manager selector (only active users with warehouse management roles)
-  const { data: usersResponse, isLoading: isLoadingUsers } = useUsers({
+  const { data: usersResponseWrapper, isLoading: isLoadingUsers } = useUsers({
     search: debouncedSearch,
     status: "active",
-    limit: "20", // Increase limit to show more results
+    limit: 20,
   });
+  const usersResponse = usersResponseWrapper?.data as unknown as User[];
 
-  // Filter users by allowed roles (admin, warehouse_manager, warehouse_staff)
+  // Lọc user có quyền truy cập (admin, warehouse_manager, warehouse_staff)
   const allowedRoleKeys = ["admin", "warehouse_manager", "warehouse_staff"];
-  const filteredUsers = usersResponse?.data?.filter(
+  const filteredUsers = usersResponse?.filter(
     (user) => user.role && allowedRoleKeys.includes(user.role.roleKey)
   ) || [];
 
@@ -52,8 +49,7 @@ export default function CreateWarehousePage() {
       await createWarehouse.mutateAsync(data);
       router.push("/warehouses");
     } catch (error) {
-      // Error handled by mutation
-      console.error("Create warehouse failed:", error);
+      console.error("Tạo kho thất bại:", error);
     }
   };
 

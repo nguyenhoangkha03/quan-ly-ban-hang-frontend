@@ -1,7 +1,3 @@
-/**
- * Customer Types - Dựa trên database schema
- */
-
 import type { BaseEntity, Gender } from "./common.types";
 import type { AuthUser } from "./user.types";
 

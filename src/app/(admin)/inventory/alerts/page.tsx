@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useInventoryAlerts, useWarehouses } from "@/hooks/api";
 import { Can } from "@/components/auth";
@@ -13,71 +13,89 @@ import {
 } from "@/components/ui/table";
 import Badge from "@/components/ui/badge/Badge";
 import { StockLevelIndicator } from "@/components/inventory/StockLevelIndicator";
+import type { AlertsApiResponse, ApiResponse, InventoryAlert, Warehouse } from "@/types";
+import { useDebounce } from "@/hooks";
+import Pagination from "@/components/tables/Pagination";
 
-/**
- * Low Stock Alerts Page
- * Trang cảnh báo tồn kho thấp
- */
 export default function LowStockAlertsPage() {
+  // Pagination & Filters
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);  
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedWarehouse, setSelectedWarehouse] = useState<number | "all">("all");
+  const debouncedSearch = useDebounce(searchTerm, 400);
+  const [warehouseFilter, setWarehouseFilter] = useState<number | "all">("all");
 
-  // Fetch warehouses for filter
+  // Fetch kho cho bộ lọc
   const { data: warehousesResponse } = useWarehouses();
-  const warehouses = warehousesResponse?.data || [];
+  const warehouses = warehousesResponse?.data as unknown as Warehouse[] || [];
 
-  // Fetch low stock alerts
-  const { data: alertsResponse, isLoading, error } = useInventoryAlerts(
-    selectedWarehouse !== "all" ? selectedWarehouse : undefined
-  );
+  // Fetch cảnh báo tồn kho thấp
+  const { data: alertsResponseWrapper, isLoading, error } = useInventoryAlerts({
+    page,
+    limit,
+    ...(debouncedSearch && { search: debouncedSearch }),
+    ...(warehouseFilter !== "all" && { warehouseId: warehouseFilter }),
+  });
+  const alertsResponse = alertsResponseWrapper as unknown as ApiResponse<AlertsApiResponse>;
+  console.log(alertsResponse);
+  const paginationMeta = alertsResponse?.meta;
+  const alerts = alertsResponse?.data?.alerts || [];
+
+  useEffect(() => {
+      setPage(1);
+  }, [debouncedSearch, warehouseFilter, warehouseFilter]);
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  }
 
   // Client-side filtering
-  const alerts = useMemo(() => {
-    if (!alertsResponse?.data) return [];
+//   const alerts = useMemo(() => {
+//     if (!alertsResponse?.data) return [];
 
-    return alertsResponse.data.filter((alert) => {
-      const matchesSearch =
-        (alert.product?.product_name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-        (alert.product?.product_code?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-        (alert.warehouse?.warehouseName?.toLowerCase() || "").includes(searchTerm.toLowerCase());
+//     return alertsResponse.data.alerts.filter((alert: InventoryAlert) => {
+//       const matchesSearch =
+//         alert.product.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+//         alert.product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
+//         alert.warehouse.warehouseName.toLowerCase().includes(searchTerm.toLowerCase());
 
-      return matchesSearch;
-    });
-  }, [alertsResponse?.data, searchTerm]);
+//       return matchesSearch;
+//     });
+//   }, [alertsResponse?.data, searchTerm]);
 
-  // Sort by severity (most critical first)
+  // Sắp xếp theo mức độ nghiêm trọng (nghiêm trọng nhất trước)
   const sortedAlerts = useMemo(() => {
     return [...alerts].sort((a, b) => {
-      const severityA = a.current_quantity === 0 ? 3 : (a.current_quantity / a.min_stock_level) * 100;
-      const severityB = b.current_quantity === 0 ? 3 : (b.current_quantity / b.min_stock_level) * 100;
+      const severityA = a.availableQuantity === 0 ? 0 : a.percentageOfMin;
+      const severityB = b.availableQuantity === 0 ? 0 : b.percentageOfMin;
       return severityA - severityB;
     });
   }, [alerts]);
 
-  // Calculate statistics
+  // Nhận số liệu thống kê từ bản tóm tắt phụ trợ (đã được tính toán)
   const stats = useMemo(() => {
-    if (!alerts.length) {
+    const summary = alertsResponse?.data?.summary;
+
+    if (!summary) {
       return {
         total: 0,
         outOfStock: 0,
         criticalLow: 0,
+        warning: 0,
         low: 0,
       };
     }
 
     return {
-      total: alerts.length,
-      outOfStock: alerts.filter((a) => a.current_quantity === 0).length,
-      criticalLow: alerts.filter(
-        (a) => a.current_quantity > 0 && (a.current_quantity / a.min_stock_level) * 100 < 25
-      ).length,
-      low: alerts.filter(
-        (a) => (a.current_quantity / a.min_stock_level) * 100 >= 25 && (a.current_quantity / a.min_stock_level) * 100 < 50
-      ).length,
+      total: summary.totalAlerts,
+      outOfStock: summary.outOfStock,
+      criticalLow: summary.critical,
+      warning: summary.warning,
+      low: summary.low,
     };
-  }, [alerts]);
+  }, [alertsResponse?.data?.summary]);
 
-  // Get warehouse type info
+  // Lấy thông tin loại kho
   const getWarehouseTypeInfo = (type?: string) => {
     const types = {
       raw_material: { label: "Nguyên liệu", color: "blue" as const },
@@ -103,10 +121,34 @@ export default function LowStockAlertsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Cảnh báo Tồn kho Thấp
+          </h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Danh sách sản phẩm cần nhập kho
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Link
+            href="/inventory"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
+            </svg>
+            Quay lại
+          </Link>
+
+          <Can permission="manage_inventory">
             <Link
-              href="/inventory"
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+              href="/purchase-orders/create"
+              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
             >
               <svg
                 className="h-5 w-5"
@@ -118,40 +160,13 @@ export default function LowStockAlertsPage() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                  d="M12 4v16m8-8H4"
                 />
               </svg>
+              Tạo đơn đặt hàng
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Cảnh báo Tồn kho Thấp
-            </h1>
-          </div>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Danh sách sản phẩm cần nhập kho
-          </p>
+          </Can>
         </div>
-
-        <Can permission="manage_inventory">
-          <Link
-            href="/purchase-orders/create"
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
-          >
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            Tạo đơn đặt hàng
-          </Link>
-        </Can>
       </div>
 
       {/* Alert Banner */}
@@ -178,7 +193,8 @@ export default function LowStockAlertsPage() {
               <div className="mt-1 text-sm text-orange-700 dark:text-orange-300">
                 <span className="font-semibold">{stats.outOfStock}</span> hết hàng, {" "}
                 <span className="font-semibold">{stats.criticalLow}</span> sắp hết, {" "}
-                <span className="font-semibold">{stats.low}</span> tồn thấp
+                <span className="font-semibold">{stats.warning}</span> tồn thấp, {" "}
+                <span className="font-semibold">{stats.low}</span> tồn vừa
               </div>
             </div>
           </div>
@@ -186,7 +202,7 @@ export default function LowStockAlertsPage() {
       )}
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
         <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
           <div className="flex items-center">
             <div className="flex-1">
@@ -248,6 +264,19 @@ export default function LowStockAlertsPage() {
                 Tồn thấp (25-50%)
               </p>
               <p className="mt-2 text-3xl font-bold text-yellow-700 dark:text-yellow-400">
+                {stats.warning}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-6 dark:border-blue-800 dark:bg-blue-900/10">
+          <div className="flex items-center">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                Tồn vừa (50-99%)
+              </p>
+              <p className="mt-2 text-3xl font-bold text-blue-700 dark:text-blue-400">
                 {stats.low}
               </p>
             </div>
@@ -256,9 +285,15 @@ export default function LowStockAlertsPage() {
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {/* Search */}
         <div>
+            <label
+                htmlFor="limit"
+                className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                Tìm kiếm
+            </label>
           <div className="relative">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
               <svg
@@ -287,10 +322,16 @@ export default function LowStockAlertsPage() {
 
         {/* Warehouse Filter */}
         <div>
+            <label
+                htmlFor="limit"
+                className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                Kho
+            </label>
           <select
-            value={selectedWarehouse}
+            value={warehouseFilter}
             onChange={(e) =>
-              setSelectedWarehouse(e.target.value === "all" ? "all" : Number(e.target.value))
+              setWarehouseFilter(e.target.value === "all" ? "all" : Number(e.target.value))
             }
             className="block w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
           >
@@ -301,6 +342,30 @@ export default function LowStockAlertsPage() {
               </option>
             ))}
           </select>
+        </div>
+
+        {/* Items per page */}
+        <div>
+            <label
+                htmlFor="limit"
+                className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                Hiển thị
+            </label>
+            <select
+                id="limit"
+                value={limit}
+                onChange={(e) => {
+                    setLimit(Number(e.target.value));
+                    setPage(1); // Reset to first page when changing limit
+                }}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            >
+            <option value={10}>10 / trang</option>
+            <option value={20}>20 / trang</option>
+            <option value={50}>50 / trang</option>
+            <option value={100}>100 / trang</option>
+            </select>
         </div>
       </div>
 
@@ -359,17 +424,16 @@ export default function LowStockAlertsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedAlerts.map((alert) => {
-                const percentage = (alert.current_quantity / alert.min_stock_level) * 100;
-                const typeInfo = getWarehouseTypeInfo(alert.warehouse?.warehouseType);
+              {sortedAlerts.map((alert: InventoryAlert) => {
+                const typeInfo = getWarehouseTypeInfo(alert.warehouse.warehouseType);
 
                 return (
-                  <TableRow key={`${alert.warehouse_id}-${alert.product_id}`}>
+                  <TableRow key={`${alert.warehouseId}-${alert.productId}`}>
                     {/* Severity */}
                     <TableCell className="px-6 py-4">
-                      {alert.current_quantity === 0 ? (
+                      {alert.availableQuantity === 0 ? (
                         <Badge color="red">Hết hàng</Badge>
-                      ) : percentage < 25 ? (
+                      ) : alert.percentageOfMin < 25 ? (
                         <Badge color="orange">Sắp hết</Badge>
                       ) : (
                         <Badge color="yellow">Tồn thấp</Badge>
@@ -379,24 +443,34 @@ export default function LowStockAlertsPage() {
                     {/* Product */}
                     <TableCell className="px-6 py-4">
                       <Link
-                        href={`/products/${alert.product_id}`}
-                        className="font-medium text-gray-900 hover:text-blue-600 dark:text-white dark:hover:text-blue-400"
+                        href={`/products/${alert.productId}`}
+                        className="group inline-flex items-center gap-1 font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                       >
-                        {alert.product?.product_name || "N/A"}
+                        {alert.product.productName}
+                        <svg
+                          className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                          />
+                        </svg>
                       </Link>
                       <div className="text-xs text-gray-500 dark:text-gray-400">
-                        {alert.product?.product_code || "N/A"}
+                        {alert.product.sku}
                       </div>
                     </TableCell>
 
                     {/* Warehouse */}
                     <TableCell className="px-6 py-4">
-                      <Link
-                        href={`/inventory/warehouse/${alert.warehouse_id}`}
-                        className="text-sm text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
-                      >
-                        {alert.warehouse?.warehouseName || "N/A"}
-                      </Link>
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        {alert.warehouse.warehouseName}
+                      </div>
                       <div className="mt-1">
                         <Badge color={typeInfo.color} size="sm">
                           {typeInfo.label}
@@ -406,41 +480,66 @@ export default function LowStockAlertsPage() {
 
                     {/* Current Quantity */}
                     <TableCell className="px-6 py-4 text-sm font-semibold">
-                      <span className={alert.current_quantity === 0 ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-white"}>
-                        {alert.current_quantity.toLocaleString()}
+                      <span className={alert.availableQuantity === 0 ? "text-red-600 dark:text-red-400" : "text-gray-900 dark:text-white"}>
+                        {alert.availableQuantity.toLocaleString()} {alert.product.unit}
                       </span>
                     </TableCell>
 
                     {/* Min Stock Level */}
                     <TableCell className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
-                      {alert.min_stock_level.toLocaleString()}
+                      {alert.product.minStockLevel.toLocaleString()} {alert.product.unit}
                     </TableCell>
 
                     {/* Shortage */}
                     <TableCell className="px-6 py-4 text-sm font-semibold text-red-600 dark:text-red-400">
-                      {alert.shortage.toLocaleString()}
+                      {alert.shortfall.toLocaleString()} {alert.product.unit}
                     </TableCell>
 
                     {/* Progress */}
                     <TableCell className="px-6 py-4">
                       <StockLevelIndicator
-                        current={alert.current_quantity}
-                        min={alert.min_stock_level}
+                        current={alert.availableQuantity}
+                        min={alert.product.minStockLevel}
                         size="sm"
                         showLabel={false}
                       />
                     </TableCell>
 
                     {/* Actions */}
-                    <TableCell className="px-6 py-4 text-right">
-                      <Can permission="manage_inventory">
+                    <TableCell className="px-6 py-4">
+                      <div className="flex items-center gap-2 justify-end">
                         <Link
-                          href={`/stock-transactions/create?warehouseId=${alert.warehouse_id}&productId=${alert.product_id}&suggestedQty=${alert.shortage}`}
-                          className="text-sm font-medium text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                          href={`/inventory/warehouse/${alert.warehouseId}`}
+                          className="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                          title="Xem tồn kho"
                         >
-                          Nhập kho
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                            />
+                          </svg>
+                          Xem kho
                         </Link>
-                      </Can>
+                        <Can permission="manage_inventory">
+                          <Link
+                            href={`/stock-transactions/create?warehouseId=${alert.warehouseId}&productId=${alert.productId}&suggestedQty=${alert.shortfall}`}
+                            className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 dark:focus:ring-offset-gray-900"
+                          >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 4v16m8-8H4"
+                              />
+                            </svg>
+                            Nhập kho
+                          </Link>
+                        </Can>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -450,14 +549,33 @@ export default function LowStockAlertsPage() {
         )}
       </div>
 
-      {/* Summary */}
-      {sortedAlerts.length > 0 && (
-        <div className="text-sm text-gray-500 dark:text-gray-400">
-          Hiển thị {sortedAlerts.length} cảnh báo
-          {(searchTerm || selectedWarehouse !== "all") &&
-            ` (đã lọc từ ${alertsResponse?.data?.length || 0} cảnh báo)`}
-        </div>
-      )}
+      {/* Pagination */}
+        {paginationMeta && paginationMeta.total > 0 && (
+            <div className="mt-6 flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            <div className="text-sm text-gray-700 dark:text-gray-300">
+                Hiển thị{" "}
+                <span className="font-medium">
+                {(paginationMeta.page - 1) * paginationMeta.limit + 1}
+                </span>{" "}
+                đến{" "}
+                <span className="font-medium">
+                {Math.min(
+                    paginationMeta.page * paginationMeta.limit,
+                    paginationMeta.total
+                )}
+                </span>{" "}
+                trong tổng số{" "}
+                <span className="font-medium">{paginationMeta.total}</span> sản phẩm
+            </div>
+            {paginationMeta.totalPages > 1 && (
+                <Pagination
+                currentPage={paginationMeta.page}
+                totalPages={paginationMeta.totalPages}
+                onPageChange={handlePageChange}
+                />
+            )}
+            </div>
+        )}
     </div>
   );
 }

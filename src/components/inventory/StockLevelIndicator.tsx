@@ -9,10 +9,6 @@ interface StockLevelIndicatorProps {
   size?: "sm" | "md" | "lg";
 }
 
-/**
- * Stock Level Indicator Component
- * Hiển thị mức độ tồn kho với progress bar và color coding
- */
 export function StockLevelIndicator({
   current,
   min,
@@ -95,10 +91,6 @@ export function StockLevelIndicator({
   );
 }
 
-/**
- * Stock Status Badge
- * Badge hiển thị trạng thái tồn kho
- */
 export function StockStatusBadge({ current, min }: { current: number; min: number }) {
   const percentage = min > 0 ? (current / min) * 100 : 100;
 
@@ -114,6 +106,9 @@ export function StockStatusBadge({ current, min }: { current: number; min: numbe
   } else if (percentage < 50) {
     label = "Tồn thấp";
     colorClass = "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400";
+  } else if (percentage < 100) {
+    label = "Tồn vừa";
+    colorClass = "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400";
   } else {
     label = "Đủ hàng";
     colorClass = "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400";

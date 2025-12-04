@@ -1,12 +1,5 @@
-//----------------------------------------------
-// Notification Types & DTOs
-//----------------------------------------------
-
 import { User } from "./user.types";
 
-/**
- * Notification Type Enum
- */
 export type NotificationType =
   | "system"
   | "low_stock"
@@ -17,45 +10,33 @@ export type NotificationType =
   | "reminder"
   | "announcement";
 
-/**
- * Notification Priority Enum
- */
 export type NotificationPriority = "low" | "normal" | "high";
 
-/**
- * Notification Channel Enum
- */
 export type NotificationChannel = "web" | "email" | "sms" | "mobile_app" | "all";
 
-/**
- * Main Notification Entity
- */
 export interface Notification {
   id: string | number; // BigInt from backend
-  user_id: number;
-  sender_id: number | null;
+  userId: number;
+  senderId: number | null;
   title: string;
   message: string;
-  notification_type: NotificationType;
+  notificationType: NotificationType;
   priority: NotificationPriority;
   channel: NotificationChannel;
-  reference_type: string | null;
-  reference_id: number | null;
-  meta_data: any | null;
-  is_read: boolean;
-  read_at: string | null;
-  expires_at: string | null;
-  deleted_at: string | null;
-  created_at: string;
+  referenceType: string | null;
+  referenceId: number | null;
+  metaData: any | null;
+  isRead: boolean;
+  readAt: string | null;
+  expiresAt: string | null;
+  deletedAt: string | null;
+  createdAt: string;
 
   // Relations (populated by backend)
   user?: User;
   sender?: User;
 }
 
-/**
- * DTO for creating notification
- */
 export interface CreateNotificationDto {
   userId: number;
   title: string;
@@ -69,9 +50,6 @@ export interface CreateNotificationDto {
   expiresAt?: string;
 }
 
-/**
- * DTO for broadcasting notification
- */
 export interface BroadcastNotificationDto {
   userIds?: number[];
   roleId?: number;
@@ -85,9 +63,6 @@ export interface BroadcastNotificationDto {
   metaData?: any;
 }
 
-/**
- * Notification Filters
- */
 export interface NotificationFilters {
   isRead?: boolean;
   notificationType?: NotificationType;
@@ -96,27 +71,15 @@ export interface NotificationFilters {
   limit?: number;
 }
 
-/**
- * Unread Count Response
- */
 export interface UnreadCountResponse {
   count: number;
 }
 
-/**
- * Socket.IO Notification Event
- */
 export interface NotificationEvent {
   notification: Notification;
 }
 
-//----------------------------------------------
-// Helper Constants & Labels
-//----------------------------------------------
-
-/**
- * Notification Type Labels (Vietnamese)
- */
+// HELPERS FUNCTION
 export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
   system: "Hệ thống",
   low_stock: "Hàng sắp hết",
@@ -128,9 +91,6 @@ export const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
   announcement: "Thông báo",
 };
 
-/**
- * Notification Priority Labels (Vietnamese)
- */
 export const NOTIFICATION_PRIORITY_LABELS: Record<
   NotificationPriority,
   string
@@ -140,9 +100,6 @@ export const NOTIFICATION_PRIORITY_LABELS: Record<
   high: "Cao",
 };
 
-/**
- * Notification Type Icons (Heroicons)
- */
 export const NOTIFICATION_TYPE_ICONS: Record<NotificationType, string> = {
   system: "InformationCircleIcon",
   low_stock: "ArchiveBoxIcon",
@@ -154,9 +111,6 @@ export const NOTIFICATION_TYPE_ICONS: Record<NotificationType, string> = {
   announcement: "MegaphoneIcon",
 };
 
-/**
- * Notification Type Colors (TailwindCSS classes)
- */
 export const NOTIFICATION_TYPE_COLORS: Record<NotificationType, {
   bg: string;
   text: string;
@@ -213,18 +167,12 @@ export const NOTIFICATION_TYPE_COLORS: Record<NotificationType, {
   },
 };
 
-/**
- * Priority Colors (TailwindCSS classes)
- */
 export const PRIORITY_COLORS: Record<NotificationPriority, string> = {
   low: "text-gray-500 dark:text-gray-400",
   normal: "text-blue-600 dark:text-blue-400",
   high: "text-red-600 dark:text-red-400",
 };
 
-/**
- * Format relative time
- */
 export function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
@@ -249,25 +197,22 @@ export function formatRelativeTime(dateString: string): string {
   return `${day}/${month}/${year} ${hours}:${minutes}`;
 }
 
-/**
- * Get notification link based on reference type
- */
 export function getNotificationLink(notification: Notification): string | null {
-  if (!notification.reference_type || !notification.reference_id) {
+  if (!notification.referenceType || !notification.referenceId) {
     return null;
   }
 
   const linkMap: Record<string, string> = {
-    order: `/sales/orders/${notification.reference_id}`,
-    product: `/products/${notification.reference_id}`,
+    order: `/sales/orders/${notification.referenceId}`,
+    product: `/products/${notification.referenceId}`,
     inventory: `/inventory`,
-    customer: `/customers/${notification.reference_id}`,
-    supplier: `/suppliers/${notification.reference_id}`,
-    production_order: `/production/orders/${notification.reference_id}`,
-    salary: `/hr/salary/${notification.reference_id}`,
+    customer: `/customers/${notification.referenceId}`,
+    supplier: `/suppliers/${notification.referenceId}`,
+    production_order: `/production/orders/${notification.referenceId}`,
+    salary: `/hr/salary/${notification.referenceId}`,
     attendance: `/hr/attendance`,
-    user: `/users/${notification.reference_id}`,
+    user: `/users/${notification.referenceId}`,
   };
 
-  return linkMap[notification.reference_type] || null;
+  return linkMap[notification.referenceType] || null;
 }

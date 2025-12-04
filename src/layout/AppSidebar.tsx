@@ -8,20 +8,15 @@ import {
   BellIcon,
   BoxCubeIcon,
   BoxIconLine,
-  CalenderIcon,
   ChevronDownIcon,
   DollarLineIcon,
   GridIcon,
   GroupIcon,
   HorizontaLDots,
-  ListIcon,
-  PageIcon,
   PieChartIcon,
   PlugInIcon,
   ShootingStarIcon,
-  TableIcon,
   TaskIcon,
-  UserCircleIcon,
 } from "../icons/index";
 
 type NavItem = {
@@ -283,17 +278,23 @@ const AppSidebar: React.FC = () => {
   );
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // Check if route is active (exact match or starts with path for nested routes)
   const isActive = useCallback((path: string) => {
     if (path === pathname) return true;
-    // Check if current path starts with menu path (for nested routes)
-    // But exclude root path to avoid matching everything
-    if (path !== '/' && pathname.startsWith(path + '/')) return true;
+    if (path !== '/' && pathname.startsWith(path + '/')) {
+      const allSubItems = [...navItems, ...othersItems]
+        .flatMap(nav => nav.subItems || [])
+        .filter(subItem => subItem.path.startsWith(path + '/'));
+
+      const hasExactSubItemMatch = allSubItems.some(subItem => subItem.path === pathname);
+      if (hasExactSubItemMatch) return false;
+
+      return true;
+    }
+
     return false;
   }, [pathname]);
 
   useEffect(() => {
-    // Check if the current path matches any submenu item
     let submenuMatched = false;
     ["main", "others"].forEach((menuType) => {
       const items = menuType === "main" ? navItems : othersItems;
@@ -312,14 +313,12 @@ const AppSidebar: React.FC = () => {
       });
     });
 
-    // If no submenu item matches, close the open submenu
     if (!submenuMatched) {
       setOpenSubmenu(null);
     }
   }, [pathname,isActive]);
 
   useEffect(() => {
-    // Set the height of the submenu items when the submenu is opened
     if (openSubmenu !== null) {
       const key = `${openSubmenu.type}-${openSubmenu.index}`;
       if (subMenuRefs.current[key]) {

@@ -1,58 +1,61 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
-import { useInventory, useWarehouses } from "@/hooks/api";
+import { useInventory, useWarehouses, useInventoryStats } from "@/hooks/api";
 import { InventoryTable } from "@/components/inventory/InventoryTable";
 import { Can } from "@/components/auth";
-import { WarehouseType } from "@/types";
+import { ApiResponse, CardStat, Inventory, Warehouse, WarehouseType } from "@/types";
+import { useDebounce } from "@/hooks";
+import Pagination from "@/components/tables/Pagination";
 
-/**
- * Inventory Overview Page
- * Trang tổng quan tồn kho - Multi-warehouse view
- */
 export default function InventoryPage() {
+  // Pagination & Filters
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedWarehouse, setSelectedWarehouse] = useState<number | "all">("all");
-  const [selectedWarehouseType, setSelectedWarehouseType] = useState<WarehouseType | "all">("all");
-  const [filterLowStock, setFilterLowStock] = useState(false);
-  const [filterOutOfStock, setFilterOutOfStock] = useState(false);
+  const debouncedSearch = useDebounce(searchTerm, 400);
+  const [warehouseFilter, setWarehouseFilter] = useState<number | "all">("all");
+  const [warehouseTypeFilter, setWarehouseTypeFilter] = useState<WarehouseType | "all">("all");
+  const [lowStockFilter, setLowStockFilter] = useState(false);
+  const [outOfStockFilter, setOutOfStockFilter] = useState(false);
 
-  // Fetch warehouses for filter
+  // Fetch dữ liệu cho bộ lọc
   const { data: warehousesResponse } = useWarehouses();
-  const warehouses = warehousesResponse?.data || [];
+  const warehouses = warehousesResponse?.data as unknown as Warehouse[] || [];
 
-  // Fetch inventory
-  const { data: response, isLoading, error } = useInventory({
-    warehouseId: selectedWarehouse !== "all" ? selectedWarehouse : undefined,
-    lowStock: filterLowStock || undefined,
+  // Fetch tồn kho
+  const { data, isLoading, error } = useInventory({
+    page,
+    limit,
+    ...(debouncedSearch && { search: debouncedSearch }),
+    ...(warehouseFilter !== 'all' && { warehouseId: warehouseFilter }),
+    ...(warehouseTypeFilter !== 'all' && { warehouseType: warehouseTypeFilter }),
+    ...(lowStockFilter && { lowStock: true }),
+    ...(outOfStockFilter && { outOfStock: true }),
   });
+  const responseWrapper = data as unknown as ApiResponse<Inventory[]>;
 
-  // Client-side filtering
-  const inventory = useMemo(() => {
-    if (!response?.data) return [];
+  const response = responseWrapper?.data || [];
+  const paginationMeta = responseWrapper?.meta;
 
-    return response.data.filter((item) => {
-      // Search filter
-      const matchesSearch =
-        (item.product?.product_name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
-        (item.product?.product_code?.toLowerCase() || "").includes(searchTerm.toLowerCase());
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, warehouseFilter, warehouseTypeFilter, lowStockFilter, outOfStockFilter]);
 
-      // Warehouse type filter
-      const matchesWarehouseType =
-        selectedWarehouseType === "all" ||
-        item.warehouse?.warehouseType === selectedWarehouseType;
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  }
 
-      // Out of stock filter
-      const matchesOutOfStock = !filterOutOfStock || item.quantity === 0;
+  // Fetch thống kê từ endpoint khác (không ảnh hướng bởi pagination/filters)
+  const { data: statsResponseWrapper } = useInventoryStats(
+    warehouseTypeFilter !== 'all' ? warehouseTypeFilter : undefined
+  );
+  const statsResponse = statsResponseWrapper as unknown as ApiResponse<CardStat>;
 
-      return matchesSearch && matchesWarehouseType && matchesOutOfStock;
-    });
-  }, [response?.data, searchTerm, selectedWarehouseType, filterOutOfStock]);
-
-  // Calculate statistics
+  // Sử dụng stats từ API (không ảnh hướng bởi pagination)
   const stats = useMemo(() => {
-    if (!inventory.length) {
+    if (!statsResponse?.data) {
       return {
         totalItems: 0,
         totalValue: 0,
@@ -61,19 +64,8 @@ export default function InventoryPage() {
       };
     }
 
-    return {
-      totalItems: inventory.length,
-      totalValue: inventory.reduce((sum, item) => {
-        const value = item.quantity * (item.product?.unit_price || 0);
-        return sum + value;
-      }, 0),
-      lowStockItems: inventory.filter(
-        (item) =>
-          item.quantity - item.reserved_quantity < (item.product?.min_stock_level || 0)
-      ).length,
-      outOfStockItems: inventory.filter((item) => item.quantity === 0).length,
-    };
-  }, [inventory]);
+    return statsResponse.data;
+  }, [statsResponse]);
 
   if (error) {
     return (
@@ -265,12 +257,15 @@ export default function InventoryPage() {
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-5">
         {/* Search */}
         <div>
-          <label htmlFor="search" className="sr-only">
-            Tìm kiếm
-          </label>
+          <label
+                htmlFor="limit"
+                className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                Tìm kiếm
+            </label>
           <div className="relative">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
               <svg
@@ -300,9 +295,15 @@ export default function InventoryPage() {
 
         {/* Warehouse Filter */}
         <div>
+            <label
+                htmlFor="limit"
+                className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                Kho
+            </label>
           <select
-            value={selectedWarehouse}
-            onChange={(e) => setSelectedWarehouse(e.target.value === "all" ? "all" : Number(e.target.value))}
+            value={warehouseFilter}
+            onChange={(e) => setWarehouseFilter(e.target.value === "all" ? "all" : Number(e.target.value))}
             className="block w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
           >
             <option value="all">Tất cả kho</option>
@@ -316,9 +317,15 @@ export default function InventoryPage() {
 
         {/* Warehouse Type Filter */}
         <div>
+            <label
+                htmlFor="limit"
+                className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                Loại kho
+            </label>
           <select
-            value={selectedWarehouseType}
-            onChange={(e) => setSelectedWarehouseType(e.target.value as any)}
+            value={warehouseTypeFilter}
+            onChange={(e) => setWarehouseTypeFilter(e.target.value as any)}
             className="block w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
           >
             <option value="all">Tất cả loại kho</option>
@@ -329,13 +336,43 @@ export default function InventoryPage() {
           </select>
         </div>
 
+        
+        {/* Items per page */}
+        <div>
+            <label
+                htmlFor="limit"
+                className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                Hiển thị
+            </label>
+            <select
+                id="limit"
+                value={limit}
+                onChange={(e) => {
+                    setLimit(Number(e.target.value));
+                    setPage(1); // Reset to first page when changing limit
+                }}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+            >
+            <option value={10}>10 / trang</option>
+            <option value={20}>20 / trang</option>
+            <option value={50}>50 / trang</option>
+            <option value={100}>100 / trang</option>
+            </select>
+        </div>
+
         {/* Quick Filters */}
         <div className="flex items-center gap-4">
           <label className="flex items-center">
             <input
               type="checkbox"
-              checked={filterLowStock}
-              onChange={(e) => setFilterLowStock(e.target.checked)}
+              checked={lowStockFilter}
+              onChange={(e) => {
+                setLowStockFilter(e.target.checked)
+                if(outOfStockFilter) {
+                    setOutOfStockFilter(!outOfStockFilter)
+                }
+              }}
               className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
             <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
@@ -345,8 +382,13 @@ export default function InventoryPage() {
           <label className="flex items-center">
             <input
               type="checkbox"
-              checked={filterOutOfStock}
-              onChange={(e) => setFilterOutOfStock(e.target.checked)}
+              checked={outOfStockFilter}
+              onChange={(e) => {
+                setOutOfStockFilter(e.target.checked)
+                if(lowStockFilter) {
+                    setLowStockFilter(!lowStockFilter)
+                }
+              }}
               className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
             <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
@@ -358,17 +400,36 @@ export default function InventoryPage() {
 
       {/* Table */}
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-        <InventoryTable inventory={inventory} isLoading={isLoading} />
+        <InventoryTable inventory={response} isLoading={isLoading} />
       </div>
 
-      {/* Summary */}
-      {inventory.length > 0 && (
-        <div className="text-sm text-gray-500 dark:text-gray-400">
-          Hiển thị {inventory.length} sản phẩm
-          {(searchTerm || selectedWarehouse !== "all" || selectedWarehouseType !== "all" || filterLowStock || filterOutOfStock) &&
-            ` (đã lọc từ ${response?.data?.length || 0} sản phẩm)`}
-        </div>
-      )}
+       {/* Pagination */}
+        {paginationMeta && paginationMeta.total > 0 && (
+            <div className="mt-6 flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            <div className="text-sm text-gray-700 dark:text-gray-300">
+                Hiển thị{" "}
+                <span className="font-medium">
+                {(paginationMeta.page - 1) * paginationMeta.limit + 1}
+                </span>{" "}
+                đến{" "}
+                <span className="font-medium">
+                {Math.min(
+                    paginationMeta.page * paginationMeta.limit,
+                    paginationMeta.total
+                )}
+                </span>{" "}
+                trong tổng số{" "}
+                <span className="font-medium">{paginationMeta.total}</span> sản phẩm
+            </div>
+            {paginationMeta.totalPages > 1 && (
+                <Pagination
+                currentPage={paginationMeta.page}
+                totalPages={paginationMeta.totalPages}
+                onPageChange={handlePageChange}
+                />
+            )}
+            </div>
+        )}
     </div>
   );
 }

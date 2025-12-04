@@ -37,8 +37,8 @@ export interface Supplier extends BaseEntity {
   paymentTerms?: string;
   notes?: string;
   status: StatusCommon;
-  created_by?: number;
-  updated_by?: number;
+  createdBy?: number;
+  updatedBy?: number;
 }
 
 // Product

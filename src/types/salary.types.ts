@@ -12,26 +12,26 @@ export type SalaryStatus = "pending" | "approved" | "paid";
 
 export interface Salary {
   id: number;
-  user_id: number;
+  userId: number;
   month: string; // Format: YYYYMM (e.g., "202501")
-  basic_salary: number; // Lương cơ bản
+  basicSalary: number; // Lương cơ bản
   allowance: number; // Phụ cấp
-  overtime_pay: number; // Lương làm thêm
+  overtimePay: number; // Lương làm thêm
   bonus: number; // Thưởng
   commission: number; // Hoa hồng
   deduction: number; // Khấu trừ
   advance: number; // Tạm ứng
-  total_salary: number; // Tổng lương (GENERATED/COMPUTED field)
-  payment_date: string | null; // Ngày thanh toán
+  totalSalary: number; // Tổng lương (GENERATED/COMPUTED field)
+  paymentDate: string | null; // Ngày thanh toán
   status: SalaryStatus;
-  is_posted: boolean; // Đã hạch toán chưa
-  approved_by: number | null;
-  approved_at: string | null;
-  paid_by: number | null;
-  voucher_id: number | null; // Payment voucher ID
+  isPosted: boolean; // Đã hạch toán chưa
+  approvedBy: number | null;
+  approvedAt: string | null;
+  paidBy: number | null;
+  voucherId: number | null; // Payment voucher ID
   notes: string | null;
-  created_by: number;
-  created_at: string;
+  createdBy: number;
+  createdAt: string;
 
   // Relations (populated by backend)
   user?: User;

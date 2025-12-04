@@ -20,10 +20,6 @@ interface InventoryTableProps {
   onAdjust?: (item: Inventory) => void;
 }
 
-/**
- * Inventory Table Component
- * Bảng hiển thị tồn kho
- */
 export function InventoryTable({
   inventory,
   isLoading = false,
@@ -95,8 +91,8 @@ export function InventoryTable({
       </TableHeader>
       <TableBody>
         {inventory.map((item) => {
-          const availableQty = item.quantity - item.reserved_quantity;
-          const minStockLevel = item.product?.minStockLevel || 0;
+          const availableQty = Number(item.quantity) - Number(item.reservedQuantity);
+          const minStockLevel = Number(item.product?.minStockLevel) || 0;
 
           return (
             <TableRow key={`${item.warehouseId}-${item.productId}`}>
@@ -155,9 +151,9 @@ export function InventoryTable({
 
               {/* Reserved Quantity */}
               <TableCell className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
-                {item.reserved_quantity > 0 ? (
+                {Number(item.reservedQuantity) > 0 ? (
                   <span className="font-medium text-orange-600 dark:text-orange-400">
-                    {item.reserved_quantity.toLocaleString()}
+                    {item.reservedQuantity.toLocaleString()}
                   </span>
                 ) : (
                   <span className="text-gray-400">—</span>
@@ -172,9 +168,9 @@ export function InventoryTable({
               {/* Stock Level */}
               <TableCell className="px-6 py-4">
                 <StockLevelIndicator
-                  current={item.quantity}
+                  current={Number(item.quantity)}
                   min={minStockLevel}
-                  reserved={item.reserved_quantity}
+                  reserved={Number(item.reservedQuantity)}
                   size="sm"
                   showLabel={false}
                 />
