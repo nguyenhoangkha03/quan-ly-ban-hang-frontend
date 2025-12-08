@@ -12,38 +12,43 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Badge from "@/components/ui/badge/Badge";
-import type { TransactionType, TransactionStatus } from "@/types";
+import SearchableSelect from "@/components/ui/SearchableSelect";
+import type { TransactionType, TransactionStatus, Warehouse, ApiResponse, StockTransaction } from "@/types";
+import { useDebounce } from "@/hooks";
 
-/**
- * Stock Transactions List Page
- * Danh sách phiếu nhập/xuất/chuyển kho
- */
 export default function StockTransactionsPage() {
+  // Pagination & Filters
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
   const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearch = useDebounce(searchTerm, 400);
   const [typeFilter, setTypeFilter] = useState<TransactionType | "all">("all");
   const [statusFilter, setStatusFilter] = useState<TransactionStatus | "all">("all");
   const [warehouseFilter, setWarehouseFilter] = useState<number | "all">("all");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
-  // Fetch warehouses for filter
-  const { data: warehousesResponse } = useWarehouses();
-  const warehouses = warehousesResponse?.data || [];
+  // Fetch kho cho bộ lọc (lấy tất cả kho cho dropdown search)
+  const { data: warehousesResponse, isLoading: warehousesLoading } = useWarehouses({
+    limit: 1000, 
+  });
+  const warehouses = warehousesResponse?.data as unknown as Warehouse[] || [];
 
-  // Fetch transactions
-  const { data: response, isLoading, error } = useStockTransactions({
-    transactionType: typeFilter !== "all" ? typeFilter : undefined,
-    status: statusFilter !== "all" ? statusFilter : undefined,
-    warehouseId: warehouseFilter !== "all" ? warehouseFilter : undefined,
-    fromDate: fromDate || undefined,
-    toDate: toDate || undefined,
-    page: "1",
-    limit: "50",
+  // Fetch giao dịch kho
+  const { data: responseWrapper, isLoading, error } = useStockTransactions({
+    page,
+    limit,
+    ...(debouncedSearch && { search: debouncedSearch}),
+    ...(typeFilter !== "all" && { transactionType: typeFilter }),
+    ...(statusFilter !== "all" && { status: statusFilter }),
+    ...(warehouseFilter !== "all" && { warehouseId: warehouseFilter }),
+    ...(fromDate && { fromDate }),
+    ...(toDate && { toDate }),
   });
 
+  const response = responseWrapper as unknown as ApiResponse<StockTransaction[]>;
   const transactions = response?.data || [];
 
-  // Type labels and colors
   const getTypeInfo = (type: TransactionType) => {
     const types = {
       import: { label: "Nhập kho", color: "green" as const },
@@ -127,7 +132,7 @@ export default function StockTransactionsPage() {
               <div className="absolute right-0 mt-2 w-56 rounded-lg border border-gray-200 bg-white shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10 dark:border-gray-700 dark:bg-gray-800">
                 <div className="py-1">
                   <Link
-                    href="/stock-transactions/import"
+                    href="/inventory/transactions/import"
                     className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                   >
                     <svg className="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -136,7 +141,7 @@ export default function StockTransactionsPage() {
                     Nhập kho
                   </Link>
                   <Link
-                    href="/stock-transactions/export"
+                    href="/inventory/transactions/export"
                     className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                   >
                     <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -145,7 +150,7 @@ export default function StockTransactionsPage() {
                     Xuất kho
                   </Link>
                   <Link
-                    href="/stock-transactions/transfer"
+                    href="/inventory/transactions/transfer"
                     className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                   >
                     <svg className="h-5 w-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -154,7 +159,7 @@ export default function StockTransactionsPage() {
                     Chuyển kho
                   </Link>
                   <Link
-                    href="/stock-transactions/disposal"
+                    href="/inventory/transactions/disposal"
                     className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                   >
                     <svg className="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -163,7 +168,7 @@ export default function StockTransactionsPage() {
                     Xuất hủy
                   </Link>
                   <Link
-                    href="/stock-transactions/stocktake"
+                    href="/inventory/transactions/stocktake"
                     className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
                   >
                     <svg className="h-5 w-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -212,22 +217,21 @@ export default function StockTransactionsPage() {
           </select>
         </div>
 
-        {/* Warehouse Filter */}
+        {/* Warehouse Filter với Search */}
         <div>
-          <select
+          <SearchableSelect
+            options={[
+              { value: "all", label: "Tất cả kho" },
+              ...warehouses.map((w) => ({
+                value: w.id,
+                label: `${w.warehouseCode} - ${w.warehouseName}`,
+              })),
+            ]}
             value={warehouseFilter}
-            onChange={(e) =>
-              setWarehouseFilter(e.target.value === "all" ? "all" : Number(e.target.value))
-            }
-            className="block w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-          >
-            <option value="all">Tất cả kho</option>
-            {warehouses.map((w) => (
-              <option key={w.id} value={w.id}>
-                {w.warehouseName}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => setWarehouseFilter(value as number | "all")}
+            placeholder="Tìm kiếm kho..."
+            isLoading={warehousesLoading}
+          />
         </div>
 
         {/* From Date */}
@@ -305,17 +309,17 @@ export default function StockTransactionsPage() {
             </TableHeader>
             <TableBody>
               {transactions.map((transaction) => {
-                const typeInfo = getTypeInfo(transaction.transaction_type);
+                const typeInfo = getTypeInfo(transaction.transactionType);
                 const statusInfo = getStatusInfo(transaction.status);
 
                 return (
                   <TableRow key={transaction.id}>
                     <TableCell className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
                       <Link
-                        href={`/stock-transactions/${transaction.id}`}
+                        href={`/inventory/transactions/${transaction.id}`}
                         className="hover:text-blue-600 dark:hover:text-blue-400"
                       >
-                        {transaction.transaction_code}
+                        {transaction.transactionCode}
                       </Link>
                     </TableCell>
                     <TableCell className="px-6 py-4">
@@ -325,8 +329,8 @@ export default function StockTransactionsPage() {
                       {transaction.warehouse?.warehouseName || "—"}
                     </TableCell>
                     <TableCell className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">
-                      {transaction.total_value
-                        ? `${transaction.total_value.toLocaleString("vi-VN")} đ`
+                      {transaction.totalValue
+                        ? `${transaction.totalValue.toLocaleString("vi-VN")} đ`
                         : "—"}
                     </TableCell>
                     <TableCell className="px-6 py-4">
@@ -337,7 +341,7 @@ export default function StockTransactionsPage() {
                     </TableCell>
                     <TableCell className="px-6 py-4 text-right text-sm">
                       <Link
-                        href={`/stock-transactions/${transaction.id}`}
+                        href={`/inventory/transactions/${transaction.id}`}
                         className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                       >
                         Xem

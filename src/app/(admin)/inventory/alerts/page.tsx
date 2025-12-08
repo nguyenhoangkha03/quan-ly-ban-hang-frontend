@@ -525,7 +525,7 @@ export default function LowStockAlertsPage() {
                         </Link>
                         <Can permission="manage_inventory">
                           <Link
-                            href={`/stock-transactions/create?warehouseId=${alert.warehouseId}&productId=${alert.productId}&suggestedQty=${alert.shortfall}`}
+                            href={`/inventory/transactions/import?warehouseId=${alert.warehouseId}&productId=${alert.productId}&suggestedQty=${alert.shortfall}`}
                             className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 dark:focus:ring-offset-gray-900"
                           >
                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -738,3 +738,30 @@ span.flatpickr-weekday,
   opacity: 0.8;
   cursor: grabbing; /* Changes the cursor to indicate dragging */
 }
+
+/* React Select Dark Mode Support */
+:root {
+  --select-bg: #ffffff;
+  --select-border: #d1d5db;
+  --select-menu-bg: #ffffff;
+  --select-option-bg: #ffffff;
+  --select-option-hover: #dbeafe;
+  --select-option-active: #bfdbfe;
+  --select-text: #111827;
+  --select-placeholder: #6b7280;
+  --select-icon: #6b7280;
+  --select-icon-hover: #111827;
+}
+
+.dark {
+  --select-bg: #1f2937;
+  --select-border: #374151;
+  --select-menu-bg: #1f2937;
+  --select-option-bg: #1f2937;
+  --select-option-hover: #374151;
+  --select-option-active: #4b5563;
+  --select-text: #f3f4f6;
+  --select-placeholder: #9ca3af;
+  --select-icon: #9ca3af;
+  --select-icon-hover: #f3f4f6;
+}

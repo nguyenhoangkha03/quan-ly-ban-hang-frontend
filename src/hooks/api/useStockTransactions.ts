@@ -3,9 +3,7 @@ import api from "@/lib/axios";
 import type { StockTransaction, ApiResponse, PaginationParams } from "@/types";
 import { toast } from "react-hot-toast";
 
-/**
- * Query Keys
- */
+// Query Keys
 export const stockTransactionKeys = {
   all: ["stock-transactions"] as const,
   lists: () => [...stockTransactionKeys.all, "list"] as const,
@@ -14,9 +12,7 @@ export const stockTransactionKeys = {
   detail: (id: number) => [...stockTransactionKeys.details(), id] as const,
 };
 
-/**
- * Stock Transaction Filters
- */
+// Stock Transaction Filters
 export interface StockTransactionFilters extends PaginationParams {
   transactionType?: "import" | "export" | "transfer" | "disposal" | "stocktake";
   warehouseId?: number;
@@ -28,10 +24,8 @@ export interface StockTransactionFilters extends PaginationParams {
   sortOrder?: "asc" | "desc";
 }
 
-/**
- * Get Stock Transactions List
- */
-export function useStockTransactions(params?: StockTransactionFilters) {
+// Get Stock Transactions List
+export function useStockTransactions(params?: StockTransactionFilters & PaginationParams) {
   return useQuery({
     queryKey: stockTransactionKeys.list(params),
     queryFn: async () => {
@@ -44,9 +38,7 @@ export function useStockTransactions(params?: StockTransactionFilters) {
   });
 }
 
-/**
- * Get Single Stock Transaction
- */
+// Get Single Stock Transaction
 export function useStockTransaction(id: number, enabled = true) {
   return useQuery({
     queryKey: stockTransactionKeys.detail(id),
@@ -60,9 +52,7 @@ export function useStockTransaction(id: number, enabled = true) {
   });
 }
 
-/**
- * Create Import Transaction
- */
+// Create Import Transaction
 export function useCreateImportTransaction() {
   const queryClient = useQueryClient();
 
@@ -99,9 +89,7 @@ export function useCreateImportTransaction() {
   });
 }
 
-/**
- * Create Export Transaction
- */
+// Create Export Transaction
 export function useCreateExportTransaction() {
   const queryClient = useQueryClient();
 
@@ -115,7 +103,6 @@ export function useCreateExportTransaction() {
       details: Array<{
         productId: number;
         quantity: number;
-        unitPrice?: number;
         batchNumber?: string;
         notes?: string;
       }>;
@@ -137,9 +124,7 @@ export function useCreateExportTransaction() {
   });
 }
 
-/**
- * Create Transfer Transaction
- */
+// Create Transfer Transaction
 export function useCreateTransferTransaction() {
   const queryClient = useQueryClient();
 
@@ -152,7 +137,6 @@ export function useCreateTransferTransaction() {
       details: Array<{
         productId: number;
         quantity: number;
-        unitPrice?: number;
         batchNumber?: string;
         notes?: string;
       }>;
@@ -174,9 +158,7 @@ export function useCreateTransferTransaction() {
   });
 }
 
-/**
- * Create Disposal Transaction
- */
+// Create Disposal Transaction
 export function useCreateDisposalTransaction() {
   const queryClient = useQueryClient();
 
@@ -209,9 +191,7 @@ export function useCreateDisposalTransaction() {
   });
 }
 
-/**
- * Create Stocktake Transaction
- */
+// Create Stocktake Transaction
 export function useCreateStocktakeTransaction() {
   const queryClient = useQueryClient();
 
@@ -245,9 +225,7 @@ export function useCreateStocktakeTransaction() {
   });
 }
 
-/**
- * Approve Stock Transaction
- */
+// Approve Stock Transaction
 export function useApproveTransaction() {
   const queryClient = useQueryClient();
 
@@ -271,9 +249,7 @@ export function useApproveTransaction() {
   });
 }
 
-/**
- * Cancel Stock Transaction
- */
+// Cancel Stock Transaction
 export function useCancelTransaction() {
   const queryClient = useQueryClient();
 

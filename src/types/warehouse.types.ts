@@ -24,3 +24,33 @@ export interface WarehouseFilters {
   region?: string;
   managerId?: number;
 }
+
+// Warehouse Statistics
+export interface WarehouseStatistics {
+  warehouseId: number;
+  warehouseName: string;
+  warehouseType: WarehouseType;
+  inventory: {
+    totalProducts: number;
+    totalQuantity: number;
+    reservedQuantity: number;
+    availableQuantity: number;
+  };
+  transactions: {
+    last30Days: Record<string, number>;
+  };
+  capacity: {
+    total: number | null;
+    used: number;
+    available: number | null;
+    utilizationPercent: number | null;
+  };
+}
+
+// Dashboard Statistics DTO
+export interface WarehouseCards {
+  totalWarehouses: number;
+  activeWarehouses: number;
+  createdThisMonth: number;
+  totalInventoryValue: number;
+}

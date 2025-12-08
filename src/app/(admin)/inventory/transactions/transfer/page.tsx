@@ -96,7 +96,7 @@ export default function TransferTransactionPage() {
   const onSubmit = async (data: TransferFormData) => {
     try {
       await createTransfer.mutateAsync(data);
-      router.push("/stock-transactions");
+      router.push("/inventory/transactions");
     } catch (error) {
       console.error("Error:", error);
     }

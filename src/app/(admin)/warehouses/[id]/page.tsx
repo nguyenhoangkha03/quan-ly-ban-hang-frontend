@@ -557,7 +557,7 @@ export default function WarehouseDetailPage() {
                 Giao dịch gần đây
               </h2>
               <Link
-                href={`/stock-transactions?warehouse=${warehouseId}`}
+                href={`/inventory/transactions?warehouse=${warehouseId}`}
                 className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
               >
                 Xem tất cả →
@@ -594,7 +594,7 @@ export default function WarehouseDetailPage() {
                         <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                           <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
                             <Link
-                              href={`/stock-transactions/${transaction.id}`}
+                              href={`/inventory/transactions/${transaction.id}`}
                               className="hover:text-blue-600 dark:hover:text-blue-400"
                             >
                               {transaction.transaction_code}
@@ -718,7 +718,7 @@ export default function WarehouseDetailPage() {
                 Xem tồn kho
               </Link>
               <Link
-                href={`/stock-transactions/create/import?warehouse=${warehouseId}`}
+                href={`/inventory/transactions/create/import?warehouse=${warehouseId}`}
                 className="flex w-full items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
               >
                 <svg
@@ -737,7 +737,7 @@ export default function WarehouseDetailPage() {
                 Nhập kho
               </Link>
               <Link
-                href={`/stock-transactions/create/export?warehouse=${warehouseId}`}
+                href={`/inventory/transactions/create/export?warehouse=${warehouseId}`}
                 className="flex w-full items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
               >
                 <svg

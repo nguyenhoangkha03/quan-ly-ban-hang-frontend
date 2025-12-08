@@ -1,48 +1,47 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useWarehouses, useProducts, useCreateImportTransaction } from "@/hooks/api";
+import { useWarehouses, useProducts, useCreateExportTransaction } from "@/hooks/api";
 import Button from "@/components/ui/button/Button";
 import { ProductSelector } from "@/components/inventory/ProductSelector";
 import { TransactionItems } from "@/components/inventory/TransactionItems";
 import { formatCurrency } from "@/lib/utils";
 import { ArrowLeft } from "lucide-react";
 
-const importSchema = z.object({
+const exportSchema = z.object({
   warehouseId: z.number().int().positive("Vui lòng chọn kho"),
-  reason: z.string().optional().default("Nhập từ NCC"),
+  reason: z.string().optional().default("Xuất bán"),
   notes: z.string().optional(),
   details: z
     .array(
       z.object({
         productId: z.number().int().positive(),
         quantity: z.number().positive("Số lượng phải > 0"),
-        unitPrice: z.number().nonnegative("Giá phải >= 0").optional(),
+        unitPrice: z.number().nonnegative().optional(),
         batchNumber: z.string().optional(),
-        expiryDate: z.string().optional(),
         notes: z.string().optional(),
       })
     )
     .min(1, "Phải thêm ít nhất 1 sản phẩm"),
 });
 
-type ImportFormData = z.infer<typeof importSchema>;
+type ExportFormData = z.infer<typeof exportSchema>;
 
-export default function ImportTransactionPage() {
+export default function ExportTransactionPage() {
   const router = useRouter();
   const { data: warehousesResponse } = useWarehouses();
   const { data: productsResponse } = useProducts();
-  const createImport = useCreateImportTransaction();
+  const createExport = useCreateExportTransaction();
 
   const warehouses = warehousesResponse?.data || [];
   const allProducts = productsResponse?.data || [];
 
-  const importWarehouses = warehouses.filter((w) =>
-    ["raw_material", "packaging", "finished_product", "goods"].includes(w.warehouseType)
+  const exportWarehouses = warehouses.filter((w) =>
+    ["finished_product", "goods"].includes(w.warehouseType)
   );
 
   const {
@@ -51,11 +50,11 @@ export default function ImportTransactionPage() {
     setValue,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<ImportFormData>({
-    resolver: zodResolver(importSchema),
+  } = useForm<ExportFormData>({
+    resolver: zodResolver(exportSchema),
     defaultValues: {
       details: [],
-      reason: "Nhập từ NCC",
+      reason: "Xuất bán",
     },
   });
 
@@ -65,23 +64,17 @@ export default function ImportTransactionPage() {
     const product = allProducts.find((p) => p.id === productId);
     if (!product) return;
 
-    const newDetail = {
+    setValue("details", [...details, {
       productId,
       quantity: 1,
-      unitPrice: product.purchasePrice || 0,
+      unitPrice: product.sellingPrice || 0,
       batchNumber: "",
-      expiryDate: "",
       notes: "",
-    };
-
-    setValue("details", [...details, newDetail]);
+    }]);
   };
 
   const handleRemoveItem = (index: number) => {
-    setValue(
-      "details",
-      details.filter((_, i) => i !== index)
-    );
+    setValue("details", details.filter((_, i) => i !== index));
   };
 
   const handleUpdateItem = (index: number, field: string, value: any) => {
@@ -101,10 +94,10 @@ export default function ImportTransactionPage() {
     { quantity: 0, total: 0 }
   );
 
-  const onSubmit = async (data: ImportFormData) => {
+  const onSubmit = async (data: ExportFormData) => {
     try {
-      await createImport.mutateAsync(data);
-      router.push("/stock-transactions");
+      await createExport.mutateAsync(data);
+      router.push("/inventory/transactions");
     } catch (error) {
       console.error("Error:", error);
     }
@@ -121,10 +114,10 @@ export default function ImportTransactionPage() {
         </button>
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Tạo phiếu nhập kho
+            Tạo phiếu xuất kho
           </h1>
           <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            Lập phiếu nhập hàng từ nhà cung cấp
+            Lập phiếu xuất hàng cho khách hàng
           </p>
         </div>
       </div>
@@ -132,21 +125,18 @@ export default function ImportTransactionPage() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
-            {/* Warehouse */}
             <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-              <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-                Thông tin kho
-              </h2>
+              <h2 className="mb-4 text-lg font-semibold">Thông tin kho</h2>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Kho đích *
+                  Kho xuất *
                 </label>
                 <select
                   {...register("warehouseId", { valueAsNumber: true })}
                   className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
                 >
                   <option value="">-- Chọn kho --</option>
-                  {importWarehouses.map((w) => (
+                  {exportWarehouses.map((w) => (
                     <option key={w.id} value={w.id}>
                       {w.warehouseName}
                     </option>
@@ -158,11 +148,8 @@ export default function ImportTransactionPage() {
               </div>
             </div>
 
-            {/* Add Products */}
             <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-              <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-                Chọn sản phẩm
-              </h2>
+              <h2 className="mb-4 text-lg font-semibold">Chọn sản phẩm</h2>
               <ProductSelector
                 products={allProducts}
                 onSelectProduct={handleAddProduct}
@@ -170,7 +157,6 @@ export default function ImportTransactionPage() {
               />
             </div>
 
-            {/* Items */}
             {details.length > 0 && (
               <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
                 <h2 className="mb-4 text-lg font-semibold">Danh sách ({details.length})</h2>
@@ -180,42 +166,32 @@ export default function ImportTransactionPage() {
                   onRemoveItem={handleRemoveItem}
                   onUpdateItem={handleUpdateItem}
                   showPriceFields={true}
-                  showBatchExpiry={true}
+                  showBatchExpiry={false}
                 />
               </div>
             )}
 
-            {/* Notes */}
             <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
               <h2 className="mb-4 text-lg font-semibold">Thông tin bổ sung</h2>
               <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Lý do nhập
-                  </label>
-                  <input
-                    type="text"
-                    {...register("reason")}
-                    placeholder="VD: Nhập từ NCC ABC"
-                    className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Ghi chú
-                  </label>
-                  <textarea
-                    {...register("notes")}
-                    placeholder="Ghi chú thêm..."
-                    rows={3}
-                    className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
-                  />
-                </div>
+                <select
+                  {...register("reason")}
+                  className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
+                >
+                  <option value="Xuất bán">Xuất bán hàng</option>
+                  <option value="Xuất sản xuất">Xuất cho sản xuất</option>
+                  <option value="Xuất khác">Xuất khác</option>
+                </select>
+                <textarea
+                  {...register("notes")}
+                  placeholder="Ghi chú..."
+                  rows={3}
+                  className="block w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700"
+                />
               </div>
             </div>
           </div>
 
-          {/* Summary */}
           <div>
             <div className="sticky top-6 rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
               <h3 className="mb-4 text-lg font-semibold">Tóm tắt</h3>

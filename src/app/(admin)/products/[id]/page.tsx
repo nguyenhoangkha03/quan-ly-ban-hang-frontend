@@ -697,7 +697,7 @@ export default function ProductDetailPage() {
             Lịch sử giao dịch
           </h2>
           <Link
-            href={`/stock-transactions?product=${productId}`}
+            href={`/inventory/transactions?product=${productId}`}
             className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
           >
             Xem tất cả →
@@ -767,7 +767,7 @@ export default function ProductDetailPage() {
                     <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
                         <Link
-                          href={`/stock-transactions/${transaction.id}`}
+                          href={`/inventory/transactions/${transaction.id}`}
                           className="hover:text-blue-600 dark:hover:text-blue-400"
                         >
                           {transaction.transaction_code}

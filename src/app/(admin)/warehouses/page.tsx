@@ -349,33 +349,33 @@ export default function WarehousesPage() {
                       {warehouse.status === "active" ? "Hoạt động" : "Ngưng"}
                     </Badge>
                   </TableCell>
-                  <TableCell className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                    <div className="flex items-center justify-end gap-2">
+                  <TableCell className="px-6 py-4 text-right text-sm font-medium">
+                    <div className="flex flex-col items-end gap-1.5">
                       <Link
                         href={`/warehouses/${warehouse.id}`}
-                        className="rounded p-1 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-                        title="Xem"
+                        className="inline-flex items-center gap-1.5 rounded-md bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
                       >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-3.5 w-3.5" />
+                        Xem
                       </Link>
 
                       <Can permission="update_warehouse">
                         <Link
                           href={`/warehouses/${warehouse.id}/edit`}
-                          className="rounded p-1 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                          title="Sửa"
+                          className="inline-flex items-center gap-1.5 rounded-md bg-blue-100 px-3 py-1.5 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
                         >
-                          <Pencil className="h-4 w-4" />
+                          <Pencil className="h-3.5 w-3.5" />
+                          Sửa
                         </Link>
                       </Can>
 
                       <Can permission="delete_warehouse">
                         <button
                           onClick={() => handleDeleteClick(warehouse)}
-                          className="rounded p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                          title="Xóa"
+                          className="inline-flex items-center gap-1.5 rounded-md bg-red-100 px-3 py-1.5 text-xs font-medium text-red-700 transition-colors hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Xóa
                         </button>
                       </Can>
                     </div>

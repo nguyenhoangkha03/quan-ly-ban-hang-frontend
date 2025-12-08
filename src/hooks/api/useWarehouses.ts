@@ -1,16 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
-import type { Warehouse, WarehouseStatistics, ApiResponse, PaginationParams, WarehouseFilters } from "@/types";
+import type { Warehouse, WarehouseStatistics, ApiResponse, PaginationParams, WarehouseFilters, WarehouseCards } from "@/types";
 import { toast } from "react-hot-toast";
 import { UpdateWarehouseFormData, WarehouseFormData } from "@/lib/validations";
-
-// Dashboard Statistics DTO
-export interface WarehouseCards {
-  totalWarehouses: number;
-  activeWarehouses: number;
-  createdThisMonth: number;
-  totalInventoryValue: number;
-}
 
 // Query Keys
 export const warehouseKeys = {

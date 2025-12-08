@@ -3,15 +3,6 @@ import type { Product } from "./product.types";
 import type { User } from "./user.types";
 import { Warehouse, WarehouseType } from "./warehouse.types";
 
-// Transaction Type
-export type TransactionType = "import" | "export" | "transfer" | "disposal" | "stocktake";
-
-// Transaction Status
-export type TransactionStatus = "draft" | "pending" | "approved" | "completed" | "cancelled";
-
-// Transfer Status
-export type TransferStatus = "pending" | "in_transit" | "completed" | "cancelled";
-
 // Inventory Interface
 export interface Inventory extends BaseEntity {
   warehouseId: number;
@@ -24,135 +15,6 @@ export interface Inventory extends BaseEntity {
   updatedBy?: number;
 }
 
-// Stock Transaction
-export interface StockTransaction extends BaseEntity {
-  transactioncode: string;
-  transactionType: TransactionType;
-  warehouseId?: number;
-  warehouse?: Warehouse;
-  sourceWarehouseId?: number;
-  sourceWarehouse?: Warehouse;
-  destinationWarehouseId?: number;
-  destinationWarehouse?: Warehouse;
-  referenceType?: string;
-  referenceId?: number;
-  totalValue?: number;
-  reason?: string;
-  notes?: string;
-  status: TransactionStatus;
-  approvedBy?: number;
-  approver?: User;
-  cancelledBy?: number;
-  canceller?: User;
-  approvedAt?: string;
-  cancelledAt?: string;
-  details?: StockTransactionDetail[];
-  createdBy?: number;
-  updatedBy?: number;
-}
-
-// Stock Transaction Detail
-export interface StockTransactionDetail extends BaseEntity {
-  transactionId: number;
-  transaction?: StockTransaction;
-  productId: number;
-  product?: Product;
-  warehouseId?: number;
-  warehouse?: Warehouse;
-  batchNumber?: string;
-  quantity: number;
-  unitPrice?: number;
-  totalPrice?: number;
-  expiryDate?: string;
-  notes?: string;
-}
-
-// Stock Transfer
-export interface StockTransfer extends BaseEntity {
-  transferCode: string;
-  fromWarehouseId: number;
-  fromWarehouse?: Warehouse;
-  toWarehouseId: number;
-  toWarehouse?: Warehouse;
-  transferDate: string;
-  totalValue?: number;
-  reason?: string;
-  status: TransferStatus;
-  requestedBy?: number;
-  requester?: User;
-  approvedBy?: number;
-  approver?: User;
-  cancelledBy?: number;
-  canceller?: User;
-  approvedAt?: string;
-  cancelledAt?: string;
-  details?: StockTransferDetail[];
-  createdBy?: number;
-  updatedBy?: number;
-}
-
-// Stock Transfer Detail
-export interface StockTransferDetail extends BaseEntity {
-  transferId: number;
-  transfer?: StockTransfer;
-  productId: number;
-  product?: Product;
-  quantity: number;
-  unitPrice?: number;
-  totalPrice?: number;
-  notes?: string;
-}
-
-// Purchase Order
-export interface PurchaseOrder extends BaseEntity {
-  poCode: string;
-  supplierId: number;
-  supplier?: any; 
-  warehouseId: number;
-  warehouse?: Warehouse;
-  orderDate: string;
-  expectedDeliveryDate?: string;
-  totalAmount: number;
-  status: "pending" | "approved" | "received" | "cancelled";
-  notes?: string;
-  approvedBy?: number;
-  approver?: User;
-  details?: PurchaseOrderDetail[];
-  createdBy?: number;
-  updatedBy?: number;
-}
-
-// Purchase Order Detail
-export interface PurchaseOrderDetail extends BaseEntity {
-  poId: number;
-  po?: PurchaseOrder;
-  productId: number;
-  product?: Product;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-  notes?: string;
-}
-
-// Create Transaction DTO
-export interface CreateTransactionDto {
-  transactionType: TransactionType;
-  warehouseId?: number;
-  sourceWarehouseId?: number;
-  destinationWarehouseId?: number;
-  referenceType?: string;
-  referenceId?: number;
-  reason?: string;
-  notes?: string;
-  details: Array<{
-    productId: number;
-    quantity: number;
-    unitPrice?: number;
-    batchNumber?: string;
-    expiryDate?: string;
-    notes?: string;
-  }>;
-}
 
 // Inventory Adjustment DTO
 export interface InventoryAdjustmentDto {
@@ -249,28 +111,6 @@ export interface InventoryByProductResponse {
     totalReserved: number;
     totalAvailable: number;
     warehouseCount: number;
-  };
-}
-
-// Warehouse Statistics
-export interface WarehouseStatistics {
-  warehouseId: number;
-  warehouseName: string;
-  warehouseType: WarehouseType;
-  inventory: {
-    totalProducts: number;
-    totalQuantity: number;
-    reservedQuantity: number;
-    availableQuantity: number;
-  };
-  transactions: {
-    last30Days: Record<string, number>;
-  };
-  capacity: {
-    total: number | null;
-    used: number;
-    available: number | null;
-    utilizationPercent: number | null;
   };
 }
 

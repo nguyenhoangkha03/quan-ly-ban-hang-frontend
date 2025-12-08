@@ -1,9 +1,19 @@
 //Types Index - Export tất cả types
 
+// Common Types
 export * from "./common.types";
 
 // Warehouse Types
 export * from "./warehouse.types";
+
+// Stock Transaction Types
+export * from "./stock-transaction.types";
+
+// Stock Transfer Types
+export * from "./stock-transfer.types";
+
+// Purchase Order Types
+export * from "./purchase-order.types";
 
 // User Types
 export * from "./user.types";
