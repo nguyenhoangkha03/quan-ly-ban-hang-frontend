@@ -1,8 +1,3 @@
-/**
- * Invoice HTML Generator
- * Tạo HTML cho hóa đơn bán hàng (để in và export PDF)
- */
-
 import { SalesOrder } from '@/types';
 import { formatCurrency } from './utils';
 import { PAYMENT_METHOD_LABELS, SALES_CHANNEL_LABELS } from './constants';

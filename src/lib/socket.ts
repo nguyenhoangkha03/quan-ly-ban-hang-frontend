@@ -1,14 +1,10 @@
 import { io, Socket } from "socket.io-client";
 import { WS_URL } from "./constants";
 
-/**
- * Socket.io client instance
- */
+// Socket.io client instance
 let socket: Socket | null = null;
 
-/**
- * Khởi tạo Socket.io connection
- */
+// Khởi tạo Socket.io connection
 export const initSocket = (): Socket => {
   // Lấy token từ localStorage
   const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
@@ -57,16 +53,12 @@ export const initSocket = (): Socket => {
   return socket;
 };
 
-/**
- * Lấy socket instance hiện tại
- */
+// Lấy socket instance hiện tại
 export const getSocket = (): Socket | null => {
   return socket;
 };
 
-/**
- * Ngắt kết nối socket
- */
+// Ngắt kết nối socket
 export const disconnectSocket = (): void => {
   if (socket) {
     socket.disconnect();
@@ -75,9 +67,7 @@ export const disconnectSocket = (): void => {
   }
 };
 
-/**
- * Emit event đến server
- */
+// Emit event đến server
 export const emitEvent = (event: string, data?: any): void => {
   if (socket?.connected) {
     socket.emit(event, data);
@@ -86,18 +76,14 @@ export const emitEvent = (event: string, data?: any): void => {
   }
 };
 
-/**
- * Listen to event từ server
- */
+// Listen to event từ server
 export const onEvent = (event: string, callback: (...args: any[]) => void): void => {
   if (socket) {
     socket.on(event, callback);
   }
 };
 
-/**
- * Remove event listener
- */
+// Remove event listener
 export const offEvent = (event: string, callback?: (...args: any[]) => void): void => {
   if (socket) {
     if (callback) {

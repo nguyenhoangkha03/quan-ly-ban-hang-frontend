@@ -1,9 +1,7 @@
 import { create } from "zustand";
 import type { CartItem, OrderSummary } from "@/types";
 
-/**
- * Cart State Interface
- */
+// Cart State Interface
 interface CartState {
   // State
   items: CartItem[];
@@ -28,9 +26,7 @@ interface CartState {
   calculateSummary: () => void;
 }
 
-/**
- * Cart Store - Quản lý shopping cart cho sales orders
- */
+// Cart Store - Quản lý shopping cart cho sales orders
 export const useCartStore = create<CartState>((set, get) => ({
   // Initial State
   items: [],
@@ -51,7 +47,7 @@ export const useCartStore = create<CartState>((set, get) => ({
     set((state) => {
       // Check if item already exists
       const existingItemIndex = state.items.findIndex(
-        (i) => i.product_id === item.product_id
+        (i) => i.productId === item.productId
       );
 
       let newItems: CartItem[];
@@ -61,10 +57,10 @@ export const useCartStore = create<CartState>((set, get) => ({
         newItems = state.items.map((i, index) => {
           if (index === existingItemIndex) {
             const newQuantity = i.quantity + item.quantity;
-            const subtotal = newQuantity * i.unit_price;
-            const discount = (subtotal * i.discount_percent) / 100;
+            const subtotal = newQuantity * i.unitPrice;
+            const discount = (subtotal * i.discountPercent) / 100;
             const taxable = subtotal - discount;
-            const tax = (taxable * i.tax_rate) / 100;
+            const tax = (taxable * i.taxRate) / 100;
             const total = taxable + tax;
 
             return {
@@ -93,17 +89,17 @@ export const useCartStore = create<CartState>((set, get) => ({
   updateItem: (product_id, updates) => {
     set((state) => ({
       items: state.items.map((item) => {
-        if (item.product_id === product_id) {
+        if (item.productId === product_id) {
           const updatedItem = { ...item, ...updates };
 
           // Recalculate amounts
-          const subtotal = updatedItem.quantity * updatedItem.unit_price;
+          const subtotal = updatedItem.quantity * updatedItem.unitPrice;
           const discount =
-            updatedItem.discount_percent > 0
-              ? (subtotal * updatedItem.discount_percent) / 100
-              : updatedItem.discount_amount;
+            updatedItem.discountPercent > 0
+              ? (subtotal * updatedItem.discountPercent) / 100
+              : updatedItem.discountAmount;
           const taxable = subtotal - discount;
-          const tax = (taxable * updatedItem.tax_rate) / 100;
+          const tax = (taxable * updatedItem.taxRate) / 100;
           const total = taxable + tax;
 
           return {
@@ -123,7 +119,7 @@ export const useCartStore = create<CartState>((set, get) => ({
   // Remove Item
   removeItem: (product_id) => {
     set((state) => ({
-      items: state.items.filter((item) => item.product_id !== product_id),
+      items: state.items.filter((item) => item.productId !== product_id),
     }));
 
     get().calculateSummary();
@@ -182,9 +178,9 @@ export const useCartStore = create<CartState>((set, get) => ({
   calculateSummary: () => {
     const { items, shipping_fee } = get();
 
-    const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unit_price, 0);
-    const discount = items.reduce((sum, item) => sum + item.discount_amount, 0);
-    const tax = items.reduce((sum, item) => sum + item.tax_amount, 0);
+    const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+    const discount = items.reduce((sum, item) => sum + item.discountAmount, 0);
+    const tax = items.reduce((sum, item) => sum + item.taxAmount, 0);
     const total = subtotal - discount + tax + shipping_fee;
 
     set({

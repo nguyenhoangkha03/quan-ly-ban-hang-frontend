@@ -355,23 +355,6 @@ export default function CategoriesPage() {
             </table>
           </div>
         )}
-
-        {/* Stats & Pagination */}
-        {/* {meta && (
-          <div className="flex flex-col items-center justify-between gap-4 border-t border-gray-200 px-6 py-4 sm:flex-row dark:border-gray-700">
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              Hiển thị {categories.length} / {meta.total} danh mục
-              {meta.totalPages > 1 && ` • Trang ${meta.page} / ${meta.totalPages}`}
-            </div>
-            {meta.totalPages > 1 && (
-              <Pagination
-                currentPage={page}
-                totalPages={meta.totalPages}
-                onPageChange={setPage}
-              />
-            )}
-          </div>
-        )} */}
       </div>
 
       {/* Pagination */}

@@ -14,9 +14,7 @@ import type {
 } from "@/types";
 import { toast } from "react-hot-toast";
 
-/**
- * Query Keys
- */
+// Query Keys
 export const authKeys = {
   all: ["auth"] as const,
   me: () => [...authKeys.all, "me"] as const,

@@ -1,7 +1,3 @@
-/**
- * Hooks Index - Export tất cả custom hooks
- */
-
 export * from "./useAuth";
 export * from "./useDebounce";
 export * from "./useLocalStorage";

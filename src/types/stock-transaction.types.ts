@@ -36,6 +36,7 @@ export interface StockTransaction extends BaseEntity {
   cancelledAt?: string;
   details?: StockTransactionDetail[];
   createdBy?: number;
+  creator: User;
   updatedBy?: number;
 }
 
@@ -55,22 +56,36 @@ export interface StockTransactionDetail extends BaseEntity {
   notes?: string;
 }
 
-// Create Transaction DTO
-export interface CreateTransactionDto {
-  transactionType: TransactionType;
+export interface TransactionItem {
+  productId?: number;
+  product?: Product;
   warehouseId?: number;
-  sourceWarehouseId?: number;
-  destinationWarehouseId?: number;
-  referenceType?: string;
-  referenceId?: number;
-  reason?: string;
+  quantity: number;
+  unitPrice?: number;
+  batchNumber?: string;
+  expiryDate?: string;
   notes?: string;
-  details: Array<{
-    productId: number;
-    quantity: number;
-    unitPrice?: number;
-    batchNumber?: string;
-    expiryDate?: string;
-    notes?: string;
-  }>;
+}
+
+export interface TransactionItemsProps {
+  items: TransactionItem[];
+  products?: Product[]; 
+  type?: TransactionType;
+  onUpdateItem: (index: number, updates: Partial<TransactionItem>) => void;
+  onRemoveItem: (index: number) => void;
+  showPrice?: boolean;
+  showBatchNumber?: boolean;
+  showExpiryDate?: boolean;
+  showNotes?: boolean;
+  readonly?: boolean;
+}
+
+// Stock Transaction Filters
+export interface StockTransactionFilters {
+  transactionType?: "import" | "export" | "transfer" | "disposal" | "stocktake";
+  warehouseId?: number;
+  productId?: number;
+  status?: "draft" | "pending" | "approved" | "completed" | "cancelled";
+  fromDate?: string;
+  toDate?: string;
 }

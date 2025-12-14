@@ -117,6 +117,13 @@ export function FormDatePicker<T extends FieldValues>({
           };
         }, []);
 
+        // Sync external value changes (from setValue)
+        React.useEffect(() => {
+          if (flatpickrInstance.current && field.value) {
+            flatpickrInstance.current.setDate(field.value, false);
+          }
+        }, [field.value]);
+
         return (
           <div className="w-full">
             {label && (

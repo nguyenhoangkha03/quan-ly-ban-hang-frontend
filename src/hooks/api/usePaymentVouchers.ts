@@ -75,6 +75,35 @@ export function usePaymentVoucher(id: number) {
 }
 
 /**
+ * Get supplier payment vouchers
+ */
+export function useSupplierPaymentVouchers(
+  supplierId: number,
+  filters?: PaginationParams
+) {
+  return useQuery({
+    queryKey: paymentVoucherKeys.list({
+      voucherType: "supplier_payment",
+      supplierId,
+      ...filters,
+    }),
+    queryFn: async () => {
+      const response = await api.get<
+        ApiResponse<{ vouchers: PaymentVoucher[]; meta: PaginationMeta }>
+      >("/payment-vouchers", {
+        params: {
+          voucherType: "supplier_payment",
+          supplierId,
+          ...filters,
+        },
+      });
+      return response.data;
+    },
+    enabled: !!supplierId,
+  });
+}
+
+/**
  * Get payment voucher statistics
  */
 export function usePaymentVoucherStatistics(filters?: PaymentVoucherFilters) {

@@ -2,23 +2,32 @@ import { BaseEntity } from "./common.types";
 import { Product } from "./product.types";
 import { User } from "./user.types";
 import { Warehouse } from "./warehouse.types";
+import { Supplier } from "./supplier.types";
+import { StockTransaction } from "./stock-transaction.types";
+
+export type PurchaseOrderStatus = "pending" | "approved" | "received" | "cancelled";
 
 // Purchase Order
 export interface PurchaseOrder extends BaseEntity {
   poCode: string;
   supplierId: number;
-  supplier?: any; 
+  supplier?: Supplier; 
   warehouseId: number;
   warehouse?: Warehouse;
   orderDate: string;
   expectedDeliveryDate?: string;
   totalAmount: number;
-  status: "pending" | "approved" | "received" | "cancelled";
+  status: PurchaseOrderStatus;
   notes?: string;
+  taxRate: number;
+  subTotal: number;
   approvedBy?: number;
+  sendNumber?: number;
   approver?: User;
   details?: PurchaseOrderDetail[];
+  stockTransaction: StockTransaction;
   createdBy?: number;
+  creator?: User;
   updatedBy?: number;
 }
 

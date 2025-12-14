@@ -5,9 +5,7 @@
 import { PaymentMethod } from "./sales.types";
 import { User } from "./user.types";
 
-/**
- * Salary Status Enum
- */
+// Salary Status Enum
 export type SalaryStatus = "pending" | "approved" | "paid";
 
 export interface Salary {

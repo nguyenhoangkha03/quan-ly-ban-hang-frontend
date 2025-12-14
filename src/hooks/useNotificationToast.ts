@@ -1,8 +1,3 @@
-/**
- * useNotificationToast Hook
- * Real-time toast notifications via Socket.IO
- */
-
 "use client";
 
 import { useEffect } from "react";
@@ -16,9 +11,6 @@ import {
   NOTIFICATION_TYPE_COLORS,
 } from "@/types/notification.types";
 
-/**
- * Hook to show toast notifications for real-time Socket.IO events
- */
 export function useNotificationToast() {
   const queryClient = useQueryClient();
 

@@ -3,9 +3,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { useEffect, useState } from "react";
 import type { AuthUser } from "@/types";
 
-/**
- * Auth State Interface
- */
+// Auth State Interface
 interface AuthState {
   // State
   user: AuthUser | null;
@@ -26,9 +24,7 @@ interface AuthState {
   setHasHydrated: (state: boolean) => void;
 }
 
-/**
- * Auth Store - Quản lý authentication state
- */
+// Auth Store
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
@@ -114,7 +110,7 @@ export const useAuthStore = create<AuthState>()(
       // Check Role
       isRole: (roleKey) => {
         const { user } = get();
-        return user?.role?.role_key === roleKey;
+        return user?.role?.roleKey === roleKey;
       },
     }),
     {
@@ -148,16 +144,12 @@ export const useAuthStore = create<AuthState>()(
   )
 );
 
-/**
- * Hook để đợi hydration hoàn thành
- * Giải quyết vấn đề hydration mismatch
- */
+// Hook để đợi hydration hoàn thành
 export function useAuthHydration() {
   const hasHydrated = useAuthStore((state) => state._hasHydrated);
   const [isHydrated, setIsHydrated] = useState(hasHydrated);
 
   useEffect(() => {
-    // Chạy ngay lập tức trên client
     setIsHydrated(true);
   }, []);
 

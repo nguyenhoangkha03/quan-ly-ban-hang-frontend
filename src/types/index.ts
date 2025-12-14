@@ -24,6 +24,9 @@ export * from "./promotion.types";
 // Attendance Types
 export * from "./attendance.types";
 
+// Supplier Types
+export * from "./supplier.types";
+
 // Product Types
 export * from "./product.types";
 

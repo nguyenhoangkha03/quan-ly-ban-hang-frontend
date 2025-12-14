@@ -1,8 +1,6 @@
 import { create } from "zustand";
 
-/**
- * Notification Interface
- */
+// Notification Interface
 export interface Notification {
   id: number;
   type: string;
@@ -14,9 +12,7 @@ export interface Notification {
   data?: any;
 }
 
-/**
- * Notification State Interface
- */
+// Notification State Interface
 interface NotificationState {
   // State
   notifications: Notification[];
@@ -32,9 +28,7 @@ interface NotificationState {
   updateUnreadCount: () => void;
 }
 
-/**
- * Notification Store - Quản lý real-time notifications
- */
+// Notification Store - Quản lý real-time notifications
 export const useNotificationStore = create<NotificationState>((set, get) => ({
   // Initial State
   notifications: [],

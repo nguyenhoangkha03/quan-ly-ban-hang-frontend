@@ -1,12 +1,12 @@
 import React, { ReactNode } from "react";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  children: ReactNode; // Button text or content
-  size?: "sm" | "md"; // Button size
-  variant?: "primary" | "outline" | "danger" | "warning"; // Button variant
-  startIcon?: ReactNode; // Icon before the text
-  endIcon?: ReactNode; // Icon after the text
-  isLoading?: boolean; // Loading state
+  children: ReactNode; 
+  size?: "ssm" | "smm" | "sm" | "md"; 
+  variant?: "primary" | "outline" | "danger" | "warning"; 
+  startIcon?: ReactNode; 
+  endIcon?: ReactNode; 
+  isLoading?: boolean;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -24,6 +24,8 @@ const Button: React.FC<ButtonProps> = ({
 }) => {
   // Size Classes
   const sizeClasses = {
+    ssm: "px-4 py-2 text-sm",
+    smm: "px-4 py-2.5 text-sm",
     sm: "px-4 py-3 text-sm",
     md: "px-5 py-3.5 text-sm",
   };

@@ -43,17 +43,15 @@ const columnHelper = createColumnHelper<Product>();
 interface ProductTableProps {
   data: Product[];
   isLoading?: boolean;
+  onDelete?: (id: number, name: string) => void;
   onSelectionChange?: (selectedIds: number[]) => void;
   enableSelection?: boolean;
 }
 
-/**
- * Product Table Component with TanStack React Table
- * Features: Sorting, Pagination, Row Selection, Column Visibility
- */
 export function ProductTable({
   data,
   isLoading = false,
+  onDelete,
   onSelectionChange,
   enableSelection = true,
 }: ProductTableProps) {
@@ -459,84 +457,6 @@ export function ProductTable({
               ))}
             </tbody>
           </table>
-        </div>
-      </div>
-
-      {/* Pagination */}
-      <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-700 dark:text-gray-300">
-            Hiển thị{" "}
-            <span className="font-medium">
-              {table.getState().pagination.pageIndex *
-                table.getState().pagination.pageSize +
-                1}
-            </span>{" "}
-            -{" "}
-            <span className="font-medium">
-              {Math.min(
-                (table.getState().pagination.pageIndex + 1) *
-                  table.getState().pagination.pageSize,
-                table.getFilteredRowModel().rows.length
-              )}
-            </span>{" "}
-            trong tổng số{" "}
-            <span className="font-medium">{table.getFilteredRowModel().rows.length}</span>{" "}
-            sản phẩm
-          </span>
-          {enableSelection && Object.keys(rowSelection).length > 0 && (
-            <span className="ml-4 text-sm font-medium text-blue-600 dark:text-blue-400">
-              ({Object.keys(rowSelection).filter((key) => rowSelection[key]).length} đã chọn)
-            </span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => table.setPageIndex(0)}
-            disabled={!table.getCanPreviousPage()}
-            className="rounded border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
-          >
-            Đầu
-          </button>
-          <button
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-            className="rounded border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
-          >
-            Trước
-          </button>
-          <span className="text-sm text-gray-700 dark:text-gray-300">
-            Trang{" "}
-            <span className="font-medium">{table.getState().pagination.pageIndex + 1}</span>{" "}
-            / <span className="font-medium">{table.getPageCount()}</span>
-          </span>
-          <button
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-            className="rounded border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
-          >
-            Sau
-          </button>
-          <button
-            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-            disabled={!table.getCanNextPage()}
-            className="rounded border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
-          >
-            Cuối
-          </button>
-
-          <select
-            value={table.getState().pagination.pageSize}
-            onChange={(e) => table.setPageSize(Number(e.target.value))}
-            className="ml-2 rounded border border-gray-300 px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
-          >
-            {[10, 20, 50, 100].map((pageSize) => (
-              <option key={pageSize} value={pageSize}>
-                {pageSize} / trang
-              </option>
-            ))}
-          </select>
         </div>
       </div>
     </div>

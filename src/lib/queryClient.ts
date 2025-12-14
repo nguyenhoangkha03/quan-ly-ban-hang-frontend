@@ -1,8 +1,6 @@
 import { QueryClient, DefaultOptions } from "@tanstack/react-query";
 
-/**
- * Default options cho React Query
- */
+// Default options cho React Query
 const queryConfig: DefaultOptions = {
   queries: {
     retry: 1, // Retry 1 lần khi thất bại
@@ -15,9 +13,7 @@ const queryConfig: DefaultOptions = {
   },
 };
 
-/**
- * Query Client instance
- */
+// Query Client instance
 export const queryClient = new QueryClient({
   defaultOptions: queryConfig,
 });

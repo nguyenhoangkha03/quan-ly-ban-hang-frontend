@@ -1,12 +1,8 @@
-/**
- * Sales Types - Dựa trên database schema
- */
-
 import type { BaseEntity } from "./common.types";
 import type { Customer } from "./customer.types";
 import type { Product } from "./product.types";
 import type { User } from "./user.types";
-import type { Warehouse } from "./inventory.types";
+import type { Warehouse } from "./warehouse.types";
 
 // Payment Method - MATCH BACKEND & DATABASE
 export type PaymentMethod = "cash" | "transfer" | "installment" | "credit";

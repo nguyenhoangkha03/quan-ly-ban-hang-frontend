@@ -1,30 +1,17 @@
 import { useState, useEffect } from "react";
 
-/**
- * useLocalStorage Hook
- * Đồng bộ state với localStorage
- *
- * @param key - localStorage key
- * @param initialValue - Giá trị khởi tạo
- * @returns [value, setValue, removeValue]
- *
- * @example
- * const [user, setUser, removeUser] = useLocalStorage("user", null);
- */
+// Hàm để lấy giá trị từ localStorage
 export function useLocalStorage<T>(
   key: string,
   initialValue: T
 ): [T, (value: T) => void, () => void] {
-  // State để lưu giá trị
   const [storedValue, setStoredValue] = useState<T>(() => {
     if (typeof window === "undefined") {
       return initialValue;
     }
 
     try {
-      // Lấy giá trị từ localStorage
       const item = window.localStorage.getItem(key);
-      // Parse JSON hoặc return initialValue nếu không có
       return item ? JSON.parse(item) : initialValue;
     } catch (error) {
       console.error(`Error loading localStorage key "${key}":`, error);

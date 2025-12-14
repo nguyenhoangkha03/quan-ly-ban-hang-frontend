@@ -1,8 +1,3 @@
-/**
- * useOrderCart Hook
- * Local state management for sales order cart
- */
-
 import { useState, useCallback, useMemo } from "react";
 import type { CartItem, Product, OrderSummary } from "@/types";
 

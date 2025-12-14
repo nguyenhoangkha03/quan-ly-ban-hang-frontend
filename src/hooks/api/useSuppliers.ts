@@ -33,7 +33,7 @@ export function useSupplier(id: number, enabled = true) {
     queryKey: supplierKeys.detail(id),
     queryFn: async () => {
       const response = await api.get<ApiResponse<Supplier>>(`/suppliers/${id}`);
-      return response.data;
+      return response;
     },
     enabled: enabled && !!id,
   });
@@ -45,6 +45,20 @@ export function useSupplierStatistics(id: number, enabled = true) {
     queryKey: supplierKeys.statistics(id),
     queryFn: async () => {
       const response = await api.get<ApiResponse<any>>(`/suppliers/${id}/statistics`);
+      return response;
+    },
+    enabled: enabled && !!id,
+  });
+}
+
+// Get Supplier Products
+export function useSupplierProducts(id: number, enabled = true) {
+  return useQuery({
+    queryKey: [...supplierKeys.detail(id), "products"],
+    queryFn: async () => {
+      const response = await api.get(`/products`, {
+        params: { supplierId: id },
+      });
       return response;
     },
     enabled: enabled && !!id,

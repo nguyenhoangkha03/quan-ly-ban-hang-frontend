@@ -1,9 +1,5 @@
 import { z } from "zod";
 
-/**
- * Promotion Validation Schemas
- */
-
 // Promotion Type Enum
 export const promotionTypeEnum = z.enum([
   "percent_discount",
@@ -34,9 +30,7 @@ export const promotionProductSchema = z.object({
 // Promotion Conditions Schema (flexible JSON)
 export const promotionConditionsSchema = z.any().optional();
 
-/**
- * Create Promotion Schema
- */
+// Create Promotion Schema
 export const createPromotionSchema = z
   .object({
     promotionCode: z
@@ -106,11 +100,7 @@ export const createPromotionSchema = z
     }
   );
 
-export type CreatePromotionFormData = z.infer<typeof createPromotionSchema>;
-
-/**
- * Update Promotion Schema
- */
+// Update Promotion Schema
 export const updatePromotionSchema = z
   .object({
     promotionName: z
@@ -146,11 +136,7 @@ export const updatePromotionSchema = z
     }
   );
 
-export type UpdatePromotionFormData = z.infer<typeof updatePromotionSchema>;
-
-/**
- * Promotion Filter Schema
- */
+// Promotion Filter Schema
 export const promotionFilterSchema = z.object({
   promotionType: promotionTypeEnum.optional(),
   status: z
@@ -164,4 +150,6 @@ export const promotionFilterSchema = z.object({
   hasProducts: z.boolean().optional(),
 });
 
+export type CreatePromotionFormData = z.infer<typeof createPromotionSchema>;
+export type UpdatePromotionFormData = z.infer<typeof updatePromotionSchema>;
 export type PromotionFilterFormData = z.infer<typeof promotionFilterSchema>;

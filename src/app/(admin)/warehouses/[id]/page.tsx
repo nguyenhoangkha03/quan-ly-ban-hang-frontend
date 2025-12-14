@@ -597,11 +597,11 @@ export default function WarehouseDetailPage() {
                               href={`/inventory/transactions/${transaction.id}`}
                               className="hover:text-blue-600 dark:hover:text-blue-400"
                             >
-                              {transaction.transaction_code}
+                              {transaction.transactionCode}
                             </Link>
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                            {getTransactionTypeLabel(transaction.transaction_type)}
+                            {getTransactionTypeLabel(transaction.transactionType)}
                           </td>
                           <td className="px-4 py-3 text-sm">
                             <Badge color={statusInfo.color}>{statusInfo.label}</Badge>

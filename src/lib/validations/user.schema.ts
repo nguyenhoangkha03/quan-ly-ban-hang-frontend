@@ -1,18 +1,12 @@
 import { z } from "zod";
 
-/**
- * User Validation Schemas
- */
-
 // Gender Enum
 export const genderEnum = z.enum(["male", "female", "other"]);
 
 // User Status Enum
 export const userStatusEnum = z.enum(["active", "inactive", "locked"]);
 
-/**
- * Create User Schema
- */
+// Create User Schema
 export const createUserSchema = z.object({
   employeeCode: z
     .string()
@@ -49,7 +43,7 @@ export const createUserSchema = z.object({
   address: z.string().max(255, "Địa chỉ không được quá 255 ký tự").optional(),
   gender: genderEnum.optional(),
   dateOfBirth: z.string().optional(),
-  roleId: z.number({ required_error: "Vui lòng chọn vai trò" }).int().positive("Vui lòng chọn vai trò"),
+  roleId: z.number({}).int().positive("Vui lòng chọn vai trò"),
   warehouseId: z.number().int().positive().optional(),
   status: userStatusEnum.default("active"),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -57,11 +51,8 @@ export const createUserSchema = z.object({
   path: ["confirmPassword"],
 });
 
-export type CreateUserFormData = z.infer<typeof createUserSchema>;
 
-/**
- * Update User Schema
- */
+// Update User Schema
 export const updateUserSchema = z.object({
   email: z
     .string()
@@ -87,32 +78,7 @@ export const updateUserSchema = z.object({
   status: userStatusEnum.optional(),
 });
 
-export type UpdateUserFormData = z.infer<typeof updateUserSchema>;
-
-/**
- * Change Password Schema
- */
-// export const changePasswordSchema = z.object({
-//   currentPassword: z.string().min(1, "Vui lòng nhập mật khẩu hiện tại"),
-//   newPassword: z
-//     .string()
-//     .min(8, "Mật khẩu mới phải có ít nhất 8 ký tự")
-//     .max(100, "Mật khẩu không được quá 100 ký tự")
-//     .regex(
-//       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-//       "Mật khẩu phải chứa chữ thường, chữ hoa và số"
-//     ),
-//   confirmPassword: z.string().min(1, "Vui lòng xác nhận mật khẩu mới"),
-// }).refine((data) => data.newPassword === data.confirmPassword, {
-//   message: "Mật khẩu xác nhận không khớp",
-//   path: ["confirmPassword"],
-// });
-
-// export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
-
-/**
- * User Filter Schema
- */
+// User Filter Schema
 export const userFilterSchema = z.object({
   search: z.string().optional(),
   roleId: z.number().int().positive().optional(),
@@ -122,3 +88,5 @@ export const userFilterSchema = z.object({
 });
 
 export type UserFilterFormData = z.infer<typeof userFilterSchema>;
+export type CreateUserFormData = z.infer<typeof createUserSchema>;
+export type UpdateUserFormData = z.infer<typeof updateUserSchema>;

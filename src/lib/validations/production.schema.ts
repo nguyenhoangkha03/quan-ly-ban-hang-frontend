@@ -1,8 +1,5 @@
 import { z } from "zod";
 
-/**
- * BOM (Bill of Materials) Schema
- */
 export const bomSchema = z.object({
   bom_code: z
     .string()
@@ -21,9 +18,9 @@ export const bomSchema = z.object({
     .array(
       z.object({
         product_id: z.number().int().positive("Nguyên liệu không hợp lệ"),
-        product_type: z.enum(["raw_material", "packaging"], {
-          errorMap: () => ({ message: "Loại nguyên liệu không hợp lệ" }),
-        }),
+        product_type: z.enum(["raw_material", "packaging"])
+            .refine((val) => !!val, { message: "Loại nguyên liệu là bắt buộc" })
+        ,
         quantity_required: z.number().positive("Số lượng định mức phải lớn hơn 0"),
         wastage_percent: z
           .number()
@@ -37,11 +34,7 @@ export const bomSchema = z.object({
     .min(1, "BOM phải có ít nhất 1 nguyên liệu"),
 });
 
-export type BOMFormData = z.infer<typeof bomSchema>;
-
-/**
- * Production Order Schema
- */
+// Production Order Schema
 export const productionOrderSchema = z.object({
   po_code: z
     .string()
@@ -61,17 +54,11 @@ export const productionOrderSchema = z.object({
   finished_warehouse_id: z.number().int().positive("Vui lòng chọn kho thành phẩm"),
   planned_start_date: z.string().min(1, "Ngày bắt đầu dự kiến là bắt buộc"),
   planned_end_date: z.string().min(1, "Ngày kết thúc dự kiến là bắt buộc"),
-  priority: z.enum(["low", "normal", "high", "urgent"], {
-    errorMap: () => ({ message: "Độ ưu tiên không hợp lệ" }),
-  }).optional().default("normal"),
+  priority: z.enum(["low", "normal", "high", "urgent"]).optional().default("normal"),
   notes: z.string().max(500, "Ghi chú không được quá 500 ký tự").optional(),
 });
 
-export type ProductionOrderFormData = z.infer<typeof productionOrderSchema>;
-
-/**
- * Production Order Validation - End date phải sau start date
- */
+// Production Order Validation - End date phải sau start date
 export const productionOrderSchemaWithValidation = productionOrderSchema.superRefine(
   (data, ctx) => {
     const startDate = new Date(data.planned_start_date);
@@ -87,36 +74,23 @@ export const productionOrderSchemaWithValidation = productionOrderSchema.superRe
   }
 );
 
-/**
- * Production Wastage Schema
- */
+// Production Wastage Schema
 export const productionWastageSchema = z.object({
   production_order_id: z.number().int().positive("Lệnh sản xuất không hợp lệ"),
   product_id: z.number().int().positive("Sản phẩm không hợp lệ"),
   wastage_quantity: z.number().positive("Số lượng hao hụt phải lớn hơn 0"),
-  wastage_reason: z.enum(
-    ["material_defect", "production_error", "equipment_failure", "other"],
-    {
-      errorMap: () => ({ message: "Lý do hao hụt không hợp lệ" }),
-    }
-  ),
+  wastage_reason: z.enum(["material_defect", "production_error", "equipment_failure", "other"])
+    .refine((val) => !!val, { message: "Ly do hao hụt là bắt buộc" })
+  ,
   notes: z.string().max(500, "Ghi chú không được quá 500 ký tự").optional(),
 });
 
-export type ProductionWastageFormData = z.infer<typeof productionWastageSchema>;
-
-/**
- * Start Production Schema
- */
+// Start Production Schema
 export const startProductionSchema = z.object({
   actual_start_date: z.string().min(1, "Ngày bắt đầu thực tế là bắt buộc"),
 });
 
-export type StartProductionFormData = z.infer<typeof startProductionSchema>;
-
-/**
- * Complete Production Schema
- */
+// Complete Production Schema
 export const completeProductionSchema = z.object({
   actual_end_date: z.string().min(1, "Ngày hoàn thành thực tế là bắt buộc"),
   actual_quantity_produced: z.number().positive("Số lượng sản xuất thực tế phải lớn hơn 0"),
@@ -124,3 +98,7 @@ export const completeProductionSchema = z.object({
 });
 
 export type CompleteProductionFormData = z.infer<typeof completeProductionSchema>;
+export type BOMFormData = z.infer<typeof bomSchema>;
+export type ProductionOrderFormData = z.infer<typeof productionOrderSchema>;
+export type ProductionWastageFormData = z.infer<typeof productionWastageSchema>;
+export type StartProductionFormData = z.infer<typeof startProductionSchema>;

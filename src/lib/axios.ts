@@ -2,9 +2,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { API_URL } from "./constants";
 import { useAuthStore } from "@/stores";
 
-/**
- * Axios instance với interceptors cho authentication và error handling
- */
+// Axios instance với interceptors cho authentication và error handling
 const api = axios.create({
   baseURL: API_URL,
   timeout: 30000,
@@ -14,12 +12,10 @@ const api = axios.create({
   withCredentials: true, // Để gửi cookies (cho refresh token)
 });
 
-/**
- * Request interceptor - Thêm authorization token vào mỗi request
- */
+// Request interceptor - Thêm authorization token vào mỗi request
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Lấy token từ Zustand store (theo ROADMAP Phase 0.2)
+    // Lấy token từ Zustand store 
     // Dùng getState() để đọc trực tiếp từ store, không phải từ localStorage
     const token = useAuthStore.getState().token;
 
@@ -34,9 +30,7 @@ api.interceptors.request.use(
   }
 );
 
-/**
- * Response interceptor - Xử lý errors và refresh token
- */
+// Response interceptor - Xử lý errors và refresh token
 api.interceptors.response.use(
   (response) => {
     // Trả về data trực tiếp từ response

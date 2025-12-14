@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
-import type { StockTransaction, ApiResponse, PaginationParams } from "@/types";
+import type { StockTransaction, ApiResponse, PaginationParams, StockTransactionFilters } from "@/types";
 import { toast } from "react-hot-toast";
+import { type ExportFormData, type ImportFormData, type TransferFormData } from "@/lib/validations";
 
 // Query Keys
 export const stockTransactionKeys = {
@@ -11,18 +12,6 @@ export const stockTransactionKeys = {
   details: () => [...stockTransactionKeys.all, "detail"] as const,
   detail: (id: number) => [...stockTransactionKeys.details(), id] as const,
 };
-
-// Stock Transaction Filters
-export interface StockTransactionFilters extends PaginationParams {
-  transactionType?: "import" | "export" | "transfer" | "disposal" | "stocktake";
-  warehouseId?: number;
-  productId?: number;
-  status?: "draft" | "pending" | "approved" | "completed" | "cancelled";
-  fromDate?: string;
-  toDate?: string;
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
-}
 
 // Get Stock Transactions List
 export function useStockTransactions(params?: StockTransactionFilters & PaginationParams) {
@@ -57,21 +46,7 @@ export function useCreateImportTransaction() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: {
-      warehouseId: number;
-      referenceType?: string;
-      referenceId?: number;
-      reason?: string;
-      notes?: string;
-      details: Array<{
-        productId: number;
-        quantity: number;
-        unitPrice?: number;
-        batchNumber?: string;
-        expiryDate?: string;
-        notes?: string;
-      }>;
-    }) => {
+    mutationFn: async (data: ImportFormData) => {
       const response = await api.post<ApiResponse<StockTransaction>>(
         "/stock-transactions/import",
         data
@@ -94,19 +69,7 @@ export function useCreateExportTransaction() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: {
-      warehouseId: number;
-      referenceType?: string;
-      referenceId?: number;
-      reason?: string;
-      notes?: string;
-      details: Array<{
-        productId: number;
-        quantity: number;
-        batchNumber?: string;
-        notes?: string;
-      }>;
-    }) => {
+    mutationFn: async (data: ExportFormData) => {
       const response = await api.post<ApiResponse<StockTransaction>>(
         "/stock-transactions/export",
         data
@@ -129,18 +92,7 @@ export function useCreateTransferTransaction() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: {
-      sourceWarehouseId: number;
-      destinationWarehouseId: number;
-      reason?: string;
-      notes?: string;
-      details: Array<{
-        productId: number;
-        quantity: number;
-        batchNumber?: string;
-        notes?: string;
-      }>;
-    }) => {
+    mutationFn: async (data: TransferFormData) => {
       const response = await api.post<ApiResponse<StockTransaction>>(
         "/stock-transactions/transfer",
         data

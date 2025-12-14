@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-/**
- * Next.js Middleware - Route Protection
- * Chạy trước mỗi request để kiểm tra authentication
- */
+// Chạy trước mỗi request để kiểm tra authentication
 
 // Routes không cần authentication
 const publicRoutes = ["/login", "/signup", "/forgot-password", "/reset-password", "/error-404"];
@@ -63,9 +60,7 @@ export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-/**
- * Config matcher - Chỉ chạy middleware cho những routes này
- */
+// Config matcher - Chỉ chạy middleware cho những routes này
 export const config = {
   matcher: [
     /*

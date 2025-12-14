@@ -1,9 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
 import { useDebounce } from "./useDebounce";
 
-/**
- * Filter State Interface
- */
+// Filter State Interface
 interface FilterState {
   search?: string;
   page?: number;
@@ -13,33 +11,7 @@ interface FilterState {
   [key: string]: any;
 }
 
-/**
- * useTableFilters Hook
- * Hook để quản lý filters, pagination, sorting cho tables
- *
- * @param initialFilters - Initial filter values
- * @param debounceMs - Debounce time for search (default: 500ms)
- *
- * @returns Object với filters state và actions
- *
- * @example
- * const {
- *   filters,
- *   debouncedFilters,
- *   setFilter,
- *   setFilters,
- *   resetFilters,
- *   setPage,
- *   setLimit,
- *   setSort,
- *   setSearch,
- * } = useTableFilters({
- *   page: 1,
- *   limit: 20,
- *   sortBy: 'created_at',
- *   sortOrder: 'desc',
- * });
- */
+// Hook chính
 export function useTableFilters<T extends FilterState>(
   initialFilters: T,
   debounceMs = 500
@@ -58,9 +30,7 @@ export function useTableFilters<T extends FilterState>(
     [filters, debouncedSearch]
   );
 
-  /**
-   * Set single filter
-   */
+  // Set single filter
   const setFilter = useCallback((key: keyof T, value: any) => {
     setFiltersState((prev) => ({
       ...prev,
@@ -70,9 +40,7 @@ export function useTableFilters<T extends FilterState>(
     }));
   }, []);
 
-  /**
-   * Set multiple filters
-   */
+  // Set multiple filters
   const setFilters = useCallback((newFilters: Partial<T>) => {
     setFiltersState((prev) => ({
       ...prev,
@@ -82,23 +50,17 @@ export function useTableFilters<T extends FilterState>(
     }));
   }, []);
 
-  /**
-   * Reset filters về initial state
-   */
+  // Reset filters về initial state
   const resetFilters = useCallback(() => {
     setFiltersState(initialFilters);
   }, [initialFilters]);
 
-  /**
-   * Set page
-   */
+  // Set page
   const setPage = useCallback((page: number) => {
     setFilter("page" as keyof T, page);
   }, [setFilter]);
 
-  /**
-   * Set limit (page size)
-   */
+  // Set limit (page size)
   const setLimit = useCallback((limit: number) => {
     setFiltersState((prev) => ({
       ...prev,
@@ -107,9 +69,7 @@ export function useTableFilters<T extends FilterState>(
     }));
   }, []);
 
-  /**
-   * Set sort
-   */
+  // Set sort
   const setSort = useCallback((sortBy: string, sortOrder: "asc" | "desc" = "asc") => {
     setFiltersState((prev) => ({
       ...prev,
@@ -118,9 +78,7 @@ export function useTableFilters<T extends FilterState>(
     }));
   }, []);
 
-  /**
-   * Toggle sort order
-   */
+  // Toggle sort order
   const toggleSort = useCallback((sortBy: string) => {
     setFiltersState((prev) => {
       const isSameField = prev.sortBy === sortBy;
@@ -135,23 +93,17 @@ export function useTableFilters<T extends FilterState>(
     });
   }, []);
 
-  /**
-   * Set search
-   */
+  // Set search
   const setSearch = useCallback((search: string) => {
     setFilter("search" as keyof T, search);
   }, [setFilter]);
 
-  /**
-   * Clear search
-   */
+  // Clear search
   const clearSearch = useCallback(() => {
     setFilter("search" as keyof T, "");
   }, [setFilter]);
 
-  /**
-   * Check if any filter is active (excluding page, limit, sortBy, sortOrder)
-   */
+  // Check if any filter is active (excluding page, limit, sortBy, sortOrder)
   const hasActiveFilters = useMemo(() => {
     const filterKeys = Object.keys(filters).filter(
       (key) => !["page", "limit", "sortBy", "sortOrder"].includes(key)
@@ -163,9 +115,7 @@ export function useTableFilters<T extends FilterState>(
     });
   }, [filters]);
 
-  /**
-   * Get active filters count
-   */
+  // Get active filters count
   const activeFiltersCount = useMemo(() => {
     const filterKeys = Object.keys(filters).filter(
       (key) => !["page", "limit", "sortBy", "sortOrder"].includes(key)
@@ -197,9 +147,7 @@ export function useTableFilters<T extends FilterState>(
   };
 }
 
-/**
- * Type helper để extract filters từ hook
- */
+// Type helper để extract filters từ hook
 export type TableFilters<T extends FilterState> = ReturnType<
   typeof useTableFilters<T>
 >;

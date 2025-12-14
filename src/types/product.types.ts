@@ -1,5 +1,7 @@
 import { ProductFormData } from "@/lib/validations";
 import type { BaseEntity, StatusCommon } from "./common.types";
+import { Supplier } from "./supplier.types";
+import type { Inventory } from "./inventory.types";
 
 // Product Type
 export type ProductType = "raw_material" | "packaging" | "finished_product" | "goods";
@@ -22,23 +24,6 @@ export interface Category extends BaseEntity {
   children?: Category[];
   description?: string;
   status: StatusCommon;
-}
-
-// Supplier
-export interface Supplier extends BaseEntity {
-  supplierCode: string;
-  supplierName: string;
-  supplierType: "local" | "foreign";
-  contactName?: string;
-  phone?: string;
-  email?: string;
-  address?: string;
-  taxCode?: string;
-  paymentTerms?: string;
-  notes?: string;
-  status: StatusCommon;
-  createdBy?: number;
-  updatedBy?: number;
 }
 
 // Product
@@ -67,6 +52,7 @@ export interface Product extends BaseEntity {
   status: StatusCommon;
   images?: ProductImage[];
   videos?: ProductVideo[];
+  inventory?: Inventory[];
   createdBy?: number;
   updatedBy?: number;
 }

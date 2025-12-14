@@ -1,8 +1,6 @@
 import { z } from "zod";
 
-/**
- * Login Schema
- */
+// Login Schema
 export const loginSchema = z.object({
   email: z
     .string()
@@ -15,11 +13,7 @@ export const loginSchema = z.object({
   remember_me: z.boolean().optional(),
 });
 
-export type LoginFormData = z.infer<typeof loginSchema>;
-
-/**
- * Register Schema
- */
+// Register Schema
 export const registerSchema = z.object({
   employee_code: z
     .string()
@@ -53,11 +47,7 @@ export const registerSchema = z.object({
   path: ["confirm_password"],
 });
 
-export type RegisterFormData = z.infer<typeof registerSchema>;
-
-/**
- * Change Password Schema
- */
+// Change Password Schema
 export const changePasswordSchema = z.object({
   current_password: z.string().min(1, "Mật khẩu hiện tại là bắt buộc"),
   new_password: z
@@ -75,11 +65,7 @@ export const changePasswordSchema = z.object({
   path: ["new_password"],
 });
 
-export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
-
-/**
- * Forgot Password Schema
- */
+// Forgot Password Schema
 export const forgotPasswordSchema = z.object({
   email: z
     .string()
@@ -87,11 +73,7 @@ export const forgotPasswordSchema = z.object({
     .email("Email không hợp lệ"),
 });
 
-export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
-
-/**
- * Reset Password Schema
- */
+// Reset Password Schema
 export const resetPasswordSchema = z.object({
   token: z.string().min(1, "Token không hợp lệ"),
   password: z
@@ -106,4 +88,8 @@ export const resetPasswordSchema = z.object({
   path: ["confirm_password"],
 });
 
+export type LoginFormData = z.infer<typeof loginSchema>;
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
+export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
+export type RegisterFormData = z.infer<typeof registerSchema>;
+export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;

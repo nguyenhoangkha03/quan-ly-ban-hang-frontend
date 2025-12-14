@@ -2,24 +2,18 @@
 
 import React, { useState, useMemo } from "react";
 import { useProducts } from "@/hooks/api";
-import { Product } from "@/types";
+import { ApiResponse, Product } from "@/types";
 import { useDebounce } from "@/hooks";
 
 interface ProductSelectorProps {
   onSelect: (product: Product) => void;
   warehouseId?: number;
   excludeProductIds?: number[];
-  checkStock?: boolean; // For export/transfer - only show products with stock
+  checkStock?: boolean;
   label?: string;
   placeholder?: string;
 }
 
-/**
- * Product Selector Component
- * Combobox để search & select products
- * Show: Image, SKU, Name, Available stock
- * Disable nếu out of stock (for export)
- */
 export function ProductSelector({
   onSelect,
   warehouseId,
@@ -33,25 +27,24 @@ export function ProductSelector({
   const debouncedSearch = useDebounce(searchTerm, 300);
 
   // Fetch products
-  const { data: productsResponse, isLoading } = useProducts({
+  const { data: productsResponseWrapper, isLoading } = useProducts({
     search: debouncedSearch,
     status: "active",
-    limit: "50",
+    limit: 50,
   });
+
+  const productsResponse = productsResponseWrapper as unknown as ApiResponse<Product[]>;
 
   // Filter available products
   const availableProducts = useMemo(() => {
     if (!productsResponse?.data) return [];
 
     return productsResponse.data.filter((product) => {
-      // Exclude already selected products
       if (excludeProductIds.includes(product.id)) return false;
 
-      // If checkStock is true, only show products with available stock
-      if (checkStock && warehouseId) {
-        // Assuming product has inventory data
-        const inventory = product.inventory?.find((inv: any) => inv.warehouse_id === warehouseId);
-        if (!inventory || (inventory.quantity - inventory.reserved_quantity) <= 0) {
+      if (checkStock && warehouseId && product.inventory) {
+        const inventory = product.inventory.find((inv) => inv.warehouseId === warehouseId);
+        if (!inventory || (inventory.quantity - inventory.reservedQuantity) <= 0) {
           return false;
         }
       }
@@ -148,11 +141,11 @@ export function ProductSelector({
               <ul className="py-1">
                 {availableProducts.map((product) => {
                   // Get inventory info if checking stock
-                  const inventory = checkStock && warehouseId
-                    ? product.inventory?.find((inv: any) => inv.warehouse_id === warehouseId)
+                  const inventory = checkStock && warehouseId && product.inventory
+                    ? product.inventory.find((inv) => inv.warehouseId === warehouseId)
                     : null;
                   const availableQty = inventory
-                    ? inventory.quantity - inventory.reserved_quantity
+                    ? inventory.quantity - inventory.reservedQuantity
                     : null;
 
                   return (
@@ -163,10 +156,10 @@ export function ProductSelector({
                         className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center gap-3"
                       >
                         {/* Product Image */}
-                        {product.image_url ? (
+                        {product.images?.[0]?.imageUrl ? (
                           <img
-                            src={product.image_url}
-                            alt={product.product_name}
+                            src={product.images[0].imageUrl}
+                            alt={product.productName}
                             className="h-12 w-12 rounded object-cover"
                           />
                         ) : (
@@ -190,14 +183,14 @@ export function ProductSelector({
                         {/* Product Info */}
                         <div className="flex-1">
                           <div className="font-medium text-gray-900 dark:text-white">
-                            {product.product_name}
+                            {product.productName}
                           </div>
                           <div className="text-xs text-gray-500 dark:text-gray-400">
-                            {product.product_code}
+                            {product.sku}
                             {product.unit && ` • ${product.unit}`}
-                            {product.unit_price && (
+                            {product.purchasePrice && (
                               <span className="ml-2 font-medium text-gray-700 dark:text-gray-300">
-                                {product.unit_price.toLocaleString("vi-VN")} đ
+                                {Number(product.purchasePrice).toLocaleString("vi-VN")} đ
                               </span>
                             )}
                           </div>

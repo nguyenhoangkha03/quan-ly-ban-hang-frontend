@@ -1,25 +1,18 @@
-/**
- * Customer Validation Schemas
- */
-
 import { z } from "zod";
 
-/**
- * Create Customer Schema
- */
+// Create Customer Schema
 export const createCustomerSchema = z.object({
   customerName: z
-    .string({ required_error: "Tên khách hàng là bắt buộc" })
+    .string({})
     .min(1, "Tên khách hàng là bắt buộc")
     .max(200, "Tên khách hàng không được quá 200 ký tự"),
 
-  customerType: z.enum(["individual", "company"], {
-    required_error: "Loại khách hàng là bắt buộc",
-  }),
-
-  classification: z.enum(["retail", "wholesale", "vip", "distributor"], {
-    required_error: "Phân loại khách hàng là bắt buộc",
-  }),
+  customerType: z.enum(["individual", "company"])
+    .refine((val) => !!val, { message: "Loại khách hàng là bắt buộc" })
+  ,
+  classification: z.enum(["retail", "wholesale", "vip", "distributor"])
+    .refine((val) => !!val, { message: "Loại khách hàng là bắt buộc" })
+  ,
 
   gender: z.enum(["male", "female", "other"]).optional(),
 
@@ -29,7 +22,8 @@ export const createCustomerSchema = z.object({
     .optional(),
 
   phone: z
-    .string({ required_error: "Số điện thoại là bắt buộc" })
+    .string({})
+    .min(1, "Số điện thoại là bắt buộc")
     .regex(/^[0-9]{10,11}$/, "Số điện thoại phải có 10-11 chữ số"),
 
   email: z
@@ -84,9 +78,7 @@ export const createCustomerSchema = z.object({
   }
 );
 
-/**
- * Update Customer Schema
- */
+// Update Customer Schema
 export const updateCustomerSchema = z.object({
   customerName: z
     .string()
@@ -149,12 +141,10 @@ export const updateCustomerSchema = z.object({
   status: z.enum(["active", "inactive", "blacklisted"]).optional(),
 });
 
-/**
- * Update Credit Limit Schema
- */
+// Update Credit Limit Schema
 export const updateCreditLimitSchema = z.object({
   creditLimit: z
-    .number({ required_error: "Hạn mức công nợ là bắt buộc" })
+    .number({})
     .nonnegative("Hạn mức công nợ phải >= 0"),
 
   reason: z
@@ -163,14 +153,11 @@ export const updateCreditLimitSchema = z.object({
     .optional(),
 });
 
-/**
- * Update Status Schema
- */
+// Update Status Schema
 export const updateCustomerStatusSchema = z.object({
-  status: z.enum(["active", "inactive", "blacklisted"], {
-    required_error: "Trạng thái là bắt buộc",
-  }),
-
+  status: z.enum(["active", "inactive", "blacklisted"])
+    .refine((val) => val !== "active", "Khách hàng hóa đơn nây khóa, không thị hành chính sách")
+  ,
   reason: z
     .string()
     .max(255, "Lý do không được quá 255 ký tự")

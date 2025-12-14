@@ -279,15 +279,20 @@ const AppSidebar: React.FC = () => {
 
   const isActive = useCallback((path: string) => {
     if (path === pathname) return true;
-    if (path !== '/' && pathname.startsWith(path + '/')) {
-      const allSubItems = [...navItems, ...othersItems]
+    
+    if (path === '/') return false;
+    
+    if (pathname.startsWith(path + '/')) {
+        const allSubItems = [...navItems, ...othersItems]
         .flatMap(nav => nav.subItems || [])
-        .filter(subItem => subItem.path.startsWith(path + '/'));
-
-      const hasExactSubItemMatch = allSubItems.some(subItem => subItem.path === pathname);
-      if (hasExactSubItemMatch) return false;
-
-      return true;
+        .filter(subItem => subItem.path !== path); 
+        
+        const hasMoreSpecificMatch = allSubItems.some(subItem => 
+        pathname === subItem.path || 
+        (pathname.startsWith(subItem.path + '/') && subItem.path.length > path.length)
+        );
+        
+        return !hasMoreSpecificMatch;
     }
 
     return false;

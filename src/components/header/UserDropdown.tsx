@@ -5,7 +5,7 @@ import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { useAuthStore } from "@/stores/authStore";
 import { useLogout } from "@/hooks/api";
-import { getUserAvatar } from "@/lib/utils/avatar";
+import { getUserAvatar } from "@/lib/utils";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -27,9 +27,9 @@ export default function UserDropdown() {
   };
 
   // Display values with fallbacks
-  const displayName = user?.full_name || "User";
+  const displayName = user?.fullName || "User";
   const displayEmail = user?.email || "user@example.com";
-  const displayAvatar = getUserAvatar(user?.avatar_url, user?.gender);
+  const displayAvatar = getUserAvatar(user?.avatarUrl, user?.gender);
 
   return (
     <div className="relative">
@@ -83,7 +83,7 @@ export default function UserDropdown() {
           </span>
           {user?.role && (
             <span className="mt-1 inline-block px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded dark:bg-blue-900 dark:text-blue-300">
-              {user.role.role_name}
+              {user.role.roleName}
             </span>
           )}
         </div>

@@ -1,8 +1,3 @@
-/**
- * Invoice PDF Generator
- * Tạo file PDF cho hóa đơn bán hàng
- */
-
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { SalesOrder } from '@/types';
@@ -18,11 +13,11 @@ export interface InvoiceConfig {
 }
 
 const DEFAULT_CONFIG: InvoiceConfig = {
-  companyName: 'Công ty TNHH Quản Lý Bán Hàng',
-  companyAddress: '123 Đường ABC, Quận 1, TP.HCM',
-  companyPhone: '0123456789',
-  companyEmail: 'info@company.com',
-  companyTax: 'MST: 0123456789',
+  companyName: 'Công Ty Cổ Phần Hoá Sinh Nam Việt',
+  companyAddress: 'QL30/ấp Đông Mỹ, Mỹ Hội, Cao Lãnh, Đồng Tháp 81167',
+  companyPhone: '0886 357 788',
+  companyEmail: 'hoasinhnamviet@gmail.com',
+  companyTax: 'MST: 1401226782',
 };
 
 export function generateInvoicePDF(order: SalesOrder, config: InvoiceConfig = DEFAULT_CONFIG) {
@@ -42,12 +37,12 @@ export function generateInvoicePDF(order: SalesOrder, config: InvoiceConfig = DE
 
   // Company Header
   doc.setFontSize(16);
-  doc.setFont(undefined, 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.text(config.companyName || DEFAULT_CONFIG.companyName!, margin, currentY);
   currentY += 8;
 
   doc.setFontSize(10);
-  doc.setFont(undefined, 'normal');
+  doc.setFont('helvetica', 'normal');
   doc.text(config.companyAddress || DEFAULT_CONFIG.companyAddress!, margin, currentY);
   currentY += 5;
   doc.text(`ĐT: ${config.companyPhone || DEFAULT_CONFIG.companyPhone}`, margin, currentY);
@@ -57,23 +52,23 @@ export function generateInvoicePDF(order: SalesOrder, config: InvoiceConfig = DE
 
   // Title
   doc.setFontSize(14);
-  doc.setFont(undefined, 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.text('HÓA ĐƠN BÁN HÀNG', pageWidth / 2, currentY, { align: 'center' });
   currentY += 8;
 
   // Invoice Info
   doc.setFontSize(10);
-  doc.setFont(undefined, 'normal');
+  doc.setFont('helvetica', 'normal');
   doc.text(`Số HĐ: ${order.orderCode}`, margin, currentY);
   doc.text(`Ngày lập: ${new Date(order.orderDate || order.createdAt).toLocaleDateString('vi-VN')}`, pageWidth - margin - 50, currentY);
   currentY += 7;
 
   // Customer Info
-  doc.setFont(undefined, 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.text('THÔNG TIN KHÁCH HÀNG:', margin, currentY);
   currentY += 6;
 
-  doc.setFont(undefined, 'normal');
+  doc.setFont('helvetica', 'normal');
   doc.text(`Tên KH: ${order.customer?.customerName || 'N/A'}`, margin, currentY);
   currentY += 5;
   doc.text(`Địa chỉ: ${order.customer?.address || order.deliveryAddress || 'N/A'}`, margin, currentY);
@@ -140,7 +135,7 @@ export function generateInvoicePDF(order: SalesOrder, config: InvoiceConfig = DE
 
   // Summary Section
   const summaryX = pageWidth - margin - 80;
-  doc.setFont(undefined, 'normal');
+  doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
 
   // Subtotal
@@ -194,14 +189,14 @@ export function generateInvoicePDF(order: SalesOrder, config: InvoiceConfig = DE
   }
 
   // Total (Bold)
-  doc.setFont(undefined, 'bold');
+  doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.text('TỔNG CỘNG:', summaryX, currentY);
   doc.text(formatCurrency(order.totalAmount), pageWidth - margin - 5, currentY, { align: 'right' });
   currentY += 8;
 
   // Payment Info
-  doc.setFont(undefined, 'normal');
+  doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.text(`Phương thức TT: ${PAYMENT_METHOD_LABELS[order.paymentMethod] || 'N/A'}`, margin, currentY);
   currentY += 5;
@@ -212,10 +207,10 @@ export function generateInvoicePDF(order: SalesOrder, config: InvoiceConfig = DE
 
   // Notes
   if (order.notes) {
-    doc.setFont(undefined, 'bold');
+    doc.setFont('helvetica', 'bold');
     doc.text('Ghi chú:', margin, currentY);
     currentY += 5;
-    doc.setFont(undefined, 'normal');
+    doc.setFont('helvetica', 'normal');
     const noteLines = doc.splitTextToSize(order.notes, pageWidth - 2 * margin);
     doc.text(noteLines, margin, currentY);
     currentY += noteLines.length * 5 + 5;
@@ -224,25 +219,21 @@ export function generateInvoicePDF(order: SalesOrder, config: InvoiceConfig = DE
   // Footer
   currentY = pageHeight - 15;
   doc.setFontSize(8);
-  doc.setFont(undefined, 'italic');
+  doc.setFont('helvetica', 'italic');
   doc.text('Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi', pageWidth / 2, currentY, { align: 'center' });
   doc.text(`Được tạo ngày: ${new Date().toLocaleDateString('vi-VN')}`, pageWidth / 2, currentY + 5, { align: 'center' });
 
   return doc;
 }
 
-/**
- * Download PDF file
- */
+// Download PDF file
 export function downloadInvoicePDF(order: SalesOrder, config?: InvoiceConfig) {
   const doc = generateInvoicePDF(order, config);
   const fileName = `HoaDon_${order.orderCode}_${new Date().getTime()}.pdf`;
   doc.save(fileName);
 }
 
-/**
- * Print PDF
- */
+// Print PDF
 export function printInvoice(order: SalesOrder, config?: InvoiceConfig) {
   const doc = generateInvoicePDF(order, config);
   const pdfBlob = doc.output('blob');

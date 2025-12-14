@@ -1,9 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
-/**
- * UI State Interface
- */
+// UI State Interface
 interface UIState {
   // Sidebar State
   sidebarOpen: boolean;
@@ -33,9 +31,7 @@ interface UIState {
   setGlobalLoading: (loading: boolean) => void;
 }
 
-/**
- * UI Store - Quản lý UI state
- */
+// UI Store - Quản lý UI state
 export const useUIStore = create<UIState>()(
   persist(
     (set, get) => ({

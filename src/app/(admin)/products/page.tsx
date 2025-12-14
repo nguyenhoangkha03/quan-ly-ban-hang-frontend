@@ -18,9 +18,15 @@ import Pagination from "@/components/tables/Pagination";
 import ConfirmDialog from "@/components/ui/modal/ConfirmDialog";
 import { ApiResponse, Category, Product, ProductType, Supplier } from "@/types";
 import { Download, Trash2, CheckCircle, XCircle } from "lucide-react";
+import { useDebounce } from "@/hooks";
 
 export default function ProductsPage() {
+  // Pagination & Filters
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
   const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearch = useDebounce(searchTerm, 400);
+  
   const [typeFilter, setTypeFilter] = useState<ProductType | "all">("all");
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "inactive" | "discontinued"
@@ -28,8 +34,6 @@ export default function ProductsPage() {
   const [categoryFilter, setCategoryFilter] = useState<number | "all">("all");
   const [supplierFilter, setSupplierFilter] = useState<number | "all">("all");
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(20);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
   const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);

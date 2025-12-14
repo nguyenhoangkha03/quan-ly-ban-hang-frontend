@@ -1,18 +1,5 @@
 import { useAuthStore } from "@/stores";
 
-/**
- * usePermissions Hook
- * Hook để check permissions của user hiện tại
- *
- * @returns Object chứa các helper functions để check permissions
- *
- * @example
- * const { canView, canCreate, canUpdate, canDelete, isAdmin } = usePermissions();
- *
- * if (canCreate("products")) {
- *   // Show create button
- * }
- */
 export function usePermissions() {
   const { hasPermission, hasAnyPermission, hasAllPermissions, isRole, user } = useAuthStore();
 
@@ -52,7 +39,7 @@ export function usePermissions() {
       // Admin và warehouse manager có quyền truy cập tất cả warehouse
       if (isRole("admin") || isRole("warehouse_manager")) return true;
       // Warehouse staff chỉ truy cập warehouse được assign
-      return user.warehouse_id === warehouseId;
+      return user.warehouseId === warehouseId;
     },
   };
 }

@@ -1,48 +1,26 @@
-/**
- * Salary Validation Schemas
- * Zod schemas for salary-related forms
- */
-
 import { z } from "zod";
-
-//----------------------------------------------
-// Calculate Salary Schema
-//----------------------------------------------
 
 export const calculateSalarySchema = z.object({
   userId: z
-    .number({
-      required_error: "Vui lòng chọn nhân viên",
-      invalid_type_error: "ID nhân viên không hợp lệ",
-    })
+    .number({})
     .min(1, "Vui lòng chọn nhân viên"),
   month: z
-    .string({
-      required_error: "Vui lòng chọn tháng",
-    })
+    .string({})
     .regex(/^\d{6}$/, "Tháng phải có định dạng YYYYMM (ví dụ: 202501)"),
   basicSalary: z
-    .number({
-      invalid_type_error: "Lương cơ bản phải là số",
-    })
+    .number({})
     .min(0, "Lương cơ bản phải >= 0")
     .optional(),
   allowance: z
-    .number({
-      invalid_type_error: "Phụ cấp phải là số",
-    })
+    .number({})
     .min(0, "Phụ cấp phải >= 0")
     .optional(),
   bonus: z
-    .number({
-      invalid_type_error: "Thưởng phải là số",
-    })
+    .number({})
     .min(0, "Thưởng phải >= 0")
     .optional(),
   advance: z
-    .number({
-      invalid_type_error: "Tạm ứng phải là số",
-    })
+    .number({})
     .min(0, "Tạm ứng phải >= 0")
     .optional(),
   notes: z
@@ -50,54 +28,34 @@ export const calculateSalarySchema = z.object({
     .max(255, "Ghi chú không được vượt quá 255 ký tự")
     .optional(),
 });
-
-export type CalculateSalaryFormValues = z.infer<typeof calculateSalarySchema>;
-
-//----------------------------------------------
-// Update Salary Schema
-//----------------------------------------------
 
 export const updateSalarySchema = z.object({
   basicSalary: z
-    .number({
-      invalid_type_error: "Lương cơ bản phải là số",
-    })
+    .number({})
     .min(0, "Lương cơ bản phải >= 0")
     .optional(),
   allowance: z
-    .number({
-      invalid_type_error: "Phụ cấp phải là số",
-    })
+    .number({})
     .min(0, "Phụ cấp phải >= 0")
     .optional(),
   overtimePay: z
-    .number({
-      invalid_type_error: "Lương làm thêm phải là số",
-    })
+    .number({})
     .min(0, "Lương làm thêm phải >= 0")
     .optional(),
   bonus: z
-    .number({
-      invalid_type_error: "Thưởng phải là số",
-    })
+    .number({})
     .min(0, "Thưởng phải >= 0")
     .optional(),
   commission: z
-    .number({
-      invalid_type_error: "Hoa hồng phải là số",
-    })
+    .number({})
     .min(0, "Hoa hồng phải >= 0")
     .optional(),
   deduction: z
-    .number({
-      invalid_type_error: "Khấu trừ phải là số",
-    })
+    .number({})
     .min(0, "Khấu trừ phải >= 0")
     .optional(),
   advance: z
-    .number({
-      invalid_type_error: "Tạm ứng phải là số",
-    })
+    .number({})
     .min(0, "Tạm ứng phải >= 0")
     .optional(),
   notes: z
@@ -105,13 +63,10 @@ export const updateSalarySchema = z.object({
     .max(255, "Ghi chú không được vượt quá 255 ký tự")
     .optional(),
 });
-
-export type UpdateSalaryFormValues = z.infer<typeof updateSalarySchema>;
 
 //----------------------------------------------
 // Approve Salary Schema
 //----------------------------------------------
-
 export const approveSalarySchema = z.object({
   notes: z
     .string()
@@ -119,36 +74,28 @@ export const approveSalarySchema = z.object({
     .optional(),
 });
 
-export type ApproveSalaryFormValues = z.infer<typeof approveSalarySchema>;
 
 //----------------------------------------------
 // Pay Salary Schema
 //----------------------------------------------
-
 export const paySalarySchema = z.object({
   paymentDate: z
-    .string({
-      required_error: "Vui lòng chọn ngày thanh toán",
-    })
+    .string({})
     .refine((val) => !isNaN(Date.parse(val)), {
       message: "Ngày thanh toán không hợp lệ",
     }),
-  paymentMethod: z.enum(["cash", "transfer"], {
-    required_error: "Vui lòng chọn phương thức thanh toán",
-    invalid_type_error: "Phương thức thanh toán không hợp lệ",
-  }),
+  paymentMethod: z.enum(["cash", "transfer"])
+    .refine((val) => !!val, { message: "Phương thức thanh toán la bát buộc" })
+  ,
   notes: z
     .string()
     .max(500, "Ghi chú không được vượt quá 500 ký tự")
     .optional(),
 });
 
-export type PaySalaryFormValues = z.infer<typeof paySalarySchema>;
-
 //----------------------------------------------
 // Salary Filters Schema
 //----------------------------------------------
-
 export const salaryFilterSchema = z.object({
   userId: z.number().optional(),
   month: z.string().regex(/^\d{6}$/).optional(),
@@ -161,4 +108,8 @@ export const salaryFilterSchema = z.object({
   sortOrder: z.enum(["asc", "desc"]).optional(),
 });
 
+export type CalculateSalaryFormValues = z.infer<typeof calculateSalarySchema>;
 export type SalaryFilterFormValues = z.infer<typeof salaryFilterSchema>;
+export type UpdateSalaryFormValues = z.infer<typeof updateSalarySchema>;
+export type ApproveSalaryFormValues = z.infer<typeof approveSalarySchema>;
+export type PaySalaryFormValues = z.infer<typeof paySalarySchema>;

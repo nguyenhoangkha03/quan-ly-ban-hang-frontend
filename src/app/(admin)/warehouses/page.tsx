@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { useWarehouses, useDeleteWarehouse, WarehouseCards, useWarehouseCards } from "@/hooks/api";
+import { useWarehouses, useDeleteWarehouse, useWarehouseCards } from "@/hooks/api";
 import { Can } from "@/components/auth";
 import {
   Table,
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import Badge, { type BadgeColor } from "@/components/ui/badge/Badge";
 import WarehouseStats from "@/components/warehouses/WarehouseStats";
-import { WarehouseType, StatusCommon, ApiResponse, Warehouse } from "@/types";
+import { WarehouseType, StatusCommon, ApiResponse, Warehouse, WarehouseCards } from "@/types";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import { useDebounce } from "@/hooks";
 import Pagination from "@/components/tables/Pagination";

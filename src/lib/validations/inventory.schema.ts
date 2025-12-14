@@ -1,12 +1,10 @@
 import { z } from "zod";
 
-/**
- * Stock Transaction Schema
- */
+// Stock Transaction Schema
 export const stockTransactionSchema = z.object({
-  transaction_type: z.enum(["import", "export", "transfer", "disposal", "stocktake"], {
-    errorMap: () => ({ message: "Loại giao dịch không hợp lệ" }),
-  }),
+  transaction_type: z.enum(["import", "export", "transfer", "disposal", "stocktake"])
+    .refine((val) => !!val, { message: "Loại giao dịch là bắt buộc" })
+  ,
   warehouse_id: z.number().int().positive("Vui lòng chọn kho").optional(),
   source_warehouse_id: z
     .number()
@@ -38,9 +36,7 @@ export const stockTransactionSchema = z.object({
 
 export type StockTransactionFormData = z.infer<typeof stockTransactionSchema>;
 
-/**
- * Stock Transaction Validation dựa theo type
- */
+// Stock Transaction Validation dựa theo type
 export const stockTransactionSchemaWithValidation = stockTransactionSchema.superRefine(
   (data, ctx) => {
     // Import: cần warehouse_id
@@ -110,9 +106,7 @@ export const stockTransactionSchemaWithValidation = stockTransactionSchema.super
   }
 );
 
-/**
- * Inventory Adjustment Schema
- */
+// Inventory Adjustment Schema
 export const inventoryAdjustmentSchema = z.object({
   warehouse_id: z.number().int().positive("Vui lòng chọn kho"),
   product_id: z.number().int().positive("Vui lòng chọn sản phẩm"),
@@ -128,9 +122,7 @@ export const inventoryAdjustmentSchema = z.object({
 
 export type InventoryAdjustmentFormData = z.infer<typeof inventoryAdjustmentSchema>;
 
-/**
- * Inventory Filter Schema
- */
+// Inventory Filter Schema
 export const inventoryFilterSchema = z.object({
   warehouse_id: z.number().int().positive().optional(),
   warehouse_type: z
