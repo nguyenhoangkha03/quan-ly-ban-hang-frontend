@@ -106,9 +106,17 @@ export function SimpleDatePicker({
 
   // Sync external value changes without re-initializing
   useEffect(() => {
-    if (flatpickrInstance.current && value && value !== displayValue) {
-      flatpickrInstance.current.setDate(value, false);
-      setDisplayValue(value);
+    if (flatpickrInstance.current) {
+      if (value) {
+        if (value !== displayValue) {
+          flatpickrInstance.current.setDate(value, false);
+          setDisplayValue(value);
+        }
+      } else {
+        // Clear the date picker when value is empty
+        flatpickrInstance.current.clear();
+        setDisplayValue("");
+      }
     }
   }, [value]);
 

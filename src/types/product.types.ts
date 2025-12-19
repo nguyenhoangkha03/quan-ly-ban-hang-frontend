@@ -24,6 +24,7 @@ export interface Category extends BaseEntity {
   children?: Category[];
   description?: string;
   status: StatusCommon;
+  _count: { products: number };
 }
 
 // Product
@@ -49,7 +50,7 @@ export interface Product extends BaseEntity {
   taxRate?: number;
   minStockLevel?: number;
   expiryDate?: string;
-  status: StatusCommon;
+  status: ProductStatus;
   images?: ProductImage[];
   videos?: ProductVideo[];
   inventory?: Inventory[];

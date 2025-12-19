@@ -24,6 +24,9 @@ const protectedRoutes = [
   "/reports",
   "/settings",
   "/profile",
+  "/nguyen-lieu",
+  "/bao-bi",
+  "/thanh-pham",
 ];
 
 export function middleware(request: NextRequest) {

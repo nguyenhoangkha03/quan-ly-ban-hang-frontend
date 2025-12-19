@@ -10,6 +10,8 @@ interface CancelModalProps {
   onConfirm: (reason: string) => void;
   title?: string;
   message?: string;
+  placeholder?: string;
+  action?: string;
   confirmText?: string;
   cancelText?: string;
   isLoading?: boolean;
@@ -22,6 +24,8 @@ export default function CancelModal({
   title = "Hủy giao dịch",
   message = "Vui lòng nhập lý do hủy giao dịch này:",
   confirmText = "Xác nhận hủy",
+  placeholder = "Nhập lý do hủy giao dịch...",
+  action="hủy",
   cancelText = "Đóng",
   isLoading = false,
 }: CancelModalProps) {
@@ -87,12 +91,12 @@ export default function CancelModal({
         {/* Textarea */}
         <div className="mb-6">
           <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Lý do hủy <span className="text-red-500">*</span>
+            Lý do {action} <span className="text-red-500">*</span>
           </label>
           <textarea
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="Nhập lý do hủy giao dịch..."
+            placeholder={placeholder}
             rows={4}
             disabled={isLoading}
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:bg-gray-100 disabled:cursor-not-allowed dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-blue-400 dark:disabled:bg-gray-700"

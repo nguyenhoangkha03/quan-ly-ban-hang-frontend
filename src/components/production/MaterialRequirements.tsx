@@ -1,13 +1,9 @@
-/**
- * Material Requirements Component
- * Hiển thị danh sách nguyên liệu & bao bì cần cho sản xuất
- */
-
 import React from "react";
 import { AlertCircle, CheckCircle, Package } from "lucide-react";
 import type { ProductionOrderMaterial, MaterialShortage } from "@/types";
 import { MATERIAL_TYPE_LABELS } from "@/lib/constants";
 import { formatCurrency, formatNumber } from "@/lib/utils";
+import Link from "next/link";
 
 interface MaterialRequirementsProps {
   materials: ProductionOrderMaterial[];
@@ -43,9 +39,21 @@ export function MaterialRequirements({
           <div className="flex items-center gap-2">
             <Package className="h-4 w-4 text-gray-400" />
             <div>
-              <p className="font-medium text-gray-900 dark:text-white">
-                {material.material?.productName || `Material #${material.materialId}`}
-              </p>
+              {material.materialType === "raw_material" ? (
+                <Link 
+                  className="font-medium text-blue-600 dark:text-white hover:underline" 
+                  href={`/materials/${material.materialId}`}
+                >
+                  {material.material?.productName || `Material #${material.materialId}`}
+                </Link>
+              ) : (
+                <Link 
+                  className="font-medium text-blue-600 dark:text-white hover:underline" 
+                  href={`/packaging/${material.materialId}`}
+                >
+                  {material.material?.productName || `Material #${material.materialId}`}
+                </Link>
+              )}
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {MATERIAL_TYPE_LABELS[material.materialType]}
               </p>

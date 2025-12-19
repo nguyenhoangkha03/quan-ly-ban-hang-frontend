@@ -8,15 +8,12 @@ import { useCreateBOM, useProducts } from "@/hooks/api";
 import { Can } from "@/components/auth";
 import MaterialsTable from "@/components/production/MaterialsTable";
 import Button from "@/components/ui/button/Button";
-import { BomFormData, ProductType, ApiResponse, Product } from "@/types";
+import { BomFormData, ApiResponse, Product } from "@/types";
 import { createBomSchema } from "@/lib/validations";
 import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
+import SearchableSelect from "@/components/ui/SearchableSelect";
 
-/**
- * Create BOM Page
- * Tạo công thức sản xuất mới (Bill of Materials)
- */
 export default function CreateBOMPage() {
   const router = useRouter();
   const createBOM = useCreateBOM();
@@ -24,9 +21,8 @@ export default function CreateBOMPage() {
 
   // Fetch finished products
   const { data: productsData } = useProducts({
-    productType: ProductType.finished_product,
-    status: "active",
-    limit: 100,
+    productType: 'finished_product',
+    limit: 1000,
   });
 
   const finishedProducts = ((productsData as unknown as ApiResponse<Product[]>)?.data || []);
@@ -39,7 +35,7 @@ export default function CreateBOMPage() {
     watch,
     setValue,
     formState: { errors },
-  } = useForm<BomFormData>({
+  } = useForm({
     resolver: zodResolver(createBomSchema),
     defaultValues: {
       bomCode: "",
@@ -68,8 +64,8 @@ export default function CreateBOMPage() {
         version: data.version,
         outputQuantity: data.outputQuantity,
         efficiencyRate: data.efficiencyRate,
-        productionTime: data.productionTime || undefined,
-        notes: data.notes || undefined,
+        productionTime: data.productionTime,
+        notes: data.notes,
         materials: data.materials.map((m) => ({
           materialId: m.materialId,
           quantity: m.quantity,
@@ -92,13 +88,6 @@ export default function CreateBOMPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/production/bom">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Quay lại
-            </Button>
-          </Link>
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               Tạo BOM Mới
@@ -107,17 +96,19 @@ export default function CreateBOMPage() {
               Tạo công thức sản xuất cho sản phẩm thành phẩm
             </p>
           </div>
-        </div>
+          <Link
+            href={"/production/bom"}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            Quay lại
+          </Link>
       </div>
 
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Basic Information */}
-        <div className="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
-          <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-            Thông tin cơ bản
-          </h3>
-
+        <div className="rounded-lg border bg-white p-6 shadow dark:bg-gray-800">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             {/* BOM Code */}
             <div>
@@ -159,19 +150,15 @@ export default function CreateBOMPage() {
               <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Sản phẩm thành phẩm <span className="text-red-500">*</span>
               </label>
-              <select
-                {...register("finishedProductId", {
-                  setValueAs: (v) => (v === "" ? 0 : parseInt(v)),
-                })}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              >
-                <option value="">-- Chọn sản phẩm --</option>
-                {finishedProducts.map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {product.productName} ({product.sku})
-                  </option>
-                ))}
-              </select>
+              <SearchableSelect
+                options={finishedProducts.map((s) => ({
+                value: s.id,
+                label: s.sku + " - " + s.productName,
+                }))}
+                value={watch("finishedProductId") || ""}
+                onChange={(value) => setValue("finishedProductId", Number(value))}
+                placeholder="Tìm kiếm sản phẩm thành phẩm..."
+            />
               {errors.finishedProductId && (
                 <p className="mt-1 text-sm text-red-600">
                   {errors.finishedProductId.message}

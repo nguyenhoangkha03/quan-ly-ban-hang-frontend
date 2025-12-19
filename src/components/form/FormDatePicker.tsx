@@ -142,7 +142,7 @@ export function FormDatePicker<T extends FieldValues>({
                   "w-full rounded-lg border px-4 py-2.5 text-sm transition-colors",
                   "border-gray-300 bg-white text-gray-900",
                   "placeholder:text-gray-400",
-                  "focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20",
+                  "focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none",
                   "disabled:cursor-not-allowed disabled:opacity-50",
                   "dark:border-gray-600 dark:bg-gray-800 dark:text-white",
                   "dark:placeholder:text-gray-500",

@@ -39,8 +39,7 @@ export const createBomSchema = z.object({
     .number()
     .int("Thời gian sản xuất phải là số nguyên")
     .positive("Thời gian sản xuất phải lớn hơn 0")
-    .optional()
-    .nullable(),
+    .optional(),
   notes: z.string().max(255, "Ghi chú không được quá 255 ký tự").optional(),
   materials: z
     .array(bomMaterialItemSchema)
@@ -57,20 +56,18 @@ export const updateBomSchema = z.object({
     .regex(
       /^[A-Z0-9-]+$/,
       "Mã BOM chỉ được chứa chữ hoa, số và dấu gạch ngang"
-    )
-    .optional(),
-  finishedProductId: z.number().int().positive().optional(),
-  version: z.string().max(20).optional(),
-  outputQuantity: z.number().positive().optional(),
-  efficiencyRate: z.number().min(0).max(100).optional(),
+    ),
+  finishedProductId: z.number().int().positive("ID sản phẩm không hợp lệ"),
+  version: z.string().max(20, "Phiên bản không được quá 20 ký tự"),
+  outputQuantity: z.number().positive("Sản lượng đầu ra phải lớn hơn 0"),
+  efficiencyRate: z.number().min(0, "Tỷ lệ hiệu suất phải từ 0 đến 100").max(100, "Tỷ lệ hiệu suất không được vượt quá 100"),
   productionTime: z
     .number()
     .int()
     .positive()
-    .optional()
-    .nullable(),
-  notes: z.string().max(255).optional().nullable(),
-  materials: z.array(bomMaterialItemSchema).min(1).max(100).optional(),
+    .optional(),
+  notes: z.string().max(255, "Ghi chú không được quá 255 ký tự").optional(),
+  materials: z.array(bomMaterialItemSchema).min(1, "Phải có ít nhất một nguyên liệu").max(100, "Tối đa 100 nguyên liệu cho mỗi BOM"),
 });
 
 // Calculate Materials Schema

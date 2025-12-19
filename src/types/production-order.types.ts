@@ -50,41 +50,17 @@ export interface ProductionOrder extends BaseEntity {
   completedAt?: string;
   cancelledAt?: string;
   materials?: ProductionOrderMaterial[];
-}
-
-// Create Production Order DTO
-export interface CreateProductionOrderDto {
-  bomId: number;
-  plannedQuantity: number;
-  warehouseId?: number;
-  startDate: string;
-  endDate?: string;
-  notes?: string;
-}
-
-// Update Production Order DTO
-export interface UpdateProductionOrderDto extends Partial<CreateProductionOrderDto> {}
-
-// Start Production DTO
-export interface StartProductionDto {
-  actualStartDate?: string;
-  notes?: string;
-}
-
-// Complete Production DTO
-export interface CompleteProductionDto {
-  actualQuantity: number;
-  actualMaterials?: {
-    materialId: number;
-    actualQuantity: number;
-    notes?: string;
-  }[];
-  notes?: string;
-}
-
-// Cancel Production DTO
-export interface CancelProductionDto {
-  reason: string;
+  materialAvailability: {
+    missingItems: {
+      available: number;
+      materialId: number;
+      materialName: string;
+      missing: number
+      required: number
+      unit: string
+    }[]
+    status: string
+  }
 }
 
 // Production Order Filters

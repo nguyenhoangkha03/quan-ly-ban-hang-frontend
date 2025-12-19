@@ -12,6 +12,7 @@ export const categoryKeys = {
   tree: () => [...categoryKeys.all, "tree"] as const,
   details: () => [...categoryKeys.all, "detail"] as const,
   detail: (id: number) => [...categoryKeys.details(), id] as const,
+  stats: () => [...categoryKeys.all, "stats"] as const,
 };
 
 // Get Categories List
@@ -47,6 +48,30 @@ export function useCategory(id: number, enabled = true) {
       return response.data;
     },
     enabled: enabled && !!id,
+  });
+}
+
+// Get Category Statistics
+export interface CategoryStats {
+  totalCategories: number;
+  activeCategories: number;
+  inactiveCategories: number;
+  rootCategories: number;
+  totalProducts: number;
+  topCategories: Array<{
+    id: number;
+    categoryName: string;
+    productCount: number;
+  }>;
+}
+
+export function useCategoryStats() {
+  return useQuery({
+    queryKey: categoryKeys.stats(),
+    queryFn: async () => {
+      const response = await api.get<ApiResponse<CategoryStats>>("/categories/stats/overview");
+      return response.data;
+    },
   });
 }
 
@@ -103,6 +128,7 @@ export function useDeleteCategory() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: categoryKeys.lists() });
       queryClient.invalidateQueries({ queryKey: categoryKeys.tree() });
+      queryClient.invalidateQueries({ queryKey: categoryKeys.stats() });
       toast.success("Xóa danh mục thành công!");
     },
     onError: (error: any) => {

@@ -12,9 +12,7 @@ import type {
 } from "@/types";
 import { toast } from "react-hot-toast";
 
-/**
- * Query Keys
- */
+// Query Keys
 export const bomKeys = {
   all: ["bom"] as const,
   lists: () => [...bomKeys.all, "list"] as const,
@@ -26,9 +24,7 @@ export const bomKeys = {
     [...bomKeys.all, "calculate", bomId, quantity] as const,
 };
 
-/**
- * Get BOMs List với filters & pagination
- */
+// Get BOMs List với filters & pagination
 export function useBOMs(params?: BomQueryParams) {
   return useQuery({
     queryKey: bomKeys.list(params),
@@ -42,9 +38,7 @@ export function useBOMs(params?: BomQueryParams) {
   });
 }
 
-/**
- * Get Single BOM by ID
- */
+// Get Single BOM by ID
 export function useBOM(id: number, enabled = true) {
   return useQuery({
     queryKey: bomKeys.detail(id),
@@ -56,9 +50,7 @@ export function useBOM(id: number, enabled = true) {
   });
 }
 
-/**
- * Get BOMs by Finished Product
- */
+// Get BOMs by Finished Product
 export function useBOMsByProduct(productId: number, enabled = true) {
   return useQuery({
     queryKey: bomKeys.byProduct(productId),
@@ -70,9 +62,7 @@ export function useBOMsByProduct(productId: number, enabled = true) {
   });
 }
 
-/**
- * Calculate Material Requirements
- */
+// Calculate Material Requirements
 export function useCalculateMaterials() {
   return useMutation({
     mutationFn: async (data: CalculateMaterialsInput) => {
@@ -85,9 +75,7 @@ export function useCalculateMaterials() {
   });
 }
 
-/**
- * Create BOM
- */
+// Create BOM
 export function useCreateBOM() {
   const queryClient = useQueryClient();
 
@@ -99,25 +87,25 @@ export function useCreateBOM() {
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: bomKeys.lists() });
 
+      const responseApi = response as unknown as ApiResponse<Bom>;
+
       // Invalidate product's BOM list
-      if (response.data?.finishedProductId) {
+      if (responseApi.data?.finishedProductId) {
         queryClient.invalidateQueries({
-          queryKey: bomKeys.byProduct(response.data.finishedProductId),
+          queryKey: bomKeys.byProduct(responseApi.data.finishedProductId),
         });
       }
 
-      toast.success(response.message || "Tạo BOM thành công!");
+      toast.success("Tạo BOM thành công!");
     },
     onError: (error: any) => {
-      const errorMessage = error?.error?.message || error?.message || "Tạo BOM thất bại!";
+      const errorMessage = "Tạo BOM thất bại!";
       toast.error(errorMessage);
     },
   });
 }
 
-/**
- * Update BOM
- */
+// Update BOM
 export function useUpdateBOM() {
   const queryClient = useQueryClient();
 
@@ -130,25 +118,25 @@ export function useUpdateBOM() {
       queryClient.invalidateQueries({ queryKey: bomKeys.lists() });
       queryClient.invalidateQueries({ queryKey: bomKeys.detail(variables.id) });
 
+      const responseApi = response as unknown as ApiResponse<Bom>;
+
       // Invalidate product's BOM list
-      if (response.data?.finishedProductId) {
+      if (responseApi.data?.finishedProductId) {
         queryClient.invalidateQueries({
-          queryKey: bomKeys.byProduct(response.data.finishedProductId),
+          queryKey: bomKeys.byProduct(responseApi.data.finishedProductId),
         });
       }
 
-      toast.success(response.message || "Cập nhật BOM thành công!");
+      toast.success("Cập nhật BOM thành công!");
     },
     onError: (error: any) => {
-      const errorMessage = error?.error?.message || error?.message || "Cập nhật BOM thất bại!";
+      const errorMessage = "Cập nhật BOM thất bại!";
       toast.error(errorMessage);
     },
   });
 }
 
-/**
- * Delete BOM
- */
+// Delete BOM
 export function useDeleteBOM() {
   const queryClient = useQueryClient();
 
@@ -159,18 +147,16 @@ export function useDeleteBOM() {
     },
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: bomKeys.lists() });
-      toast.success(response.message || "Xóa BOM thành công!");
+      toast.success("Xóa BOM thành công!");
     },
     onError: (error: any) => {
-      const errorMessage = error?.error?.message || error?.message || "Xóa BOM thất bại!";
+      const errorMessage = "Xóa BOM thất bại!";
       toast.error(errorMessage);
     },
   });
 }
 
-/**
- * Approve BOM
- */
+// Approve BOM
 export function useApproveBOM() {
   const queryClient = useQueryClient();
 
@@ -183,25 +169,24 @@ export function useApproveBOM() {
       queryClient.invalidateQueries({ queryKey: bomKeys.lists() });
       queryClient.invalidateQueries({ queryKey: bomKeys.detail(variables.id) });
 
+      const responseApi = response as unknown as ApiResponse<Bom>;
       // Invalidate product's BOM list
-      if (response.data?.finishedProductId) {
+      if (responseApi.data?.finishedProductId) {
         queryClient.invalidateQueries({
-          queryKey: bomKeys.byProduct(response.data.finishedProductId),
+          queryKey: bomKeys.byProduct(responseApi.data.finishedProductId),
         });
       }
 
-      toast.success(response.message || "Phê duyệt BOM thành công!");
+      toast.success(responseApi.message || "Phê duyệt BOM thành công!");
     },
     onError: (error: any) => {
-      const errorMessage = error?.error?.message || error?.message || "Phê duyệt BOM thất bại!";
+      const errorMessage = "Phê duyệt BOM thất bại!";
       toast.error(errorMessage);
     },
   });
 }
 
-/**
- * Set BOM to Inactive
- */
+// Set BOM to Inactive
 export function useSetBOMInactive() {
   const queryClient = useQueryClient();
 
@@ -216,18 +201,19 @@ export function useSetBOMInactive() {
       queryClient.invalidateQueries({ queryKey: bomKeys.lists() });
       queryClient.invalidateQueries({ queryKey: bomKeys.detail(variables.id) });
 
+      const responseApi = response as unknown as ApiResponse<Bom>;
+
       // Invalidate product's BOM list
-      if (response.data?.finishedProductId) {
+      if (responseApi.data?.finishedProductId) {
         queryClient.invalidateQueries({
-          queryKey: bomKeys.byProduct(response.data.finishedProductId),
+          queryKey: bomKeys.byProduct(responseApi.data.finishedProductId),
         });
       }
 
-      toast.success(response.message || "Đã đặt BOM thành không hoạt động!");
+      toast.success(responseApi.message || "Đã đặt BOM thành không hoạt động!");
     },
     onError: (error: any) => {
-      const errorMessage =
-        error?.error?.message || error?.message || "Thay đổi trạng thái BOM thất bại!";
+      const errorMessage = "Thay đổi trạng thái BOM thất bại!";
       toast.error(errorMessage);
     },
   });

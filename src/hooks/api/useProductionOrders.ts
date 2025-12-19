@@ -1,21 +1,11 @@
-/**
- * Production Orders API Hooks
- */
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
 import type {
-  ProductionOrder,
-  CreateProductionOrderDto,
-  UpdateProductionOrderDto,
-  StartProductionDto,
-  CompleteProductionDto,
-  CancelProductionDto,
   ProductionOrderFilters,
-  WastageReport,
-  ApiResponse,
+  PaginationParams,
 } from "@/types";
+import { CancelProductionInput, CompleteProductionInput, CreateProductionOrderInput, StartProductionInput, UpdateProductionOrderInput } from "@/lib/validations";
 
 // Query Keys
 export const PRODUCTION_ORDER_KEYS = {
@@ -28,10 +18,8 @@ export const PRODUCTION_ORDER_KEYS = {
   wastage: (id: number) => [...PRODUCTION_ORDER_KEYS.detail(id), "wastage"] as const,
 };
 
-/**
- * Get all production orders
- */
-export function useProductionOrders(filters?: ProductionOrderFilters) {
+// Get all production orders
+export function useProductionOrders(filters?: ProductionOrderFilters & PaginationParams) {
   return useQuery({
     queryKey: PRODUCTION_ORDER_KEYS.list(filters),
     queryFn: async () => {
@@ -41,9 +29,7 @@ export function useProductionOrders(filters?: ProductionOrderFilters) {
   });
 }
 
-/**
- * Get production order by ID
- */
+// Get production order by ID
 export function useProductionOrder(id: number, enabled = true) {
   return useQuery({
     queryKey: PRODUCTION_ORDER_KEYS.detail(id),
@@ -55,9 +41,7 @@ export function useProductionOrder(id: number, enabled = true) {
   });
 }
 
-/**
- * Get wastage report
- */
+// Get wastage report
 export function useWastageReport(id: number, enabled = true) {
   return useQuery({
     queryKey: PRODUCTION_ORDER_KEYS.wastage(id),
@@ -69,45 +53,31 @@ export function useWastageReport(id: number, enabled = true) {
   });
 }
 
-/**
- * Create production order
- */
+// Create production order
 export function useCreateProductionOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: CreateProductionOrderDto) => {
+    mutationFn: async (data: CreateProductionOrderInput) => {
       const response = await api.post("/production-orders", data);
       return response ;
     },
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: PRODUCTION_ORDER_KEYS.lists() });
-
-      // Check for material shortage warnings
-      if (response.warnings?.materialShortages) {
-        const shortages = response.warnings.materialShortages;
-        toast.error(
-          `Lệnh sản xuất đã tạo nhưng thiếu ${shortages.length} nguyên liệu. Vui lòng nhập kho trước khi bắt đầu!`,
-          { duration: 5000 }
-        );
-      } else {
-        toast.success("Tạo lệnh sản xuất thành công!");
-      }
+      toast.success("Tạo lệnh sản xuất thành công!");
     },
     onError: (error: any) => {
-      toast.error(error?.message || "Không thể tạo lệnh sản xuất");
+      toast.error("Không thể tạo lệnh sản xuất");
     },
   });
 }
 
-/**
- * Update production order
- */
+// Update production order
 export function useUpdateProductionOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: UpdateProductionOrderDto }) => {
+    mutationFn: async ({ id, data }: { id: number; data: UpdateProductionOrderInput }) => {
       const response = await api.put(`/production-orders/${id}`, data);
       return response ;
     },
@@ -122,14 +92,12 @@ export function useUpdateProductionOrder() {
   });
 }
 
-/**
- * Start production
- */
+// Start production
 export function useStartProduction() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data?: StartProductionDto }) => {
+    mutationFn: async ({ id, data }: { id: number; data?: StartProductionInput }) => {
       const response = await api.put(`/production-orders/${id}/start`, data || {});
       return response ;
     },
@@ -149,14 +117,12 @@ export function useStartProduction() {
   });
 }
 
-/**
- * Complete production
- */
+// Complete production
 export function useCompleteProduction() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: CompleteProductionDto }) => {
+    mutationFn: async ({ id, data }: { id: number; data: CompleteProductionInput }) => {
       const response = await api.put(`/production-orders/${id}/complete`, data);
       return response ;
     },
@@ -186,14 +152,12 @@ export function useCompleteProduction() {
   });
 }
 
-/**
- * Cancel production order
- */
+// Cancel production order
 export function useCancelProductionOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: CancelProductionDto }) => {
+    mutationFn: async ({ id, data }: { id: number; data: CancelProductionInput }) => {
       const response = await api.put(`/production-orders/${id}/cancel`, data);
       return response ;
     },
@@ -208,9 +172,7 @@ export function useCancelProductionOrder() {
   });
 }
 
-/**
- * Delete production order
- */
+// Delete production order
 export function useDeleteProductionOrder() {
   const queryClient = useQueryClient();
 

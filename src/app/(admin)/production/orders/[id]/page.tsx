@@ -10,8 +10,10 @@ import {
   useCompleteProduction,
   useCancelProductionOrder,
   useWastageReport,
+  useDeleteProductionOrder,
 } from "@/hooks/api";
 import Button from "@/components/ui/button/Button";
+import ConfirmDialog from "@/components/ui/modal/ConfirmDialog";
 import {
   MaterialRequirements,
   WastageReport,
@@ -20,8 +22,8 @@ import {
 import {
   completeProductionSchema,
   cancelProductionSchema,
-  type CompleteProductionInput,
   type CancelProductionInput,
+  CompleteProductionInput,
 } from "@/lib/validations";
 import { ApiResponse, ProductionOrder, WastageReport as WastageReportType } from "@/types";
 import {
@@ -29,20 +31,19 @@ import {
   Play,
   CheckCircle,
   XCircle,
-  Package,
-  Clock,
   DollarSign,
   BarChart3,
+  Edit2,
+  Trash2,
+  Edit,
+  Printer,
+  Flag,
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { PRODUCTION_STATUS_LABELS, PRODUCTION_STATUS_COLORS } from "@/lib/constants";
 
-/**
- * Production Order Detail Page
- * Chi tiết lệnh sản xuất với actions: Start, Complete, Cancel
- */
 export default function ProductionOrderDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -50,6 +51,8 @@ export default function ProductionOrderDetailPage() {
 
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showStartDialog, setShowStartDialog] = useState(false);
 
   // Fetch data
   const { data, isLoading, error } = useProductionOrder(orderId);
@@ -67,13 +70,14 @@ export default function ProductionOrderDetailPage() {
   const startProduction = useStartProduction();
   const completeProduction = useCompleteProduction();
   const cancelOrder = useCancelProductionOrder();
+  const deleteOrder = useDeleteProductionOrder();
 
   // Complete form
   const {
     register: registerComplete,
     handleSubmit: handleSubmitComplete,
     formState: { errors: errorsComplete },
-  } = useForm<CompleteProductionInput>({
+  } = useForm({
     resolver: zodResolver(completeProductionSchema),
     defaultValues: {
       actualQuantity: order?.plannedQuantity || 0,
@@ -92,16 +96,14 @@ export default function ProductionOrderDetailPage() {
   // Handle Start Production
   const handleStart = async () => {
     if (!order) return;
+    setShowStartDialog(true);
+  };
 
-    const confirmed = window.confirm(
-      `Bắt đầu sản xuất lệnh "${order.orderCode}"?\n\n` +
-        `Nguyên liệu sẽ được xuất kho tự động.`
-    );
-
-    if (!confirmed) return;
-
+  // Handle Confirm Start Production
+  const handleConfirmStart = async () => {
     try {
       await startProduction.mutateAsync({ id: orderId });
+      setShowStartDialog(false);
     } catch (error) {
       console.error("Failed to start production:", error);
     }
@@ -152,17 +154,22 @@ export default function ProductionOrderDetailPage() {
     );
   }
 
+  // Handle Delete
+  const handleDelete = async () => {
+    try {
+      await deleteOrder.mutateAsync(orderId);
+      router.push("/production/orders");
+    } catch (error) {
+      console.error("Failed to delete production order:", error);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <div className="mb-2 flex items-center gap-2">
-            <Link href="/production/orders">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               {order.orderCode}
             </h1>
@@ -181,35 +188,91 @@ export default function ProductionOrderDetailPage() {
 
         {/* Actions */}
         <div className="flex items-center gap-2">
+          <Link
+              href="/production/orders"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+              >
+              <ArrowLeft className="h-5 w-5" />
+              Quay lại
+          </Link>
           {order.status === "pending" && (
             <>
               <Button
-                variant="primary"
+                variant="success"
+                size="smm"
                 onClick={handleStart}
-                disabled={startProduction.isPending}
-                isLoading={startProduction.isPending}
               >
                 <Play className="mr-2 h-5 w-5" />
                 Bắt đầu sản xuất
               </Button>
+              <Link href={`/production/orders/${orderId}/edit`}>
+                <Button
+                  variant="primary"
+                  size="smm"
+                >
+                  <Edit className="mr-2 h-5 w-5" />
+                  Chỉnh sửa
+                </Button>
+              </Link>
               <Button
                 variant="danger"
+                size="smm"
                 onClick={() => setShowCancelModal(true)}
               >
                 <XCircle className="mr-2 h-5 w-5" />
                 Hủy lệnh
               </Button>
+              <Button
+                variant="danger"
+                size="smm"
+                onClick={() => setShowDeleteDialog(true)}
+              >
+                <Trash2 className="mr-2 h-5 w-5" />
+                Xóa lệnh
+              </Button>
             </>
           )}
 
           {order.status === "in_progress" && (
-            <Button
-              variant="success"
-              onClick={() => setShowCompleteModal(true)}
-            >
-              <CheckCircle className="mr-2 h-5 w-5" />
-              Hoàn thành
-            </Button>
+            <>
+              <Button
+                variant="success"
+                size="smm"
+                onClick={() => setShowCompleteModal(true)}
+              >
+                <CheckCircle className="mr-2 h-5 w-5" />
+                Hoàn thành
+              </Button>
+              <Button
+                variant="outline"
+                size="smm"
+                title="In phiếu xuất kho cho nhân viên nhặt hàng"
+              >
+                <Printer className="mr-2 h-5 w-5" />
+                In phiếu xuất kho
+              </Button>
+            </>
+          )}
+
+          {order.status === "completed" && (
+            <>
+              <Button
+                variant="outline"
+                size="smm"
+                title="In phiếu xác nhận thành phẩm nhập kho"
+              >
+                <Printer className="mr-2 h-5 w-5" />
+                In phiếu nhập kho
+              </Button>
+              <Button
+                variant="outline"
+                size="smm"
+                title="In nhãn dán lên thành phẩm"
+              >
+                <Flag className="mr-2 h-5 w-5" />
+                In nhãn sản phẩm
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -462,6 +525,33 @@ export default function ProductionOrderDetailPage() {
           </div>
         </div>
       )}
+
+
+      {/* Start Production Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showStartDialog}
+        onClose={() => setShowStartDialog(false)}
+        onConfirm={handleConfirmStart}
+        title="Bắt đầu sản xuất"
+        message={`Bắt đầu sản xuất lệnh "${order?.orderCode}"?\n\nNguyên liệu sẽ được xuất kho tự động.`}
+        confirmText="Bắt đầu"
+        cancelText="Hủy"
+        variant="info"
+        isLoading={startProduction.isPending}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={handleDelete}
+        title="Xóa lệnh sản xuất"
+        message={`Bạn có chắc chắn muốn xóa lệnh sản xuất "${order?.orderCode}"? Hành động này không thể hoàn tác.`}
+        confirmText="Xóa"
+        cancelText="Hủy"
+        variant="danger"
+        isLoading={deleteOrder.isPending}
+      />
     </div>
   );
 }

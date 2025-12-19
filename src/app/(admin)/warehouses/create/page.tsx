@@ -9,6 +9,7 @@ import { useCreateWarehouse, useUsers } from "@/hooks/api";
 import { warehouseSchema, type WarehouseFormData } from "@/lib/validations/warehouse.schema";
 import { useDebounce } from "@/hooks";
 import { User } from "@/types";
+import { ArrowLeft } from "lucide-react";
 
 export default function CreateWarehousePage() {
   const router = useRouter();
@@ -69,19 +70,7 @@ export default function CreateWarehousePage() {
           href="/warehouses"
           className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
         >
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M10 19l-7-7m0 0l7-7m-7 7h18"
-            />
-          </svg>
+          <ArrowLeft className="h-5 w-5" />
           Quay lại
         </Link>
       </div>

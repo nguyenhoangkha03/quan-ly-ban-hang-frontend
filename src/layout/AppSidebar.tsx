@@ -55,10 +55,13 @@ const navItems: NavItem[] = [
   },
   {
     icon: <BoxIconLine />,
-    name: "Sản phẩm",
+    name: "Vật tư & Hàng hóa",
     subItems: [
-      { name: "Danh sách sản phẩm", path: "/products", pro: false },
       { name: "Danh mục", path: "/categories", pro: false },
+      { name: "Nguyên liệu", path: "/nguyen-lieu", pro: false },
+      { name: "Bao bì", path: "/bao-bi", pro: false },
+      { name: "Thành phẩm", path: "/thanh-pham", pro: false },
+      { name: "Danh sách sản phẩm", path: "/products", pro: false },
     ],
   },
   {

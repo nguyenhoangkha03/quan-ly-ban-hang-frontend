@@ -18,6 +18,7 @@ interface InventoryTableProps {
   isLoading?: boolean;
   showWarehouse?: boolean;
   onAdjust?: (item: Inventory) => void;
+  onTransfer?: (item: Inventory) => void;
 }
 
 export function InventoryTable({
@@ -25,6 +26,7 @@ export function InventoryTable({
   isLoading = false,
   showWarehouse = true,
   onAdjust,
+  onTransfer,
 }: InventoryTableProps) {
   if (isLoading) {
     return (
@@ -85,6 +87,11 @@ export function InventoryTable({
           {onAdjust && (
             <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
               Thao tác
+            </th>
+          )}
+          {onTransfer && (
+            <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              Chuyển kho
             </th>
           )}
         </TableRow>
@@ -192,6 +199,21 @@ export function InventoryTable({
                     className="text-sm font-medium text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                   >
                     Điều chỉnh
+                  </button>
+                </TableCell>
+              )}
+
+              {/* Transfer Action */}
+              {onTransfer && (
+                <TableCell className="px-6 py-4 text-right">
+                  <button
+                    onClick={() => onTransfer(item)}
+                    className="inline-flex items-center gap-1 text-sm font-medium text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                    Chuyển
                   </button>
                 </TableCell>
               )}

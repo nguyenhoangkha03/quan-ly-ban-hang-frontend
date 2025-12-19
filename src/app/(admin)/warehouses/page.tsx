@@ -12,14 +12,17 @@ import {
   TableRow
 } from "@/components/ui/table";
 import Badge, { type BadgeColor } from "@/components/ui/badge/Badge";
-import WarehouseStats from "@/components/warehouses/WarehouseStats";
 import { WarehouseType, StatusCommon, ApiResponse, Warehouse, WarehouseCards } from "@/types";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { Calendar, CheckCircle, Edit, Eye, Package, Pencil, Plus, Trash2, TrendingUp } from "lucide-react";
 import { useDebounce } from "@/hooks";
 import Pagination from "@/components/tables/Pagination";
 import ConfirmDialog from "@/components/ui/modal/ConfirmDialog";
+import Button from "@/components/ui/button/Button";
+import { useRouter } from 'next/navigation';
 
 export default function WarehousesPage() {
+  const router = useRouter();
+
   // Pagination & Filters
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
@@ -120,30 +123,107 @@ export default function WarehousesPage() {
         </div>
 
         <Can permission="create_warehouse">
-          <Link
-            href="/warehouses/create"
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
-          >
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            Tạo kho mới
-          </Link>
+            <Button variant="primary" size="sm" onClick={() => router.push('/warehouses/create')}>
+                <Plus className="mr-2 h-5 w-5" />
+                Thêm kho mới
+            </Button>
         </Can>
       </div>
 
       {/* Statistics Cards */}
-      <WarehouseStats data={warehouseCards} isLoading={statsLoading} />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {/* Total Categories Card */}
+        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            {statsLoading ? (
+            <div className="h-24 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
+            ) : (
+            <>
+                <div className="flex items-center justify-between">
+                <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Tổng số kho
+                    </p>
+                    <p className="mt-2 text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    {warehouseCards?.totalWarehouses || 0}
+                    </p>
+                </div>
+                <div className="rounded-full bg-blue-100 p-3 dark:bg-blue-900/30">
+                    <Package className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                </div>
+            </>
+            )}
+        </div>
+
+        {/* Active Categories Card */}
+        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            {statsLoading ? (
+            <div className="h-24 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
+            ) : (
+            <>
+                <div className="flex items-center justify-between">
+                <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Đang hoạt động
+                    </p>
+                    <p className="mt-2 text-2xl font-bold text-green-600 dark:text-green-400">
+                    {warehouseCards?.activeWarehouses || 0}
+                    </p>
+                </div>
+                <div className="rounded-full bg-green-100 p-3 dark:bg-green-900/30">
+                    <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+                </div>
+                </div>
+            </>
+            )}
+        </div>
+
+        {/* Inactive Categories Card */}
+        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            {statsLoading ? (
+            <div className="h-24 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
+            ) : (
+            <>
+                <div className="flex items-center justify-between">
+                <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Tháng này
+                    </p>
+                    <p className="mt-2 text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                    {warehouseCards?.createdThisMonth || 0}
+                    </p>
+                </div>
+                <div className="rounded-full bg-yellow-100 p-3 dark:bg-yellow-800">
+                    <Calendar className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+                </div>
+                </div>
+            </>
+            )}
+        </div>
+
+        {/* Root Categories Card */}
+        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            {statsLoading ? (
+            <div className="h-24 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
+            ) : (
+            <>
+                <div className="flex items-center justify-between">
+                <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Tổng tồn kho
+                    </p>
+                    <p className="mt-2 text-2xl font-bold text-purple-600 dark:text-purple-400">
+                    {warehouseCards?.totalInventoryValue || 0}
+                    </p>
+                </div>
+                <div className="rounded-full bg-purple-100 p-3 dark:bg-purple-900/30">
+                    <TrendingUp className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                </div>
+                </div>
+            </>
+            )}
+        </div>
+      </div>
 
       {/* Filters */}
       <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
@@ -350,32 +430,32 @@ export default function WarehousesPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="px-6 py-4 text-right text-sm font-medium">
-                    <div className="flex flex-col items-end gap-1.5">
+                    <div className="flex items-center justify-end gap-2">
                       <Link
                         href={`/warehouses/${warehouse.id}`}
-                        className="inline-flex items-center gap-1.5 rounded-md bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                        className="rounded p-1 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                        title="Xem"
                       >
-                        <Eye className="h-3.5 w-3.5" />
-                        Xem
+                        <Eye className="h-4 w-4" />
                       </Link>
 
                       <Can permission="update_warehouse">
                         <Link
                           href={`/warehouses/${warehouse.id}/edit`}
-                          className="inline-flex items-center gap-1.5 rounded-md bg-blue-100 px-3 py-1.5 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+                          className="rounded p-1 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                          title="Sửa"
                         >
-                          <Pencil className="h-3.5 w-3.5" />
-                          Sửa
+                          <Edit className="h-4 w-4" />
                         </Link>
                       </Can>
 
                       <Can permission="delete_warehouse">
                         <button
                           onClick={() => handleDeleteClick(warehouse)}
-                          className="inline-flex items-center gap-1.5 rounded-md bg-red-100 px-3 py-1.5 text-xs font-medium text-red-700 transition-colors hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+                          className="rounded p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          title="Xóa"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
-                          Xóa
                         </button>
                       </Can>
                     </div>

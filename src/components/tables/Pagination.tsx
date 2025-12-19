@@ -9,9 +9,18 @@ const Pagination: React.FC<PaginationProps> = ({
   totalPages,
   onPageChange,
 }) => {
+  // Calculate page range to display (show 3 pages around current)
+  let startPage = Math.max(currentPage - 1, 1);
+  let endPage = Math.min(startPage + 2, totalPages);
+  
+  // Adjust startPage if we're near the end
+  if (endPage - startPage < 2) {
+    startPage = Math.max(endPage - 2, 1);
+  }
+
   const pagesAroundCurrent = Array.from(
-    { length: Math.min(3, totalPages) },
-    (_, i) => i + Math.max(currentPage - 1, 1)
+    { length: endPage - startPage + 1 },
+    (_, i) => startPage + i
   );
 
   return (

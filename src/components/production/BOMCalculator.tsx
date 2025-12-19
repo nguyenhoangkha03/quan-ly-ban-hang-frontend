@@ -5,6 +5,7 @@ import { useCalculateMaterials } from "@/hooks/api";
 import Button from "@/components/ui/button/Button";
 import { Calculator, Package, DollarSign, TrendingUp } from "lucide-react";
 import { BOM_MATERIAL_TYPE_LABELS } from "@/lib/constants";
+import { CalculateMaterialsResult } from "@/types";
 
 interface BOMCalculatorProps {
   bomId: number;
@@ -13,10 +14,6 @@ interface BOMCalculatorProps {
   finishedProductUnit: string;
 }
 
-/**
- * BOMCalculator Component
- * Tính toán nguyên liệu cần thiết cho số lượng sản xuất
- */
 export default function BOMCalculator({
   bomId,
   bomCode,
@@ -47,7 +44,9 @@ export default function BOMCalculator({
     }
   };
 
-  const result = calculateMaterials.data?.data;
+  console.log("Calculate Materials Result:", calculateMaterials);
+
+  const result = calculateMaterials.data?.data as unknown as CalculateMaterialsResult;
 
   // Separate materials by type
   const rawMaterials = result?.materials?.filter((m) => m.materialType === "raw_material") || [];

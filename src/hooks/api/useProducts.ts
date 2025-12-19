@@ -19,6 +19,7 @@ export const productKeys = {
     [...productKeys.lists(), filters] as const,
   details: () => [...productKeys.all, "detail"] as const,
   detail: (id: number) => [...productKeys.details(), id] as const,
+  stats: () => [...productKeys.all, "stats"] as const,
 };
 
 // Get Products List với filters & pagination
@@ -47,6 +48,59 @@ export function useProduct(id: number, enabled = true) {
   });
 }
 
+// Get Product Statistics
+export interface ProductStats {
+  totalProducts: number;
+  byStatus: {
+    active: number;
+    inactive: number;
+    discontinued: number;
+  };
+  byType: {
+    rawMaterial: number;
+    packaging: number;
+    finished: number;
+    goods: number;
+  };
+  dataQuality: {
+    withoutSupplier: number;
+    withoutCategory: number;
+  };
+}
+
+// Raw Material Statistics
+export interface RawMaterialStats {
+  totalRawMaterials: number;
+  byStatus: {
+    active: number;
+    inactive: number;
+    discontinued: number;
+  };
+  lowStockCount: number;
+  expiringCount: number;
+  discontinuedCount: number;
+}
+
+export function useProductStats() {
+  return useQuery({
+    queryKey: productKeys.stats(),
+    queryFn: async () => {
+      const response = await api.get<ApiResponse<ProductStats>>("/products/stats/overview");
+      return response.data;
+    },
+  });
+}
+
+export function useRawMaterialStats() {
+  return useQuery({
+    queryKey: [...productKeys.stats(), "raw-material"],
+    queryFn: async () => {
+      const response = await api.get<ApiResponse<RawMaterialStats>>("/products/stats/raw-materials");
+      return response.data;
+    },
+  });
+}
+
 // Create Product Mutation
 export function useCreateProduct() {
   const queryClient = useQueryClient();
@@ -58,6 +112,7 @@ export function useCreateProduct() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: productKeys.stats() });
       toast.success("Tạo sản phẩm thành công!");
     },
     onError: (error: any) => {
@@ -97,6 +152,7 @@ export function useDeleteProduct() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: productKeys.stats() });
       toast.success("Xóa sản phẩm thành công!");
     },
     onError: (error: any) => {

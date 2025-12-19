@@ -8,15 +8,11 @@ import { useBOM, useUpdateBOM, useProducts } from "@/hooks/api";
 import { Can } from "@/components/auth";
 import MaterialsTable from "@/components/production/MaterialsTable";
 import Button from "@/components/ui/button/Button";
-import { BomFormData, ProductType, ApiResponse, Product, Bom } from "@/types";
+import { BomFormData, ApiResponse, Product, Bom } from "@/types";
 import { updateBomSchema } from "@/lib/validations";
 import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 
-/**
- * Edit BOM Page
- * Chỉnh sửa công thức sản xuất (chỉ khi status = draft)
- */
 export default function EditBOMPage() {
   const params = useParams();
   const router = useRouter();
@@ -31,9 +27,9 @@ export default function EditBOMPage() {
 
   // Fetch finished products
   const { data: productsData } = useProducts({
-    productType: ProductType.finished_product,
+    productType: 'finished_product',
     status: "active",
-    limit: 100,
+    limit: 1000,
   });
 
   const finishedProducts = ((productsData as unknown as ApiResponse<Product[]>)?.data || []);
@@ -47,7 +43,7 @@ export default function EditBOMPage() {
     setValue,
     reset,
     formState: { errors },
-  } = useForm<BomFormData>({
+  } = useForm({
     resolver: zodResolver(updateBomSchema),
     defaultValues: {
       bomCode: "",
@@ -152,22 +148,22 @@ export default function EditBOMPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href={`/production/bom/${bomId}`}>
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Quay lại
-            </Button>
-          </Link>
-          <div>
+        <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Chỉnh sửa BOM: {bom.bomCode}
+                Chỉnh sửa BOM: {bom.bomCode}
             </h1>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Cập nhật công thức sản xuất
+                Cập nhật công thức sản xuất
             </p>
-          </div>
         </div>
+        <Button
+          variant="outline"
+          size="ssm"
+          onClick={() => router.back()}
+        >
+            <ArrowLeft className="h-5 w-5" />
+            Quay lại
+        </Button>
       </div>
 
       {/* Warning if not draft */}
@@ -183,7 +179,7 @@ export default function EditBOMPage() {
       {/* Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Basic Information */}
-        <div className="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+        <div className="rounded-lg border bg-white p-6 shadow dark:bg-gray-800">
           <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
             Thông tin cơ bản
           </h3>
@@ -346,7 +342,7 @@ export default function EditBOMPage() {
         </div>
 
         {/* Materials Section */}
-        <div className="rounded-lg bg-white p-6 shadow dark:bg-gray-800">
+        <div className="rounded-lg border bg-white p-6 shadow dark:bg-gray-800">
           <Controller
             name="materials"
             control={control}

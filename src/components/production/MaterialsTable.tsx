@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { BomMaterialFormData, Product, ProductType, BomMaterialType } from "@/types";
+import { BomMaterialFormData, Product, BomMaterialType } from "@/types";
 import { useProducts } from "@/hooks/api";
 import { Trash2, Plus, Search } from "lucide-react";
 import Button from "@/components/ui/button/Button";
@@ -13,10 +13,6 @@ interface MaterialsTableProps {
   errors?: any;
 }
 
-/**
- * MaterialsTable Component
- * Editable table để thêm/sửa/xóa nguyên liệu trong BOM
- */
 export default function MaterialsTable({ materials, onChange, errors }: MaterialsTableProps) {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -29,7 +25,7 @@ export default function MaterialsTable({ materials, onChange, errors }: Material
   // Fetch products dựa trên materialType
   const { data: productsData } = useProducts({
     productType:
-      materialType === "raw_material" ? ProductType.raw_material : ProductType.packaging,
+      materialType === "raw_material" ? "raw_material" : "packaging",
     status: "active",
     limit: 100,
   });

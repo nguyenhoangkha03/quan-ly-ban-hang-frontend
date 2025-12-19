@@ -3,7 +3,7 @@ import React, { ReactNode } from "react";
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode; 
   size?: "ssm" | "smm" | "sm" | "md"; 
-  variant?: "primary" | "outline" | "danger" | "warning"; 
+  variant?: "primary" | "outline" | "danger" | "warning" | "success" | "secondary" | "ghost" | "link" | "gradient" | "soft" | "dark"; 
   startIcon?: ReactNode; 
   endIcon?: ReactNode; 
   isLoading?: boolean;
@@ -40,6 +40,20 @@ const Button: React.FC<ButtonProps> = ({
       "bg-red-600 text-white shadow-theme-xs hover:bg-red-700 disabled:bg-red-300",
     warning:
       "bg-yellow-500 text-white shadow-theme-xs hover:bg-yellow-600 disabled:bg-yellow-300",
+    success:
+      "bg-green-600 text-white shadow-theme-xs hover:bg-green-700 disabled:bg-green-300",
+    secondary:
+      "bg-gray-600 text-white shadow-theme-xs hover:bg-gray-700 disabled:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600",
+    ghost:
+      "bg-transparent text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800",
+    link:
+      "bg-transparent text-brand-600 hover:text-brand-700 hover:underline dark:text-brand-400 dark:hover:text-brand-300",
+    gradient:
+      "bg-gradient-to-r from-brand-500 to-purple-600 text-white shadow-theme-xs hover:from-brand-600 hover:to-purple-700 disabled:from-brand-300 disabled:to-purple-300",
+    soft:
+      "bg-brand-50 text-brand-700 hover:bg-brand-100 disabled:bg-brand-25 dark:bg-brand-900/20 dark:text-brand-400 dark:hover:bg-brand-900/30",
+    dark:
+      "bg-gray-900 text-white shadow-theme-xs hover:bg-gray-800 disabled:bg-gray-400 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200",
   };
 
   const isDisabled = disabled || isLoading;

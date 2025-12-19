@@ -110,6 +110,7 @@ export interface InventoryByProductResponse {
     totalQuantity: number;
     totalReserved: number;
     totalAvailable: number;
+    onOrderQuantity: number;
     warehouseCount: number;
   };
 }

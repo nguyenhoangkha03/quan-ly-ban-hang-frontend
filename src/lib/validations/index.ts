@@ -8,7 +8,6 @@ export * from "./warehouse.schema";
 export * from "./promotion.schema";
 export * from "./sales.schema";
 export * from "./inventory.schema";
-export * from "./production.schema";
 export * from "./finance.schema";
 export * from "./bom.validation";
 export * from "./production-order.schema";

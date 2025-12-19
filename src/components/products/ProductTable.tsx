@@ -18,8 +18,8 @@ import {
 import { Product, ProductType } from "@/types";
 import Badge from "@/components/ui/badge/Badge";
 import { formatCurrency } from "@/lib/utils";
-import { ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
-import { getImagePath } from "@/lib/utils/imagePath";
+import { ChevronUp, ChevronDown, ChevronsUpDown, Eye, Edit, Delete, DeleteIcon, Trash2 } from "lucide-react";
+import { getImagePath } from "@/lib/utils";
 
 // Import BadgeColor type from Badge component
 type BadgeColor = 
@@ -42,14 +42,20 @@ const columnHelper = createColumnHelper<Product>();
 
 interface ProductTableProps {
   data: Product[];
+  name?: string;
+  urlProduct?: string;
+  priceName?: string;
   isLoading?: boolean;
-  onDelete?: (id: number, name: string) => void;
+  onDelete?: (product: Product) => void;
   onSelectionChange?: (selectedIds: number[]) => void;
   enableSelection?: boolean;
 }
 
 export function ProductTable({
   data,
+  name,
+  priceName,
+  urlProduct,
   isLoading = false,
   onDelete,
   onSelectionChange,
@@ -193,7 +199,7 @@ export function ProductTable({
         header: "SKU",
         cell: (info) => (
           <Link
-            href={`/products/${info.row.original.id}`}
+            href={`/${urlProduct}/${info.row.original.id}`}
             className="font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
           >
             {info.getValue()}
@@ -204,7 +210,7 @@ export function ProductTable({
 
       // Name column
       columnHelper.accessor("productName", {
-        header: "Tên sản phẩm",
+        header: name || "Tên sản phẩm",
         cell: (info) => (
           <div>
             <div className="font-medium text-gray-900 dark:text-white">
@@ -221,15 +227,15 @@ export function ProductTable({
       }),
 
       // Type column
-      columnHelper.accessor("productType", {
-        header: "Loại",
-        cell: (info) => (
-          <Badge color={getTypeBadgeColor(info.getValue())}>
-            {getTypeLabel(info.getValue())}
-          </Badge>
-        ),
-        size: 130,
-      }),
+    //   columnHelper.accessor("productType", {
+    //     header: "Loại",
+    //     cell: (info) => (
+    //       <Badge color={getTypeBadgeColor(info.getValue())}>
+    //         {getTypeLabel(info.getValue())}
+    //       </Badge>
+    //     ),
+    //     size: 130,
+    //   }),
 
       // Category column
       columnHelper.accessor("category.categoryName", {
@@ -256,7 +262,7 @@ export function ProductTable({
 
       // Price column
       columnHelper.accessor("sellingPriceRetail", {
-        header: "Giá bán",
+        header: priceName || 'Giá bán',
         cell: (info) => {
           const price = info.getValue();
           return price ? (
@@ -297,41 +303,28 @@ export function ProductTable({
         id: "actions",
         header: "Thao tác",
         cell: ({ row }) => (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <Link
-              href={`/products/${row.original.id}`}
+              href={`/${urlProduct}/${row.original.id}`}
               className="text-blue-600 hover:text-blue-700 dark:text-blue-400"
               title="Xem chi tiết"
             >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                />
-              </svg>
+              <Eye className="h-4 w-4" />
             </Link>
             <Link
-              href={`/products/${row.original.id}/edit`}
+              href={`/${urlProduct}/${row.original.id}/edit`}
               className="text-yellow-600 hover:text-yellow-700 dark:text-yellow-400"
               title="Chỉnh sửa"
             >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
+              <Edit className="h-4 w-4" />
             </Link>
+            <button
+              onClick={() => onDelete?.(row.original)}
+              className="text-red-600 hover:text-red-700 dark:text-red-400"
+              title="Xóa"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
           </div>
         ),
         size: 100,

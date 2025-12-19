@@ -172,7 +172,7 @@ export const PRODUCTION_STATUSES = {
 } as const;
 
 export const PRODUCTION_STATUS_LABELS: Record<string, string> = {
-  pending: "Chờ thực hiện",
+  pending: "Chờ phê duyệt",
   in_progress: "Đang sản xuất",
   completed: "Hoàn thành",
   cancelled: "Đã hủy",
