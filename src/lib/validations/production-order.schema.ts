@@ -83,8 +83,18 @@ export const completeProductionSchema = z.object({
     .array(
       z.object({
         materialId: z.number().positive("ID nguyên liệu phải là số dương"),
-        actualQuantity: z.number().nonnegative("Số lượng thực tế không được âm"),
-        wastage: z.number().nonnegative("Lượng hao hụt không được âm").optional(),
+        actualQuantity: z
+          .number()
+          .nonnegative("Số lượng thực tế không được âm")
+          .optional()
+          .or(z.undefined())
+          .or(z.nan().transform(() => undefined)), // Xử lý NaN
+        wastage: z
+          .number()
+          .nonnegative("Lượng hao hụt không được âm")
+          .optional()
+          .or(z.undefined())
+          .or(z.nan().transform(() => undefined)), // Xử lý NaN
         notes: z.string().max(255, "Ghi chú không được vượt quá 255 ký tự").optional(),
       })
     )

@@ -80,7 +80,7 @@ export function TopProductsTable() {
             ) : products && products.length > 0 ? (
               products.map((product, index) => (
                 <tr
-                  key={product.product_id}
+                  key={product.productId}
                   className="border-b border-gray-100 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700/50"
                 >
                   <td className="py-3">
@@ -100,23 +100,23 @@ export function TopProductsTable() {
                   </td>
                   <td className="py-3">
                     <Link
-                      href={`/inventory/products/${product.product_id}`}
+                      href={`/inventory/products/${product.productId}`}
                       className="font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                     >
-                      {product.product_name}
+                      {product.productName}
                     </Link>
                   </td>
                   <td className="py-3 text-gray-600 dark:text-gray-400">
                     {product.sku}
                   </td>
                   <td className="py-3 text-right font-medium text-gray-900 dark:text-white">
-                    {formatNumber(product.total_quantity_sold)}
+                    {formatNumber(product.quantitySold)}
                   </td>
                   <td className="py-3 text-right font-medium text-gray-900 dark:text-white">
-                    {formatCurrency(product.total_revenue)}
+                    {formatCurrency(product.revenue || 0)}
                   </td>
                   <td className="py-3 text-right text-gray-600 dark:text-gray-400">
-                    {formatCurrency(product.average_price)}
+                    {formatCurrency((product.revenue || 0) / (product.quantitySold || 1))}
                   </td>
                 </tr>
               ))

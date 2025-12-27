@@ -1,17 +1,9 @@
-/**
- * Attendance Status Components
- * Display attendance status badges and related UI components
- */
-
 import React from "react";
 import Badge from "@/components/ui/badge/Badge";
 import type { AttendanceStatus, LeaveType } from "@/types";
 import { CheckCircle, XCircle, Clock, Home, UserX } from "lucide-react";
 
-/**
- * Attendance Status Colors
- */
-const STATUS_COLORS: Record<AttendanceStatus, "green" | "red" | "yellow" | "blue" | "gray"> = {
+const STATUS_COLORS: Record<AttendanceStatus, "green" | "red" | "yellow" | "blue" | "gray" | "purple"> = {
   present: "green",
   absent: "red",
   late: "yellow",
@@ -19,9 +11,6 @@ const STATUS_COLORS: Record<AttendanceStatus, "green" | "red" | "yellow" | "blue
   work_from_home: "purple",
 };
 
-/**
- * Attendance Status Labels
- */
 const STATUS_LABELS: Record<AttendanceStatus, string> = {
   present: "Có mặt",
   absent: "Vắng mặt",
@@ -30,9 +19,6 @@ const STATUS_LABELS: Record<AttendanceStatus, string> = {
   work_from_home: "WFH",
 };
 
-/**
- * Leave Type Labels
- */
 const LEAVE_TYPE_LABELS: Record<LeaveType, string> = {
   none: "Không phải nghỉ",
   annual: "Nghỉ phép năm",
@@ -41,17 +27,11 @@ const LEAVE_TYPE_LABELS: Record<LeaveType, string> = {
   other: "Khác",
 };
 
-/**
- * Props for AttendanceStatusBadge
- */
 interface AttendanceStatusBadgeProps {
   status: AttendanceStatus;
   showIcon?: boolean;
 }
 
-/**
- * Attendance Status Badge Component
- */
 export default function AttendanceStatusBadge({
   status,
   showIcon = false,
@@ -72,9 +52,6 @@ export default function AttendanceStatusBadge({
   );
 }
 
-/**
- * Leave Type Display
- */
 interface LeaveTypeDisplayProps {
   leaveType: LeaveType;
 }
@@ -98,10 +75,6 @@ export function LeaveTypeDisplay({ leaveType }: LeaveTypeDisplayProps) {
   );
 }
 
-/**
- * Time Display Component
- * Format: HH:MM
- */
 interface TimeDisplayProps {
   time?: string;
   label?: string;
@@ -123,10 +96,6 @@ export function TimeDisplay({ time, label }: TimeDisplayProps) {
   );
 }
 
-/**
- * Work Hours Display
- * Shows work hours with visual indicator
- */
 interface WorkHoursDisplayProps {
   hours?: number;
   standard?: number; // Standard work hours (default: 8)
@@ -158,9 +127,6 @@ export function WorkHoursDisplay({ hours, standard = 8 }: WorkHoursDisplayProps)
   );
 }
 
-/**
- * Overtime Hours Badge
- */
 interface OvertimeBadgeProps {
   hours?: number;
 }
@@ -177,10 +143,6 @@ export function OvertimeBadge({ hours }: OvertimeBadgeProps) {
   );
 }
 
-/**
- * Check Status Indicator
- * Shows if user has checked in/out with visual indicator
- */
 interface CheckStatusIndicatorProps {
   hasCheckedIn: boolean;
   hasCheckedOut: boolean;
@@ -216,10 +178,6 @@ export function CheckStatusIndicator({
   );
 }
 
-/**
- * Attendance Summary Card
- * Shows daily attendance summary
- */
 interface AttendanceSummaryProps {
   checkInTime?: string;
   checkOutTime?: string;
@@ -260,10 +218,6 @@ export function AttendanceSummary({
   );
 }
 
-/**
- * Location Display
- * Shows check-in/out location
- */
 interface LocationDisplayProps {
   location?: string;
   type: "check-in" | "check-out";

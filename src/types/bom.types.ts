@@ -95,13 +95,8 @@ export interface UpdateBomInput {
 
 // BOM Query Params
 export interface BomQueryParams {
-  page?: number;
-  limit?: number;
-  search?: string;
   status?: BomStatus;
   finishedProductId?: number;
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
 }
 
 // Calculate Materials Input

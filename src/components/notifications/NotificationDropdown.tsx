@@ -21,21 +21,19 @@ import {
 } from "@/types/notification.types";
 import type { Notification } from "@/types/notification.types";
 import {
-  CheckIcon,
-  TrashIcon,
-  BellSlashIcon,
-  ArrowRightIcon,
-} from "@heroicons/react/24/outline";
-import {
-  InformationCircleIcon,
-  ArchiveBoxIcon,
-  ExclamationTriangleIcon,
-  CurrencyDollarIcon,
-  ShoppingCartIcon,
-  CheckCircleIcon,
-  BellAlertIcon,
-  MegaphoneIcon,
-} from "@heroicons/react/24/solid";
+  Check,
+  Trash2,
+  BellOff,
+  ArrowRight,
+  Info,
+  Archive,
+  AlertTriangle,
+  DollarSign,
+  ShoppingCart,
+  CheckCircle,
+  Bell,
+  Megaphone,
+} from "lucide-react";
 
 export interface NotificationDropdownProps {
   isOpen: boolean;
@@ -76,16 +74,16 @@ export default function NotificationDropdown({
 
   const getIcon = (type: string) => {
     const iconMap: Record<string, React.ReactNode> = {
-      system: <InformationCircleIcon className="w-5 h-5" />,
-      low_stock: <ArchiveBoxIcon className="w-5 h-5" />,
-      expiry_warning: <ExclamationTriangleIcon className="w-5 h-5" />,
-      debt_overdue: <CurrencyDollarIcon className="w-5 h-5" />,
-      order_new: <ShoppingCartIcon className="w-5 h-5" />,
-      approval_required: <CheckCircleIcon className="w-5 h-5" />,
-      reminder: <BellAlertIcon className="w-5 h-5" />,
-      announcement: <MegaphoneIcon className="w-5 h-5" />,
+      system: <Info className="w-5 h-5" />,
+      low_stock: <Archive className="w-5 h-5" />,
+      expiry_warning: <AlertTriangle className="w-5 h-5" />,
+      debt_overdue: <DollarSign className="w-5 h-5" />,
+      order_new: <ShoppingCart className="w-5 h-5" />,
+      approval_required: <CheckCircle className="w-5 h-5" />,
+      reminder: <Bell className="w-5 h-5" />,
+      announcement: <Megaphone className="w-5 h-5" />,
     };
-    return iconMap[type] || <InformationCircleIcon className="w-5 h-5" />;
+    return iconMap[type] || <Info className="w-5 h-5" />;
   };
 
   if (!isOpen) return null;
@@ -116,7 +114,7 @@ export default function NotificationDropdown({
           </div>
         ) : notifications.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <BellSlashIcon className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-3" />
+            <BellOff className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-3" />
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Không có thông báo mới
             </p>
@@ -145,7 +143,7 @@ export default function NotificationDropdown({
             className="flex items-center justify-center gap-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
           >
             Xem tất cả thông báo
-            <ArrowRightIcon className="w-4 h-4" />
+            <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       )}
@@ -223,7 +221,7 @@ function NotificationItem({
                   className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 rounded hover:bg-green-100 dark:hover:bg-green-900/30"
                   title="Đánh dấu đã đọc"
                 >
-                  <CheckIcon className="w-4 h-4" />
+                  <Check className="w-4 h-4" />
                 </button>
               )}
               <button
@@ -231,7 +229,7 @@ function NotificationItem({
                 className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded hover:bg-red-100 dark:hover:bg-red-900/30"
                 title="Xóa"
               >
-                <TrashIcon className="w-4 h-4" />
+                <Trash2 className="w-4 h-4" />
               </button>
             </div>
           </div>

@@ -58,8 +58,8 @@ const navItems: NavItem[] = [
     name: "Vật tư & Hàng hóa",
     subItems: [
       { name: "Danh mục", path: "/categories", pro: false },
-      { name: "Nguyên liệu", path: "/nguyen-lieu", pro: false },
-      { name: "Bao bì", path: "/bao-bi", pro: false },
+      { name: "Nguyên liệu", path: "/material", pro: false },
+      { name: "Bao bì", path: "/packaging", pro: false },
       { name: "Thành phẩm", path: "/thanh-pham", pro: false },
       { name: "Danh sách sản phẩm", path: "/products", pro: false },
     ],
@@ -70,7 +70,6 @@ const navItems: NavItem[] = [
     subItems: [
       { name: "Công thức (BOM)", path: "/production/bom", pro: false },
       { name: "Lệnh sản xuất", path: "/production/orders", pro: false },
-      { name: "Báo cáo sản xuất", path: "/production/reports", pro: false },
     ],
   },
   {

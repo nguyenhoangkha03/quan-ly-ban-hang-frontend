@@ -218,94 +218,106 @@ export default function CategoriesPage() {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {/* Total Categories Card */}
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-gradient-to-br from-white to-blue-50 p-6 shadow-sm transition-all duration-300 hover:shadow-xl hover:scale-[1.02] dark:border-gray-800 dark:from-gray-900 dark:to-blue-950">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -z-0" />
             {statsLoading ? (
-            <div className="h-24 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
+            <div className="h-24 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-800" />
             ) : (
             <>
-                <div className="flex items-center justify-between">
-                <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Tổng danh mục
-                    </p>
-                    <p className="mt-2 text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {stats?.totalCategories || 0}
-                    </p>
+                <div className="flex items-center justify-between relative z-10">
+                <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Tổng danh mục</p>
+                    <p className="mt-3 text-3xl font-bold text-blue-600 dark:text-blue-400 transition-all duration-300 group-hover:scale-110">{stats?.totalCategories || 0}</p>
                 </div>
-                <div className="rounded-full bg-blue-100 p-3 dark:bg-blue-900/30">
-                    <HomeIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                <div className="relative">
+                    <div className="absolute inset-0 bg-blue-500 rounded-xl blur-md opacity-20 group-hover:opacity-40 transition-opacity" />
+                    <div className="relative border-2 border-blue-500 rounded-xl p-3 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
+                    <HomeIcon className="h-7 w-7 text-blue-600 dark:text-blue-400" />
+                    </div>
                 </div>
+                </div>
+                <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-900">
+                <p className="text-xs text-gray-500 dark:text-gray-500">Tổng số danh mục</p>
                 </div>
             </>
             )}
         </div>
 
         {/* Active Categories Card */}
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-gradient-to-br from-white to-green-50 p-6 shadow-sm transition-all duration-300 hover:shadow-xl hover:scale-[1.02] dark:border-gray-800 dark:from-gray-900 dark:to-green-950">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full blur-3xl -z-0" />
             {statsLoading ? (
-            <div className="h-24 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
+            <div className="h-24 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-800" />
             ) : (
             <>
-                <div className="flex items-center justify-between">
-                <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Danh mục hoạt động
-                    </p>
-                    <p className="mt-2 text-2xl font-bold text-green-600 dark:text-green-400">
-                    {stats?.activeCategories || 0}
-                    </p>
+                <div className="flex items-center justify-between relative z-10">
+                <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Danh mục hoạt động</p>
+                    <p className="mt-3 text-3xl font-bold text-green-600 dark:text-green-400 transition-all duration-300 group-hover:scale-110">{stats?.activeCategories || 0}</p>
                 </div>
-                <div className="rounded-full bg-green-100 p-3 dark:bg-green-900/30">
-                    <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+                <div className="relative">
+                    <div className="absolute inset-0 bg-green-500 rounded-xl blur-md opacity-20 group-hover:opacity-40 transition-opacity" />
+                    <div className="relative border-2 border-green-500 rounded-xl p-3 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
+                    <CheckCircle className="h-7 w-7 text-green-600 dark:text-green-400" />
+                    </div>
                 </div>
+                </div>
+                <div className="mt-4 pt-4 border-t border-green-200 dark:border-green-900">
+                <p className="text-xs text-gray-500 dark:text-gray-500">Danh mục đang hoạt động</p>
                 </div>
             </>
             )}
         </div>
 
         {/* Inactive Categories Card */}
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-gradient-to-br from-white to-red-50 p-6 shadow-sm transition-all duration-300 hover:shadow-xl hover:scale-[1.02] dark:border-gray-800 dark:from-gray-900 dark:to-red-950">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-3xl -z-0" />
             {statsLoading ? (
-            <div className="h-24 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
+            <div className="h-24 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-800" />
             ) : (
             <>
-                <div className="flex items-center justify-between">
-                <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Danh mục không hoạt động
-                    </p>
-                    <p className="mt-2 text-2xl font-bold text-red-600 dark:text-red-400">
-                    {stats?.inactiveCategories || 0}
-                    </p>
+                <div className="flex items-center justify-between relative z-10">
+                <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Danh mục không hoạt động</p>
+                    <p className="mt-3 text-3xl font-bold text-red-600 dark:text-red-400 transition-all duration-300 group-hover:scale-110">{stats?.inactiveCategories || 0}</p>
                 </div>
-                <div className="rounded-full bg-gray-100 p-3 dark:bg-gray-800">
-                    <XCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
+                <div className="relative">
+                    <div className="absolute inset-0 bg-red-500 rounded-xl blur-md opacity-20 group-hover:opacity-40 transition-opacity" />
+                    <div className="relative border-2 border-red-500 rounded-xl p-3 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
+                    <XCircle className="h-7 w-7 text-red-600 dark:text-red-400" />
+                    </div>
                 </div>
+                </div>
+                <div className="mt-4 pt-4 border-t border-red-200 dark:border-red-900">
+                <p className="text-xs text-gray-500 dark:text-gray-500">Danh mục tạm ngưng</p>
                 </div>
             </>
             )}
         </div>
 
         {/* Root Categories Card */}
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-gradient-to-br from-white to-purple-50 p-6 shadow-sm transition-all duration-300 hover:shadow-xl hover:scale-[1.02] dark:border-gray-800 dark:from-gray-900 dark:to-purple-950">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -z-0" />
             {statsLoading ? (
-            <div className="h-24 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
+            <div className="h-24 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-800" />
             ) : (
             <>
-                <div className="flex items-center justify-between">
-                <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Danh mục gốc
-                    </p>
-                    <p className="mt-2 text-2xl font-bold text-purple-600 dark:text-purple-400">
-                    {stats?.rootCategories || 0}
-                    </p>
+                <div className="flex items-center justify-between relative z-10">
+                <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Danh mục gốc</p>
+                    <p className="mt-3 text-3xl font-bold text-purple-600 dark:text-purple-400 transition-all duration-300 group-hover:scale-110">{stats?.rootCategories || 0}</p>
                 </div>
-                <div className="rounded-full bg-purple-100 p-3 dark:bg-purple-900/30">
-                    <Layers className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                <div className="relative">
+                    <div className="absolute inset-0 bg-purple-500 rounded-xl blur-md opacity-20 group-hover:opacity-40 transition-opacity" />
+                    <div className="relative border-2 border-purple-500 rounded-xl p-3 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
+                    <Layers className="h-7 w-7 text-purple-600 dark:text-purple-400" />
+                    </div>
                 </div>
+                </div>
+                <div className="mt-4 pt-4 border-t border-purple-200 dark:border-purple-900">
+                <p className="text-xs text-gray-500 dark:text-gray-500">Danh mục gốc trong hệ thống</p>
                 </div>
             </>
             )}

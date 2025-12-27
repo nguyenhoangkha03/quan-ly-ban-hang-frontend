@@ -18,7 +18,7 @@ import {
 import { Product, ProductType } from "@/types";
 import Badge from "@/components/ui/badge/Badge";
 import { formatCurrency } from "@/lib/utils";
-import { ChevronUp, ChevronDown, ChevronsUpDown, Eye, Edit, Delete, DeleteIcon, Trash2 } from "lucide-react";
+import { ChevronUp, ChevronDown, ChevronsUpDown, Eye, Edit, Delete, DeleteIcon, Trash2, AlertCircle } from "lucide-react";
 import { getImagePath } from "@/lib/utils";
 
 // Import BadgeColor type from Badge component
@@ -114,6 +114,25 @@ export function ProductTable({
       discontinued: "Ngừng kinh doanh",
     };
     return labels[status] || status;
+  };
+
+  // Helper function to calculate total quantity from inventory
+  const getTotalQuantity = (inventory?: any[]) => {
+    if (!inventory || inventory.length === 0) return 0;
+    return inventory.reduce((sum, inv) => sum + (Number(inv.quantity) || 0), 0);
+  };
+
+  // Helper function to get stock status color
+  const getStockStatusColor = (quantity: number, minStockLevel?: number) => {
+    if (quantity === 0) return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
+    if (minStockLevel && quantity <= minStockLevel) return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
+    return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
+  };
+
+  const getStockStatusLabel = (quantity: number, minStockLevel?: number) => {
+    if (quantity === 0) return "Hết hàng";
+    if (minStockLevel && quantity <= minStockLevel) return "Tồn kho thấp";
+    return "Bình thường";
   };
 
   // Define columns
@@ -285,6 +304,31 @@ export function ProductTable({
           </span>
         ),
         size: 100,
+      }),
+
+      // Stock Status column
+      columnHelper.display({
+        id: "stock",
+        header: "Tồn kho",
+        cell: ({ row }) => {
+          const quantity = getTotalQuantity(row.original.inventory);
+          const minStock = row.original.minStockLevel || 0;
+          const statusLabel = getStockStatusLabel(quantity, minStock);
+          const statusColor = getStockStatusColor(quantity, minStock);
+
+          return (
+            <div className="flex flex-col gap-2">
+              <div className={`inline-flex items-center gap-2 rounded-lg px-2 py-1 text-sm font-medium ${statusColor} w-fit`}>
+                {quantity === 0 && <AlertCircle className="h-4 w-4" />}
+                <span>{quantity}</span>
+              </div>
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                {statusLabel}
+              </span>
+            </div>
+          );
+        },
+        size: 130,
       }),
 
       // Status column

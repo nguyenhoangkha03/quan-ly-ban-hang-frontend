@@ -14,11 +14,11 @@ import {
   formatCurrency,
 } from "@/types/salary.types";
 import {
-  CheckCircleIcon,
-  ClockIcon,
-  BanknotesIcon,
-  ExclamationCircleIcon,
-} from "@heroicons/react/24/outline";
+  CheckCircle,
+  Clock,
+  Banknote,
+  AlertCircle,
+} from "lucide-react";
 
 //----------------------------------------------
 // Status Badge Component
@@ -49,9 +49,9 @@ export default function SalaryStatusBadge({
 
   const getStatusIcon = (status: SalaryStatusType) => {
     const icons: Record<SalaryStatusType, React.ReactNode> = {
-      pending: <ClockIcon className="w-4 h-4" />,
-      approved: <CheckCircleIcon className="w-4 h-4" />,
-      paid: <BanknotesIcon className="w-4 h-4" />,
+      pending: <Clock className="w-4 h-4" />,
+      approved: <CheckCircle className="w-4 h-4" />,
+      paid: <Banknote className="w-4 h-4" />,
     };
     return icons[status];
   };
@@ -86,22 +86,8 @@ export function PaymentMethodDisplay({
 }: PaymentMethodDisplayProps) {
   const getMethodIcon = (method: PaymentMethod) => {
     const icons: Record<PaymentMethod, React.ReactNode> = {
-      cash: <BanknotesIcon className="w-4 h-4" />,
-      transfer: (
-        <svg
-          className="w-4 h-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-          />
-        </svg>
-      ),
+      cash: <Banknote className="w-4 h-4" />,
+      transfer: <Banknote className="w-4 h-4" />,
     };
     return icons[method];
   };
@@ -441,12 +427,12 @@ export function PostedStatus({ isPosted, className = "" }: PostedStatusProps) {
     >
       {isPosted ? (
         <>
-          <CheckCircleIcon className="w-4 h-4" />
+          <CheckCircle className="w-4 h-4" />
           Đã hạch toán
         </>
       ) : (
         <>
-          <ExclamationCircleIcon className="w-4 h-4" />
+          <AlertCircle className="w-4 h-4" />
           Chưa hạch toán
         </>
       )}

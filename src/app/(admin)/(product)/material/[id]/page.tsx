@@ -21,6 +21,7 @@ import { InventoryTable } from "@/components/inventory/InventoryTable";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Product, StockTransaction, Bom, ProductionOrder, SalesOrder, Promotion, Inventory, InventoryByProductResponse } from "@/types";
 import { ArrowLeft, Boxes, DollarSign, Edit, FileText, Trash2, Zap } from "lucide-react";
+import Button from "@/components/ui/button/Button";
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -33,7 +34,6 @@ export default function ProductDetailPage() {
   const product = productWrapper?.data as unknown as Product;
   const { data: inventoryWrapper, isLoading: inventoryLoading } = useInventoryByProduct(productId);
   const inventory = inventoryWrapper?.data as unknown as InventoryByProductResponse;
-  console.log(inventory);
 
   const { data: transactionsWapper, isLoading: transactionsLoading } = useStockTransactions({
     productId: productId,
@@ -41,7 +41,8 @@ export default function ProductDetailPage() {
     sortBy: "createdAt",
     sortOrder: "desc",
   });
-  const transaction = transactionsWapper?.data as unknown as StockTransaction[]
+  const transaction = transactionsWapper?.data as unknown as StockTransaction[];
+  console.log(transaction);
   
   // BOM và Production Orders hooks - chỉ áp dụng cho thành phẩm
   const { data: bomWrapper, isLoading: bomLoading } = useBOMsByProduct(productId);
@@ -85,7 +86,7 @@ export default function ProductDetailPage() {
     try {
       await deleteProduct.mutateAsync(productId);
       setIsDeleteConfirmOpen(false);
-      router.push("/nguyen-lieu");
+      router.push("/material");
     } catch (error) {
       console.error("Xóa nguyên liệu thất bại:", error);
       setIsDeleteConfirmOpen(false);
@@ -159,13 +160,14 @@ export default function ProductDetailPage() {
 
         <div className="flex items-center gap-3">
           {/* Back Button */}
-          <Link
-            href="/products"
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          <Button 
+            onClick={() => router.back()} 
+            size="smm"
+            variant="outline"  
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-5 w-5" /> 
             Quay lại
-          </Link>
+          </Button>
 
           {/* Edit Button */}
           <Can permission="update_product">
@@ -743,7 +745,7 @@ export default function ProductDetailPage() {
           </Link>
         </div>
         <InventoryTable
-          inventory={inventory?.warehouses || []}
+          inventory={inventory}
           isLoading={inventoryLoading}
           showWarehouse={true}
           onTransfer={(item) => {
@@ -1018,7 +1020,7 @@ export default function ProductDetailPage() {
                               href={`/production-orders/${order.id}`}
                               className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                             >
-                              {order.productionOrderCode}
+                              {order.orderCode}
                             </Link>
                           </td>
                           <td className="px-4 py-3">

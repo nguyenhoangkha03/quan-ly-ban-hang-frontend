@@ -8,10 +8,7 @@ interface QueryProviderProps {
   children: React.ReactNode;
 }
 
-/**
- * React Query Provider Wrapper
- * Wrap toàn bộ app để sử dụng React Query
- */
+// React Query Provider Wrapper
 export function QueryProvider({ children }: QueryProviderProps) {
   return (
     <QueryClientProvider client={queryClient}>

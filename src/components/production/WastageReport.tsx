@@ -1,8 +1,3 @@
-/**
- * Wastage Report Component
- * Báo cáo hao hụt sản xuất
- */
-
 import React from "react";
 import { AlertTriangle, TrendingDown, Package, DollarSign } from "lucide-react";
 import type { WastageReport } from "@/types";
@@ -14,8 +9,10 @@ interface WastageReportProps {
 }
 
 export function WastageReportComponent({ report }: WastageReportProps) {
-  const hasWastage = report.totalWastageValue > 0;
-  const efficiencyPercentage = report.efficiencyRate * 100;
+  console.log('report', report);
+  const hasWastage = report.totalWastageCost > 0;
+  const efficiencyPercentage = Number(report.efficiencyRate); // Already a percentage (0-100)
+  const quantityDifference = report.finishedProduct.actualQuantity - report.finishedProduct.plannedQuantity;
 
   return (
     <div className="space-y-6">
@@ -67,28 +64,28 @@ export function WastageReportComponent({ report }: WastageReportProps) {
                 Chênh lệch số lượng
               </p>
               <p className={`mt-1 text-2xl font-bold ${
-                report.quantityDifference >= 0
+                quantityDifference >= 0
                   ? "text-green-600 dark:text-green-400"
                   : "text-red-600 dark:text-red-400"
               }`}>
-                {report.quantityDifference >= 0 ? "+" : ""}
-                {formatNumber(report.quantityDifference)}
+                {quantityDifference >= 0 ? "+" : ""}
+                {formatNumber(quantityDifference)}
               </p>
             </div>
             <div className={`rounded-full p-3 ${
-              report.quantityDifference >= 0
+              quantityDifference >= 0
                 ? "bg-green-100 dark:bg-green-900/30"
                 : "bg-red-100 dark:bg-red-900/30"
             }`}>
               <Package className={`h-6 w-6 ${
-                report.quantityDifference >= 0
+                quantityDifference >= 0
                   ? "text-green-600 dark:text-green-400"
                   : "text-red-600 dark:text-red-400"
               }`} />
             </div>
           </div>
           <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-            Kế hoạch: {formatNumber(report.plannedQuantity)} | Thực tế: {formatNumber(report.actualQuantity)}
+            Kế hoạch: {formatNumber(report.finishedProduct.plannedQuantity)} | Thực tế: {formatNumber(report.finishedProduct.actualQuantity)}
           </p>
         </div>
 
@@ -104,7 +101,7 @@ export function WastageReportComponent({ report }: WastageReportProps) {
                   ? "text-red-600 dark:text-red-400"
                   : "text-green-600 dark:text-green-400"
               }`}>
-                {formatCurrency(report.totalWastageValue)}
+                {formatCurrency(report.totalWastageCost)}
               </p>
             </div>
             <div className={`rounded-full p-3 ${
@@ -176,8 +173,8 @@ export function WastageReportComponent({ report }: WastageReportProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
-              {report.materials.map((material, index) => {
-                const hasWastage = material.wastage > 0;
+              {report.wastageDetails.map((material, index) => {
+                const hasWastage = material.wastageAmount > 0;
                 return (
                   <tr
                     key={index}
@@ -217,7 +214,7 @@ export function WastageReportComponent({ report }: WastageReportProps) {
                             : "text-gray-900 dark:text-white"
                         }`}
                       >
-                        {formatNumber(material.wastage)}
+                        {formatNumber(material.wastageAmount)}
                       </span>
                       <span className="ml-1 text-xs text-gray-500">
                         {material.unit}
@@ -247,7 +244,7 @@ export function WastageReportComponent({ report }: WastageReportProps) {
                             : "text-gray-900 dark:text-white"
                         }`}
                       >
-                        {formatCurrency(material.wastageValue)}
+                        {formatCurrency(material.wastageCost)}
                       </span>
                     </td>
                   </tr>
@@ -263,7 +260,7 @@ export function WastageReportComponent({ report }: WastageReportProps) {
                   Tổng giá trị hao hụt:
                 </td>
                 <td className="px-4 py-3 text-right text-lg font-bold text-red-600 dark:text-red-400">
-                  {formatCurrency(report.totalWastageValue)}
+                  {formatCurrency(report.totalWastageCost)}
                 </td>
               </tr>
             </tfoot>

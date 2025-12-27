@@ -61,12 +61,6 @@ export default function BOMDetailPage() {
   const inventoryResponse = inventoryData as unknown as ApiResponse<any>;
   const inventory = inventoryResponse?.data || [];
 
-  // Get stock for a product
-  const getProductStock = (productId: number) => {
-    const item = inventory.find((inv: any) => inv.productId === productId);
-    return item?.quantity || 0;
-  };
-
   // Handle Approve
   const handleApprove = async () => {
     if (!bom) return;

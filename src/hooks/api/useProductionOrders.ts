@@ -105,14 +105,16 @@ export function useStartProduction() {
       queryClient.invalidateQueries({ queryKey: PRODUCTION_ORDER_KEYS.lists() });
       queryClient.invalidateQueries({ queryKey: PRODUCTION_ORDER_KEYS.detail(variables.id) });
 
-      const transactionCode = response.meta?.stockTransaction?.code;
+      const transactionCode = (response as any).meta?.stockTransaction?.code;
       toast.success(
         `Bắt đầu sản xuất thành công! Phiếu xuất kho: ${transactionCode}`,
         { duration: 4000 }
       );
     },
     onError: (error: any) => {
-      toast.error(error?.message || "Không thể bắt đầu sản xuất");
+      let errorMessage = "Không thể bắt đầu sản xuất";
+
+      toast.error(error.error.message || errorMessage);
     },
   });
 }
@@ -131,8 +133,8 @@ export function useCompleteProduction() {
       queryClient.invalidateQueries({ queryKey: PRODUCTION_ORDER_KEYS.detail(variables.id) });
       queryClient.invalidateQueries({ queryKey: PRODUCTION_ORDER_KEYS.wastage(variables.id) });
 
-      const transactionCode = response.meta?.stockTransaction?.code;
-      const totalWastage = response.meta?.totalWastage || 0;
+      const transactionCode = (response as any).meta?.stockTransaction?.code;
+      const totalWastage = (response as any).meta?.totalWastage || 0;
 
       if (totalWastage > 0) {
         toast.success(
@@ -147,7 +149,9 @@ export function useCompleteProduction() {
       }
     },
     onError: (error: any) => {
-      toast.error(error?.message || "Không thể hoàn thành sản xuất");
+      let errorMessage = "Không thể hoàn thành sản xuất";
+
+      toast.error(error.error.message || errorMessage);
     },
   });
 }
@@ -167,7 +171,17 @@ export function useCancelProductionOrder() {
       toast.success("Đã hủy lệnh sản xuất");
     },
     onError: (error: any) => {
-      toast.error(error?.message || "Không thể hủy lệnh sản xuất");
+      let errorMessage = "Không thể hủy lệnh sản xuất";
+      
+      if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error?.error) {
+        errorMessage = error.error;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(errorMessage);
     },
   });
 }

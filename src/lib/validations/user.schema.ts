@@ -41,6 +41,17 @@ export const createUserSchema = z.object({
     .optional()
     .or(z.literal("")),
   address: z.string().max(255, "Địa chỉ không được quá 255 ký tự").optional(),
+  cccd: z
+    .string()
+    .max(20, "CCCD không được quá 20 ký tự")
+    .optional()
+    .or(z.literal("")),
+  issuedAt: z.string().optional(),
+  issuedBy: z
+    .string()
+    .max(100, "Nơi cấp không được quá 100 ký tự")
+    .optional()
+    .or(z.literal("")),
   gender: genderEnum.optional(),
   dateOfBirth: z.string().optional(),
   roleId: z.number({}).int().positive("Vui lòng chọn vai trò"),
@@ -71,12 +82,45 @@ export const updateUserSchema = z.object({
     .optional()
     .or(z.literal("")),
   address: z.string().max(255, "Địa chỉ không được quá 255 ký tự").optional(),
+  cccd: z
+    .string()
+    .max(20, "CCCD không được quá 20 ký tự")
+    .optional()
+    .or(z.literal("")),
+  issuedAt: z.string().optional(),
+  issuedBy: z
+    .string()
+    .max(100, "Nơi cấp không được quá 100 ký tự")
+    .optional()
+    .or(z.literal("")),
   gender: genderEnum.optional(),
   dateOfBirth: z.string().optional(),
+  password: z
+    .string()
+    .min(8, "Mật khẩu phải có ít nhất 8 ký tự")
+    .max(100, "Mật khẩu không được quá 100 ký tự")
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+      "Mật khẩu phải chứa chữ thường, chữ hoa và số"
+    )
+    .optional()
+    .or(z.literal("")),
+  confirmPassword: z.string().optional().or(z.literal("")),
   roleId: z.number().int().positive().optional(),
   warehouseId: z.number().int().positive().optional(),
   status: userStatusEnum.optional(),
-});
+}).refine(
+  (data) => {
+    if (data.password && data.password.trim() !== "") {
+      return data.password === data.confirmPassword;
+    }
+    return true;
+  },
+  {
+    message: "Mật khẩu xác nhận không khớp",
+    path: ["confirmPassword"],
+  }
+);
 
 // User Filter Schema
 export const userFilterSchema = z.object({

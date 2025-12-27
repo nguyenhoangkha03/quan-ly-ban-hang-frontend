@@ -13,9 +13,7 @@ import type {
   ApiResponse,
 } from "@/types";
 
-/**
- * Query Keys
- */
+// Query Keys
 export const dashboardKeys = {
   all: ["dashboard"] as const,
   metrics: () => [...dashboardKeys.all, "metrics"] as const,
@@ -29,10 +27,7 @@ export const dashboardKeys = {
   fullData: () => [...dashboardKeys.all, "full-data"] as const,
 };
 
-/**
- * Get Dashboard Metrics
- * Auto refetch mỗi 1 phút
- */
+// Get Dashboard Metrics
 export function useDashboardMetrics() {
   return useQuery({
     queryKey: dashboardKeys.metrics(),
@@ -47,10 +42,7 @@ export function useDashboardMetrics() {
   });
 }
 
-/**
- * Get Revenue Chart Data
- * @param period - 'day' | 'week' | 'month' | 'year'
- */
+// Get Revenue Chart Data
 export function useRevenueChart(period: "day" | "week" | "month" | "year" = "month") {
   return useQuery({
     queryKey: dashboardKeys.revenue(period),
@@ -65,10 +57,7 @@ export function useRevenueChart(period: "day" | "week" | "month" | "year" = "mon
   });
 }
 
-/**
- * Get Top Products
- * @param limit - Number of products to return (default: 10)
- */
+// Get Top Products
 export function useTopProducts(limit = 10) {
   return useQuery({
     queryKey: dashboardKeys.topProducts(limit),
@@ -83,9 +72,7 @@ export function useTopProducts(limit = 10) {
   });
 }
 
-/**
- * Get Sales Channel Distribution
- */
+// Get Sales Channel Distribution
 export function useSalesChannels() {
   return useQuery({
     queryKey: dashboardKeys.salesChannels(),
@@ -99,9 +86,7 @@ export function useSalesChannels() {
   });
 }
 
-/**
- * Get Inventory By Type
- */
+// Get Inventory By Type
 export function useInventoryByType() {
   return useQuery({
     queryKey: dashboardKeys.inventoryByType(),
@@ -115,10 +100,7 @@ export function useInventoryByType() {
   });
 }
 
-/**
- * Get Recent Orders
- * @param limit - Number of orders to return (default: 10)
- */
+// Get Recent Orders
 export function useRecentOrders(limit = 10) {
   return useQuery({
     queryKey: dashboardKeys.recentOrders(limit),
@@ -134,16 +116,13 @@ export function useRecentOrders(limit = 10) {
   });
 }
 
-/**
- * Get Low Stock Items
- * Auto refetch mỗi 1 phút
- */
+// Get Low Stock Items
 export function useLowStockItems() {
   return useQuery({
     queryKey: dashboardKeys.lowStock(),
     queryFn: async () => {
       const response = await api.get<ApiResponse<LowStockItem[]>>(
-        "/inventory/low-stock-alerts"
+        "/inventory/alerts"
       );
       return response.data;
     },
@@ -152,9 +131,7 @@ export function useLowStockItems() {
   });
 }
 
-/**
- * Get Overdue Debts
- */
+// Get Overdue Debts
 export function useOverdueDebts() {
   return useQuery({
     queryKey: dashboardKeys.overdueDebts(),
@@ -168,18 +145,43 @@ export function useOverdueDebts() {
   });
 }
 
-/**
- * Get Full Dashboard Data (All in one)
- * Use this if backend provides a combined endpoint
- */
-export function useDashboardData() {
+// Get Activity Logs
+export function useActivityLogs(limit = 10) {
   return useQuery({
-    queryKey: dashboardKeys.fullData(),
+    queryKey: ["activity-logs", limit],
     queryFn: async () => {
-      const response = await api.get<ApiResponse<DashboardData>>("/reports/dashboard");
+      const response = await api.get<ApiResponse<any[]>>(
+        "/activity-logs",
+        { params: { limit } }
+      );
       return response.data;
     },
+    refetchInterval: 30000, // Refetch every 30 seconds
+    staleTime: 15000,
+  });
+}
+
+// Get Full Dashboard Stats (Optimized All-in-One)
+export function useDashboardStats(
+  period: 'day' | 'week' | 'month' = 'month',
+  customDateRange?: { from: string; to: string } | null
+) {
+  return useQuery({
+    queryKey: customDateRange 
+      ? [...dashboardKeys.fullData(), customDateRange.from, customDateRange.to]
+      : [...dashboardKeys.fullData(), period],
+    queryFn: async () => {
+      const params = customDateRange
+        ? { fromDate: customDateRange.from, toDate: customDateRange.to }
+        : { period };
+      
+      const response = await api.get<ApiResponse<any>>(
+        "/reports/dashboard/stats",
+        { params }
+      );
+      return response;
+    },
     refetchInterval: 60000, // Refetch every 1 minute
-    staleTime: 30000,
+    staleTime: 30000, // Consider stale after 30 seconds
   });
 }

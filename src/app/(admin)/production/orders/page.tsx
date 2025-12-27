@@ -51,7 +51,6 @@ export default function ProductionOrdersPage() {
   const response = data as unknown as ApiResponse<ProductionOrder[]>;
   const productionOrders = response?.data || [];
 
-  console.log(productionOrders);
   const paginationMeta = response?.meta;
 
   // Fetch Warehouses
@@ -655,7 +654,7 @@ export default function ProductionOrdersPage() {
                         {order.status === "pending" ? (
                           <div title="Đủ hàng để sản xuất" className="inline-flex items-center justify-center">
                             {
-                              order.materialAvailability.status === "sufficient" ? (
+                              order.materialAvailability?.status === "sufficient" ? (
                                 <Check className="h-6 w-6 text-green-500" />
                               ) : (
                                 <span title="Thiếu hàng">
@@ -772,7 +771,7 @@ export default function ProductionOrdersPage() {
 
                                 <DropdownItem
                                   onClick={() => setOpenDropdownId(null)}
-                                  className="dark:text-gray-300 dark:hover:bg-gray-700"
+                                  className="text-blue-600! hover:bg-blue-50! dark:text-blue-500 dark:hover:bg-blue-900/20!"
                                 >
                                   <div className="flex items-center gap-2">
                                     <Printer className="h-4 w-4" />

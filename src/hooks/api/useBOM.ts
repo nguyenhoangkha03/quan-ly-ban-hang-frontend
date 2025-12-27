@@ -9,6 +9,7 @@ import type {
   CalculateMaterialsResult,
   ApproveBomInput,
   ApiResponse,
+  PaginationParams,
 } from "@/types";
 import { toast } from "react-hot-toast";
 
@@ -25,7 +26,7 @@ export const bomKeys = {
 };
 
 // Get BOMs List với filters & pagination
-export function useBOMs(params?: BomQueryParams) {
+export function useBOMs(params?: BomQueryParams & PaginationParams) {
   return useQuery({
     queryKey: bomKeys.list(params),
     queryFn: async () => {

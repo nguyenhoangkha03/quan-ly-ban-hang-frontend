@@ -1,12 +1,7 @@
-/**
- * SalaryCalculator Component
- * Wizard-style component for calculating employee salary
- */
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   calculateSalarySchema,
@@ -18,12 +13,15 @@ import { SalaryBreakdown } from "./SalaryStatus";
 import { dateToMonth, formatMonth } from "@/types/salary.types";
 import type { SalaryCalculationResult } from "@/types/salary.types";
 import {
-  UserIcon,
-  CalendarIcon,
-  CurrencyDollarIcon,
-  CalculatorIcon,
-  CheckCircleIcon,
-} from "@heroicons/react/24/outline";
+  User,
+  Calendar,
+  DollarSign,
+  Calculator,
+  CheckCircle,
+} from "lucide-react";
+import SearchableSelect from "@/components/ui/SearchableSelect";
+import { MonthPicker } from "@/components/form/MonthPicker";
+import { User as UserType } from "@/types";
 
 export interface SalaryCalculatorProps {
   onSuccess?: () => void;
@@ -46,6 +44,7 @@ export default function SalaryCalculator({
     handleSubmit,
     watch,
     setValue,
+    control,
     formState: { errors },
   } = useForm<CalculateSalaryFormValues>({
     resolver: zodResolver(calculateSalarySchema),
@@ -55,9 +54,9 @@ export default function SalaryCalculator({
   });
 
   const calculateMutation = useCalculateSalary();
-  const { data: usersData } = useUsers({ limit: 1000 }); // Get all users for selection
+  const { data: usersData } = useUsers({ limit: 1000 }); 
 
-  const users = useMemo(() => usersData?.data || [], [usersData]);
+  const users = usersData?.data as unknown as UserType[] || [];
 
   const selectedUserId = watch("userId");
   const selectedMonth = watch("month");
@@ -81,11 +80,9 @@ export default function SalaryCalculator({
   const handleCalculate = async (data: CalculateSalaryFormValues) => {
     try {
       const result = await calculateMutation.mutateAsync(data);
-      setPreview(result.data);
+      setPreview(result.data.data);
       setStep("preview");
-    } catch (error) {
-      // Error is handled by the mutation hook
-    }
+    } catch (error) {}
   };
 
   const handleConfirm = () => {
@@ -135,20 +132,23 @@ export default function SalaryCalculator({
             {/* User Selector */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                <UserIcon className="w-4 h-4 inline mr-1" />
+                <User className="w-4 h-4 inline mr-1" />
                 Nhân viên <span className="text-red-500">*</span>
               </label>
-              <select
-                {...register("userId", { valueAsNumber: true })}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">-- Chọn nhân viên --</option>
-                {users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.full_name} - {user.employee_code}
-                  </option>
-                ))}
-              </select>
+              <Controller
+                control={control}
+                name="userId"
+                render={({ field }) => (
+                  <SearchableSelect
+                    {...field}
+                    options={users.map((user) => ({
+                      value: user.id,
+                      label: `${user.fullName} - ${user.employeeCode}`,
+                    }))}
+                    placeholder="-- Chọn nhân viên --"
+                  />
+                )}
+              />
               {errors.userId && (
                 <p className="text-sm text-red-500 mt-1">
                   {errors.userId.message}
@@ -159,18 +159,18 @@ export default function SalaryCalculator({
             {/* Month Selector */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                <CalendarIcon className="w-4 h-4 inline mr-1" />
+                <Calendar className="w-4 h-4 inline mr-1" />
                 Tháng <span className="text-red-500">*</span>
               </label>
-              <input
-                type="month"
-                {...register("month")}
-                onChange={(e) => {
-                  const value = e.target.value; // YYYY-MM
-                  const yyyymm = value.replace("-", ""); // YYYYMM
-                  setValue("month", yyyymm);
-                }}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              <Controller
+                control={control}
+                name="month"
+                render={({ field }) => (
+                  <MonthPicker
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
               />
               {errors.month && (
                 <p className="text-sm text-red-500 mt-1">
@@ -183,9 +183,9 @@ export default function SalaryCalculator({
             {selectedUser && selectedMonth && (
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                 <p className="text-sm text-blue-800 dark:text-blue-400">
-                  <strong>Nhân viên:</strong> {selectedUser.full_name}
+                  <strong>Nhân viên:</strong> {selectedUser.fullName}
                   <br />
-                  <strong>Mã NV:</strong> {selectedUser.employee_code}
+                  <strong>Mã NV:</strong> {selectedUser.employeeCode}
                   <br />
                   <strong>Tháng:</strong> {formatMonth(selectedMonth)}
                 </p>
@@ -226,7 +226,7 @@ export default function SalaryCalculator({
               {/* Basic Salary */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  <CurrencyDollarIcon className="w-4 h-4 inline mr-1" />
+                  <DollarSign className="w-4 h-4 inline mr-1" />
                   Lương cơ bản
                 </label>
                 <input
@@ -348,7 +348,7 @@ export default function SalaryCalculator({
                   </>
                 ) : (
                   <>
-                    <CalculatorIcon className="w-5 h-5" />
+                    <Calculator className="w-5 h-5" />
                     Tính lương
                   </>
                 )}
@@ -375,7 +375,7 @@ export default function SalaryCalculator({
                     Họ tên:
                   </span>
                   <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">
-                    {preview.user?.full_name}
+                    {preview.user?.fullName}
                   </span>
                 </div>
                 <div>
@@ -383,7 +383,7 @@ export default function SalaryCalculator({
                     Mã NV:
                   </span>
                   <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">
-                    {preview.user?.employee_code}
+                    {preview.user?.employeeCode}
                   </span>
                 </div>
                 <div>
@@ -451,7 +451,7 @@ export default function SalaryCalculator({
                 onClick={handleConfirm}
                 className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center gap-2"
               >
-                <CheckCircleIcon className="w-5 h-5" />
+                <CheckCircle className="w-5 h-5" />
                 Xác nhận
               </button>
             </div>
@@ -485,7 +485,7 @@ function Step({ number, title, active, completed }: StepProps) {
             : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400"
         }`}
       >
-        {completed ? <CheckCircleIcon className="w-6 h-6" /> : number}
+        {completed ? <CheckCircle className="w-6 h-6" /> : number}
       </div>
       <span
         className={`text-xs font-medium ${

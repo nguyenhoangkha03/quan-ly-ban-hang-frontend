@@ -7,7 +7,8 @@ import { formatNumber, cn } from "@/lib/utils";
 import { AlertTriangle, PackageX } from "lucide-react";
 
 export function LowStockAlertTable() {
-  const { data: items, isLoading } = useLowStockItems();
+  const { data: response, isLoading } = useLowStockItems();
+  const items = response?.data?.alerts || [];
 
   return (
     <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800">
@@ -85,28 +86,28 @@ export function LowStockAlertTable() {
               ))
             ) : items && items.length > 0 ? (
               items.map((item) => {
-                const shortage = item.min_stock - item.current_stock;
-                const isOutOfStock = item.current_stock === 0;
-                const stockPercentage = (item.current_stock / item.min_stock) * 100;
+                const shortage = item.product.minStockLevel - item.availableQuantity;
+                const isOutOfStock = item.availableQuantity === 0;
+                const stockPercentage = (item.availableQuantity / item.product.minStockLevel) * 100;
 
                 return (
                   <tr
-                    key={`${item.product_id}-${item.warehouse_id}`}
+                    key={`${item.productId}-${item.warehouseId}`}
                     className="border-b border-gray-100 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700/50"
                   >
                     <td className="py-3">
                       <Link
-                        href={`/inventory/products/${item.product_id}`}
+                        href={`/inventory/products/${item.productId}`}
                         className="font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
                       >
-                        {item.product_name}
+                        {item.product.productName}
                       </Link>
                     </td>
                     <td className="py-3 text-gray-600 dark:text-gray-400">
-                      {item.sku}
+                      {item.product.sku}
                     </td>
                     <td className="py-3 text-gray-900 dark:text-white">
-                      {item.warehouse_name}
+                      {item.warehouse.warehouseName}
                     </td>
                     <td className="py-3 text-right">
                       <span
@@ -119,11 +120,11 @@ export function LowStockAlertTable() {
                             : "text-gray-900 dark:text-white"
                         )}
                       >
-                        {formatNumber(item.current_stock)}
+                        {formatNumber(item.availableQuantity)}
                       </span>
                     </td>
                     <td className="py-3 text-right text-gray-600 dark:text-gray-400">
-                      {formatNumber(item.min_stock)}
+                      {formatNumber(item.product.minStockLevel)}
                     </td>
                     <td className="py-3 text-right">
                       <span className="font-medium text-red-600 dark:text-red-400">

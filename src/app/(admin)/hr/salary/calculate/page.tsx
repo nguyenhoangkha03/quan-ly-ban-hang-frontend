@@ -1,15 +1,11 @@
-/**
- * Calculate Salary Page
- * Wizard-based page for calculating employee salary
- */
-
 "use client";
 
 import React from "react";
 import { useRouter } from "next/navigation";
 import { Can } from "@/components/auth/Can";
 import SalaryCalculator from "@/components/salary/SalaryCalculator";
-import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { ArrowLeft, ArrowLeftIcon } from "lucide-react";
+import Button from "@/components/ui/button/Button";
 
 export default function CalculateSalaryPage() {
   const router = useRouter();
@@ -35,22 +31,25 @@ export default function CalculateSalaryPage() {
         </div>
       }
     >
-      <div className="p-6">
+      <div className="space-y-6">
         {/* Header */}
-        <div className="mb-6">
-          <button
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Tính lương Nhân viên
+            </h1>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Tính toán lương tự động dựa trên chấm công và doanh số
+            </p>
+          </div>
+          <Button
+            variant="outline"
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-4"
+            size="smm"
           >
-            <ArrowLeftIcon className="w-5 h-5" />
-            <span className="text-sm">Quay lại</span>
-          </button>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Tính lương nhân viên
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Tính toán lương tự động dựa trên chấm công và doanh số
-          </p>
+            <ArrowLeft className="h-5 w-5" />
+            Quay lại
+          </Button>
         </div>
 
         {/* Calculator */}

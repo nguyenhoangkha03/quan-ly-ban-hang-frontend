@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Inventory } from "@/types";
+import { Inventory, InventoryByProductResponse } from "@/types";
 import { StockLevelIndicator, StockStatusBadge } from "./StockLevelIndicator";
 import {
   Table,
@@ -14,7 +14,7 @@ import {
 import Badge from "@/components/ui/badge/Badge";
 
 interface InventoryTableProps {
-  inventory: Inventory[];
+  inventory: InventoryByProductResponse;
   isLoading?: boolean;
   showWarehouse?: boolean;
   onAdjust?: (item: Inventory) => void;
@@ -36,7 +36,7 @@ export function InventoryTable({
     );
   }
 
-  if (!inventory || inventory.length === 0) {
+  if (!inventory.warehouses || inventory.warehouses.length === 0) {
     return (
       <div className="flex h-64 flex-col items-center justify-center text-gray-500 dark:text-gray-400">
         <svg
@@ -97,9 +97,9 @@ export function InventoryTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {inventory.map((item) => {
+        {inventory.warehouses.map((item) => {
           const availableQty = Number(item.quantity) - Number(item.reservedQuantity);
-          const minStockLevel = Number(item.product?.minStockLevel) || 0;
+          const minStockLevel = Number(inventory.product?.minStockLevel) || 0;
 
           return (
             <TableRow key={`${item.warehouseId}-${item.productId}`}>
@@ -110,10 +110,10 @@ export function InventoryTable({
                     href={`/products/${item.productId}`}
                     className="font-medium text-gray-900 hover:text-blue-600 dark:text-white dark:hover:text-blue-400"
                   >
-                    {item.product?.productName || "N/A"}
+                    {inventory.product?.productName || "N/A"}
                   </Link>
                   <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {item.product?.sku || "N/A"}
+                    {inventory.product?.sku || "N/A"}
                   </div>
                 </div>
               </TableCell>

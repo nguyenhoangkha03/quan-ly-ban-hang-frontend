@@ -127,7 +127,7 @@ export function SalesChannelChart() {
               <div style="padding: 4px 0;">
                 <div><strong>${formatCurrency(value)}</strong></div>
                 <div style="color: #6b7280; font-size: 12px; margin-top: 2px;">
-                  ${channel.order_count} đơn hàng
+                  ${channel.orderCount} đơn hàng
                 </div>
               </div>
             `;
@@ -161,7 +161,7 @@ export function SalesChannelChart() {
         {channels && channels.length > 0 && (
           <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
             Tổng: {formatCurrency(channels.reduce((sum, ch) => sum + ch.revenue, 0))} •{" "}
-            {channels.reduce((sum, ch) => sum + ch.order_count, 0)} đơn hàng
+            {channels.reduce((sum, ch) => sum + ch.orderCount, 0)} đơn hàng
           </p>
         )}
       </div>

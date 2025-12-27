@@ -1,52 +1,36 @@
-/**
- * User Status Components
- * Display user status badges and related UI components
- */
-
 import React from "react";
 import Badge from "@/components/ui/badge/Badge";
 import type { UserStatus, Gender } from "@/types";
 import { UserCheck, UserX, Lock } from "lucide-react";
 
-/**
- * User Status Badge Colors
- */
+// User Status Badge Colors
 const STATUS_COLORS: Record<UserStatus, "green" | "gray" | "red"> = {
   active: "green",
   inactive: "gray",
   locked: "red",
 };
 
-/**
- * User Status Labels
- */
+// User Status Labels
 const STATUS_LABELS: Record<UserStatus, string> = {
   active: "Hoạt động",
   inactive: "Ngưng hoạt động",
   locked: "Bị khóa",
 };
 
-/**
- * Gender Labels
- */
+// Gender Labels
 const GENDER_LABELS: Record<Gender, string> = {
   male: "Nam",
   female: "Nữ",
   other: "Khác",
 };
 
-/**
- * Props for UserStatusBadge
- */
+// Props for UserStatusBadge
 interface UserStatusBadgeProps {
   status: UserStatus;
   showIcon?: boolean;
 }
 
-/**
- * User Status Badge Component
- * Displays user account status (active/inactive/locked)
- */
+// User Status Badge Component
 export default function UserStatusBadge({ status, showIcon = false }: UserStatusBadgeProps) {
   const StatusIcon = {
     active: UserCheck,
@@ -62,9 +46,7 @@ export default function UserStatusBadge({ status, showIcon = false }: UserStatus
   );
 }
 
-/**
- * Gender Display Component
- */
+// Gender Display Component
 interface GenderDisplayProps {
   gender?: Gender;
 }
@@ -94,9 +76,7 @@ export function GenderDisplay({ gender }: GenderDisplayProps) {
   );
 }
 
-/**
- * User Avatar Component
- */
+// User Avatar Component
 interface UserAvatarProps {
   avatarUrl?: string;
   fullName: string;
@@ -126,19 +106,27 @@ export function UserAvatar({
     xl: "h-4 w-4",
   };
 
+  // Get initials safely
+  const getInitials = () => {
+    if (!fullName || fullName.trim() === "") {
+      return "?";
+    }
+    return fullName.charAt(0).toUpperCase();
+  };
+
   return (
     <div className="relative inline-block">
       {avatarUrl ? (
         <img
           src={avatarUrl}
-          alt={fullName}
+          alt={fullName || "User"}
           className={`${sizeClasses[size]} rounded-full object-cover`}
         />
       ) : (
         <div
           className={`${sizeClasses[size]} flex items-center justify-center rounded-full bg-blue-100 font-medium text-blue-600 dark:bg-blue-900/20 dark:text-blue-400`}
         >
-          {fullName.charAt(0).toUpperCase()}
+          {getInitials()}
         </div>
       )}
 
@@ -154,10 +142,7 @@ export function UserAvatar({
   );
 }
 
-/**
- * User Info Display Component
- * Displays user name, email, and avatar in a row
- */
+// User Info Display Component
 interface UserInfoDisplayProps {
   user: {
     fullName: string;
@@ -195,9 +180,7 @@ export function UserInfoDisplay({
   );
 }
 
-/**
- * Last Login Display
- */
+// Last Login Display
 interface LastLoginDisplayProps {
   lastLogin?: string;
 }

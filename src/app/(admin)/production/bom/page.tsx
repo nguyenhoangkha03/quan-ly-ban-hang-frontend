@@ -155,71 +155,107 @@ export default function BOMListPage() {
 
       {/* Statistics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {/* Total BOMs Card */}
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+        {/* Card 1: Tổng số BOM */}
+        <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-gradient-to-br from-white to-blue-50 p-6 shadow-sm transition-all duration-300 hover:shadow-xl hover:scale-[1.02] cursor-pointer dark:border-gray-800 dark:from-gray-900 dark:to-blue-950">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -z-0" />
+          <div className="flex items-center justify-between relative z-10">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 Tổng số BOM
               </p>
-              <p className="mt-2 text-2xl font-bold text-blue-600 dark:text-blue-400">
+              <p className="mt-3 text-3xl font-bold text-blue-600 dark:text-blue-400 transition-all duration-300 group-hover:scale-110">
                 {boms.length}
               </p>
             </div>
-            <div className="rounded-full bg-blue-100 p-3 dark:bg-blue-900/30">
-              <Package className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            <div className="relative">
+              <div className="absolute inset-0 bg-blue-500 rounded-xl blur-md opacity-20 group-hover:opacity-40 transition-opacity" />
+              <div className="relative border-2 border-blue-500 rounded-xl p-3 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
+                <Package className="h-7 w-7 text-blue-600 dark:text-blue-400" strokeWidth={2} />
+              </div>
             </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-900">
+            <p className="text-xs text-gray-500 dark:text-gray-500">
+              Công thức sản xuất
+            </p>
           </div>
         </div>
 
-        {/* Active BOMs Card */}
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+        {/* Card 2: Đang sử dụng (Active) */}
+        <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-gradient-to-br from-white to-green-50 p-6 shadow-sm transition-all duration-300 hover:shadow-xl hover:scale-[1.02] cursor-pointer dark:border-gray-800 dark:from-gray-900 dark:to-green-950">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full blur-3xl -z-0" />
+          <div className="flex items-center justify-between relative z-10">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 Đang sử dụng
               </p>
-              <p className="mt-2 text-2xl font-bold text-green-600 dark:text-green-400">
+              <p className="mt-3 text-3xl font-bold text-green-600 dark:text-green-400 transition-all duration-300 group-hover:scale-110">
                 {boms.filter((b) => b.status === "active").length}
               </p>
             </div>
-            <div className="rounded-full bg-green-100 p-3 dark:bg-green-900/30">
-              <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+            <div className="relative">
+              <div className="absolute inset-0 bg-green-500 rounded-xl blur-md opacity-20 group-hover:opacity-40 transition-opacity" />
+              <div className="relative border-2 border-green-500 rounded-xl p-3 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
+                <CheckCircle className="h-7 w-7 text-green-600 dark:text-green-400" strokeWidth={2} />
+              </div>
             </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-green-200 dark:border-green-900">
+            <p className="text-xs text-gray-500 dark:text-gray-500">
+              Sẵn sàng sử dụng
+            </p>
           </div>
         </div>
 
-        {/* Draft BOMs Card */}
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+        {/* Card 3: Nháp (Draft) */}
+        <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-gradient-to-br from-white to-amber-50 p-6 shadow-sm transition-all duration-300 hover:shadow-xl hover:scale-[1.02] cursor-pointer dark:border-gray-800 dark:from-gray-900 dark:to-amber-950">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl -z-0" />
+          <div className="flex items-center justify-between relative z-10">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 Nháp
               </p>
-              <p className="mt-2 text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+              <p className="mt-3 text-3xl font-bold text-amber-600 dark:text-amber-400 transition-all duration-300 group-hover:scale-110">
                 {boms.filter((b) => b.status === "draft").length}
               </p>
             </div>
-            <div className="rounded-full bg-yellow-100 p-3 dark:bg-yellow-900/30">
-              <Edit className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+            <div className="relative">
+              <div className="absolute inset-0 bg-amber-500 rounded-xl blur-md opacity-20 group-hover:opacity-40 transition-opacity" />
+              <div className="relative border-2 border-amber-500 rounded-xl p-3 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
+                <Edit className="h-7 w-7 text-amber-600 dark:text-amber-400" strokeWidth={2} />
+              </div>
             </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-amber-200 dark:border-amber-900">
+            <p className="text-xs text-gray-500 dark:text-gray-500">
+              Chờ phê duyệt
+            </p>
           </div>
         </div>
 
-        {/* Inactive BOMs Card */}
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+        {/* Card 4: Không sử dụng (Inactive) */}
+        <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-gradient-to-br from-white to-slate-50 p-6 shadow-sm transition-all duration-300 hover:shadow-xl hover:scale-[1.02] cursor-pointer dark:border-gray-800 dark:from-gray-900 dark:to-slate-950">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-slate-500/10 rounded-full blur-3xl -z-0" />
+          <div className="flex items-center justify-between relative z-10">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
                 Không sử dụng
               </p>
-              <p className="mt-2 text-2xl font-bold text-gray-600 dark:text-gray-400">
+              <p className="mt-3 text-3xl font-bold text-slate-600 dark:text-slate-400 transition-all duration-300 group-hover:scale-110">
                 {boms.filter((b) => b.status === "inactive").length}
               </p>
             </div>
-            <div className="rounded-full bg-gray-100 p-3 dark:bg-gray-900/30">
-              <Package className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+            <div className="relative">
+              <div className="absolute inset-0 bg-slate-500 rounded-xl blur-md opacity-20 group-hover:opacity-40 transition-opacity" />
+              <div className="relative border-2 border-slate-500 rounded-xl p-3 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
+                <Package className="h-7 w-7 text-slate-600 dark:text-slate-400" strokeWidth={2} />
+              </div>
             </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-900">
+            <p className="text-xs text-gray-500 dark:text-gray-500">
+              Ngừng sử dụng
+            </p>
           </div>
         </div>
       </div>
@@ -344,7 +380,7 @@ export default function BOMListPage() {
             <p>Không tìm thấy BOM nào</p>
           </div>
         ) : (
-          <div className="overflow-x-auto min-h-72">
+          <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-900">
                 <tr>
@@ -440,7 +476,7 @@ export default function BOMListPage() {
                         </Link>
 
                         {/* Dropdown Menu */}
-                        <div className="relative">
+                        <div className="relative z-50">
                           <button
                             className="dropdown-toggle rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
                             onClick={() => setOpenDropdown(openDropdown === bom.id ? null : bom.id)}

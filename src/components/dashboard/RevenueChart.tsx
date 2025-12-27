@@ -10,13 +10,21 @@ const ReactApexChart = dynamic(() => import("react-apexcharts"), { ssr: false })
 
 type PeriodType = "day" | "week" | "month" | "year";
 
-export function RevenueChart() {
-  const [period, setPeriod] = useState<PeriodType>("month");
-  const { data, isLoading } = useRevenueChart(period);
+interface RevenueChartProps {
+  initialData?: any[];
+  period?: PeriodType;
+}
 
-  // Prepare chart data
-  const chartData: ApexOptions = React.useMemo(() => {
-    if (!data) {
+export function RevenueChart({ initialData, period = "month" }: RevenueChartProps) {
+  const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>(period);
+  const { data, isLoading } = useRevenueChart(selectedPeriod);
+
+  // Use initial data if provided (from dashboard/stats), otherwise use individual API
+  const chartData = initialData || data?.data;
+
+  // Prepare chart data with Revenue and Expenses
+  const apexChartData: ApexOptions = React.useMemo(() => {
+    if (!chartData || chartData.length === 0) {
       return {
         series: [],
         chart: { type: "area", height: 350 },
@@ -27,7 +35,11 @@ export function RevenueChart() {
       series: [
         {
           name: "Doanh thu",
-          data: data.data.map((item) => item.revenue),
+          data: chartData.map((item: any) => item.revenue),
+        },
+        {
+          name: "Chi phí",
+          data: chartData.map((item: any) => item.expenses || 0),
         },
       ],
       chart: {
@@ -56,11 +68,11 @@ export function RevenueChart() {
           stops: [0, 90, 100],
         },
       },
-      colors: ["#3b82f6"],
+      colors: ["#10b981", "#ef4444"],
       xaxis: {
-        categories: data.data.map((item) => {
+        categories: chartData.map((item: any) => {
           const date = new Date(item.date);
-          if (period === "day") {
+          if (selectedPeriod === "day") {
             return date.toLocaleTimeString("vi-VN", {
               hour: "2-digit",
               minute: "2-digit",
@@ -106,8 +118,12 @@ export function RevenueChart() {
         },
         theme: "light",
       },
+      legend: {
+        position: "top",
+        horizontalAlign: "right",
+      },
     };
-  }, [data, period]);
+  }, [chartData, selectedPeriod]);
 
   return (
     <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-gray-800">
@@ -115,11 +131,11 @@ export function RevenueChart() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Biểu đồ doanh thu
+            Biểu đồ Doanh thu & Chi phí
           </h3>
           {data && (
             <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-              Tổng: {formatCurrency(data.total_revenue)} • {data.total_orders} đơn hàng
+              Tổng doanh thu: {formatCurrency(data.total_revenue)} • {data.total_orders} đơn hàng
             </p>
           )}
         </div>
@@ -151,10 +167,10 @@ export function RevenueChart() {
           <div className="flex h-[350px] items-center justify-center">
             <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
           </div>
-        ) : data && data.data.length > 0 ? (
+        ) : chartData && chartData.length > 0 ? (
           <ReactApexChart
-            options={chartData}
-            series={chartData.series}
+            options={apexChartData}
+            series={apexChartData.series}
             type="area"
             height={350}
           />

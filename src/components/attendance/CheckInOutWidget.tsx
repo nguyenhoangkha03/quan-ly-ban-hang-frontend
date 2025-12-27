@@ -1,8 +1,3 @@
-/**
- * Check In/Out Widget
- * Widget for header to allow users to check in/out
- */
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -157,9 +152,6 @@ export default function CheckInOutWidget() {
   );
 }
 
-/**
- * Compact Version for Mobile
- */
 export function CheckInOutWidgetCompact() {
   const { data: todayData } = useTodayAttendance();
   const checkIn = useCheckIn();

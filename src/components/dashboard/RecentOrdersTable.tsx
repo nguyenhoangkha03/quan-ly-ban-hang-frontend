@@ -99,43 +99,43 @@ export function RecentOrdersTable() {
                   key={order.id}
                   className="border-b border-gray-100 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700/50"
                 >
-                  <td className="py-3">
-                    <Link
-                      href={`/sales/orders/${order.id}`}
-                      className="font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                    >
-                      {order.order_code}
-                    </Link>
-                  </td>
-                  <td className="py-3 text-gray-900 dark:text-white">
-                    {order.customer_name}
-                  </td>
-                  <td className="py-3 text-gray-600 dark:text-gray-400">
-                    {formatDate(order.order_date)}
-                  </td>
-                  <td className="py-3 text-right font-medium text-gray-900 dark:text-white">
-                    {formatCurrency(order.total_amount)}
-                  </td>
-                  <td className="py-3 text-center">
-                    <span
-                      className={cn(
-                        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-                        PAYMENT_STATUS_COLORS[order.payment_status]
-                      )}
-                    >
-                      {PAYMENT_STATUS_LABELS[order.payment_status]}
-                    </span>
-                  </td>
-                  <td className="py-3 text-center">
-                    <span
-                      className={cn(
-                        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-                        ORDER_STATUS_COLORS[order.status]
-                      )}
-                    >
-                      {ORDER_STATUS_LABELS[order.status]}
-                    </span>
-                  </td>
+                   <td className="py-3">
+                     <Link
+                       href={`/sales/orders/${order.id}`}
+                       className="font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                     >
+                       {order.orderCode}
+                     </Link>
+                   </td>
+                   <td className="py-3 text-gray-900 dark:text-white">
+                     {order.customer.customerName}
+                   </td>
+                   <td className="py-3 text-gray-600 dark:text-gray-400">
+                     {formatDate(order.orderDate)}
+                   </td>
+                   <td className="py-3 text-right font-medium text-gray-900 dark:text-white">
+                     {formatCurrency(order.totalAmount)}
+                   </td>
+                   <td className="py-3 text-center">
+                     <span
+                       className={cn(
+                         "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                         PAYMENT_STATUS_COLORS[order.paymentStatus]
+                       )}
+                     >
+                       {PAYMENT_STATUS_LABELS[order.paymentStatus]}
+                     </span>
+                   </td>
+                   <td className="py-3 text-center">
+                     <span
+                       className={cn(
+                         "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                         ORDER_STATUS_COLORS[order.orderStatus]
+                       )}
+                     >
+                       {ORDER_STATUS_LABELS[order.orderStatus]}
+                     </span>
+                   </td>
                 </tr>
               ))
             ) : (

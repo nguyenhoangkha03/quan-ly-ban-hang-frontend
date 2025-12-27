@@ -1,22 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import api from "@/lib/axios";
-import type { ApiResponse, PaginatedResponse } from "@/types/common.types";
+import type { ApiResponse, PaginationParams } from "@/types/common.types";
 import type {
   Salary,
   SalaryFilters,
-  CalculateSalaryDto,
-  UpdateSalaryDto,
-  ApproveSalaryDto,
-  PaySalaryDto,
   SalarySummary,
   SalaryCalculationResult,
 } from "@/types/salary.types";
+import type { ApproveSalaryFormValues, CalculateSalaryFormValues, PaySalaryFormValues, UpdateSalaryFormValues } from "@/lib/validations";
 
-//----------------------------------------------
 // Query Keys
-//----------------------------------------------
-
 export const salaryKeys = {
   all: ["salary"] as const,
   lists: () => [...salaryKeys.all, "list"] as const,
@@ -29,43 +23,33 @@ export const salaryKeys = {
     [...salaryKeys.all, "summary", fromMonth, toMonth] as const,
 };
 
-//----------------------------------------------
 // Query Hooks
-//----------------------------------------------
-
-/**
- * Get all salary records with filters (Admin/Manager)
- */
-export function useSalary(filters?: SalaryFilters) {
+// Get all salary records with filters (Admin/Manager)
+export function useSalary(params?: SalaryFilters & PaginationParams) {
   return useQuery({
-    queryKey: salaryKeys.list(filters),
+    queryKey: salaryKeys.list(params),
     queryFn: async () => {
-      const response = await api.get<ApiResponse<PaginatedResponse<Salary>>>(
-        "/salary",
-        { params: filters }
-      );
-      return response.data;
+      const response = await api.get<ApiResponse<Salary[]>>("/salary",{
+        params: params,
+      });
+      return response;
     },
   });
 }
 
-/**
- * Get salary by ID
- */
+// Get salary by ID
 export function useSalaryDetail(id: number) {
   return useQuery({
     queryKey: salaryKeys.detail(id),
     queryFn: async () => {
       const response = await api.get<ApiResponse<Salary>>(`/salary/${id}`);
-      return response.data;
+      return response;
     },
     enabled: !!id,
   });
 }
 
-/**
- * Get salary by user and month
- */
+// Get salary by user and month
 export function useSalaryByUserMonth(userId: number, month: string) {
   return useQuery({
     queryKey: salaryKeys.byUserMonth(userId, month),
@@ -73,15 +57,13 @@ export function useSalaryByUserMonth(userId: number, month: string) {
       const response = await api.get<ApiResponse<Salary>>(
         `/salary/${userId}/${month}`
       );
-      return response.data;
+      return response;
     },
     enabled: !!userId && !!month,
   });
 }
 
-/**
- * Get salary summary (aggregated data)
- */
+// Get salary summary (aggregated data)
 export function useSalarySummary(fromMonth: string, toMonth: string) {
   return useQuery({
     queryKey: salaryKeys.summary(fromMonth, toMonth),
@@ -90,45 +72,36 @@ export function useSalarySummary(fromMonth: string, toMonth: string) {
         "/salary/summary",
         { params: { fromMonth, toMonth } }
       );
-      return response.data;
+      return response;
     },
     enabled: !!fromMonth && !!toMonth,
   });
 }
 
-//----------------------------------------------
 // Mutation Hooks
-//----------------------------------------------
-
-/**
- * Calculate salary for a user in a month
- * This will auto-calculate overtime pay from attendance and commission from sales
- */
+// Calculate salary for a user in a month
 export function useCalculateSalary() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: CalculateSalaryDto) => {
+    mutationFn: async (data: CalculateSalaryFormValues) => {
       const response = await api.post<ApiResponse<SalaryCalculationResult>>(
         "/salary/calculate",
         data
       );
-      return response.data;
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: salaryKeys.lists() });
       toast.success("Tính lương thành công!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error?.message || "Tính lương thất bại!");
+      toast.error(error.error?.message || "Tính lương thất bại!");
     },
   });
 }
 
-/**
- * Recalculate existing salary
- * Re-fetch attendance and sales data to recalculate
- */
+// Recalculate existing salary
 export function useRecalculateSalary() {
   const queryClient = useQueryClient();
 
@@ -137,7 +110,7 @@ export function useRecalculateSalary() {
       const response = await api.post<ApiResponse<Salary>>(
         `/salary/${id}/recalculate`
       );
-      return response.data;
+      return response;
     },
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: salaryKeys.lists() });
@@ -146,22 +119,20 @@ export function useRecalculateSalary() {
     },
     onError: (error: any) => {
       toast.error(
-        error.response?.data?.error?.message || "Tính lại lương thất bại!"
+        error.error?.message || "Tính lại lương thất bại!"
       );
     },
   });
 }
 
-/**
- * Update salary manually
- */
+// Update salary manually
 export function useUpdateSalary() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: UpdateSalaryDto }) => {
+    mutationFn: async ({ id, data }: { id: number; data: UpdateSalaryFormValues }) => {
       const response = await api.put<ApiResponse<Salary>>(`/salary/${id}`, data);
-      return response.data;
+      return response;
     },
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: salaryKeys.lists() });
@@ -170,26 +141,23 @@ export function useUpdateSalary() {
     },
     onError: (error: any) => {
       toast.error(
-        error.response?.data?.error?.message || "Cập nhật lương thất bại!"
+        error.error?.message || "Cập nhật lương thất bại!"
       );
     },
   });
 }
 
-/**
- * Approve salary
- * Only manager/admin can approve
- */
+// Approve salary
 export function useApproveSalary() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data?: ApproveSalaryDto }) => {
+    mutationFn: async ({ id, data }: { id: number; data?: ApproveSalaryFormValues }) => {
       const response = await api.put<ApiResponse<Salary>>(
         `/salary/${id}/approve`,
         data
       );
-      return response.data;
+      return response;
     },
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: salaryKeys.lists() });
@@ -198,30 +166,26 @@ export function useApproveSalary() {
     },
     onError: (error: any) => {
       toast.error(
-        error.response?.data?.error?.message || "Phê duyệt lương thất bại!"
+        error.error?.message || "Phê duyệt lương thất bại!"
       );
     },
   });
 }
 
-/**
- * Pay salary
- * This will create a payment voucher and mark salary as paid
- */
+// Pay salary
 export function usePaySalary() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: PaySalaryDto }) => {
+    mutationFn: async ({ id, data }: { id: number; data: PaySalaryFormValues }) => {
       const response = await api.post<
         ApiResponse<{ salary: Salary; voucher: any }>
       >(`/salary/${id}/pay`, data);
-      return response.data;
+      return response;
     },
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: salaryKeys.lists() });
       queryClient.invalidateQueries({ queryKey: salaryKeys.detail(id) });
-      // Also invalidate payment vouchers if we have that hook
       queryClient.invalidateQueries({ queryKey: ["paymentVouchers"] });
       toast.success("Thanh toán lương thành công!");
     },
@@ -233,10 +197,7 @@ export function usePaySalary() {
   });
 }
 
-/**
- * Delete salary
- * Only admin can delete
- */
+// Delete salary
 export function useDeleteSalary() {
   const queryClient = useQueryClient();
 
@@ -245,7 +206,7 @@ export function useDeleteSalary() {
       const response = await api.delete<ApiResponse<{ id: number }>>(
         `/salary/${id}`
       );
-      return response.data;
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: salaryKeys.lists() });
@@ -253,7 +214,7 @@ export function useDeleteSalary() {
     },
     onError: (error: any) => {
       toast.error(
-        error.response?.data?.error?.message || "Xóa bảng lương thất bại!"
+        error.error?.message || "Xóa bảng lương thất bại!"
       );
     },
   });

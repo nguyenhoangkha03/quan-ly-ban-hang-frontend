@@ -1,24 +1,23 @@
 import { useAuthStore } from "@/stores";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
+import api from "@/lib/axios";
 
-/**
- * useAuth Hook
- * Hook tổng hợp để quản lý authentication
- *
- * @returns Object chứa auth state và actions
- *
- * @example
- * const { user, isAuthenticated, login, logout } = useAuth();
- */
 export function useAuth() {
   const router = useRouter();
   const authStore = useAuthStore();
 
-  // Logout và redirect về login
-  const logout = useCallback(() => {
-    authStore.logout();
-    router.push("/login");
+  // Logout và gọi API để xóa server-side session
+  const logout = useCallback(async () => {
+    try {
+      await api.post("/auth/logout");
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      // Clear client state bất kể API response
+      authStore.logout();
+      router.push("/login");
+    }
   }, [authStore, router]);
 
   // Check nếu chưa login thì redirect về login
@@ -49,7 +48,7 @@ export function useAuth() {
     login: authStore.login,
     logout,
     setUser: authStore.setUser,
-    setTokens: authStore.setTokens,
+    setToken: authStore.setToken,
 
     // Permissions
     hasPermission: authStore.hasPermission,

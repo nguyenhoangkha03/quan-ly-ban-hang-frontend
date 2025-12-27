@@ -65,6 +65,16 @@ export function formatDateFull(date: Date | string, format: "short" | "long" = "
   }).format(d);
 }
 
+// Format time only in Vietnamese
+export function formatTime(date: Date | string): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+
+  return new Intl.DateTimeFormat("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(d);
+}
+
 // Truncate text with ellipsis
 export function truncate(str: string, length: number): string {
   if (str.length <= length) return str;

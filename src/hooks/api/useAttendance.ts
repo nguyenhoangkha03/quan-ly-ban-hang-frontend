@@ -13,11 +13,10 @@ import type {
   RequestLeaveDto,
   UpdateAttendanceDto,
   ApproveLeaveDto,
+  PaginationParams,
 } from "@/types";
 
-/**
- * Query Keys
- */
+// Query Keys
 export const attendanceKeys = {
   all: ["attendance"] as const,
   lists: () => [...attendanceKeys.all, "list"] as const,
@@ -31,28 +30,21 @@ export const attendanceKeys = {
   report: (month?: string) => [...attendanceKeys.all, "report", month] as const,
 };
 
-/**
- * QUERY HOOKS
- */
-
-/**
- * Get All Attendance Records (Admin/Manager)
- */
-export function useAttendance(filters?: AttendanceFilters) {
+// Query
+// Get All Attendance Records (Admin/Manager)
+export function useAttendance(filters?: AttendanceFilters & PaginationParams) {
   return useQuery({
     queryKey: attendanceKeys.list(filters),
     queryFn: async () => {
       const response = await api.get<ApiResponse<Attendance[]>>("/attendance", {
         params: filters,
       });
-      return response.data;
+      return response;
     },
   });
 }
 
-/**
- * Get My Attendance Records
- */
+// Get My Attendance Records
 export function useMyAttendance(filters?: AttendanceFilters) {
   return useQuery({
     queryKey: attendanceKeys.myList(filters),
@@ -60,15 +52,12 @@ export function useMyAttendance(filters?: AttendanceFilters) {
       const response = await api.get<ApiResponse<Attendance[]>>("/attendance/my", {
         params: filters,
       });
-      return response.data;
+      return response;
     },
   });
 }
 
-/**
- * Get Today's Attendance Status
- * For check-in/out widget
- */
+// Get Today's Attendance Status
 export function useTodayAttendance() {
   return useQuery({
     queryKey: attendanceKeys.today(),
@@ -81,11 +70,11 @@ export function useTodayAttendance() {
       const todayRecord = response.data.data?.[0];
 
       const status: TodayAttendanceStatus = {
-        hasCheckedIn: !!todayRecord?.check_in_time,
-        hasCheckedOut: !!todayRecord?.check_out_time,
-        checkInTime: todayRecord?.check_in_time,
-        checkOutTime: todayRecord?.check_out_time,
-        workHours: todayRecord?.work_hours,
+        hasCheckedIn: !!todayRecord?.checkInTime,
+        hasCheckedOut: !!todayRecord?.checkOutTime,
+        checkInTime: todayRecord?.checkInTime,
+        checkOutTime: todayRecord?.checkOutTime,
+        workHours: todayRecord?.workHours,
         status: todayRecord?.status || "absent",
       };
 
@@ -95,23 +84,19 @@ export function useTodayAttendance() {
   });
 }
 
-/**
- * Get Single Attendance Record
- */
+// Get Single Attendance Record
 export function useAttendanceDetail(id: number, enabled = true) {
   return useQuery({
     queryKey: attendanceKeys.detail(id),
     queryFn: async () => {
       const response = await api.get<ApiResponse<Attendance>>(`/attendance/${id}`);
-      return response.data;
+      return response;
     },
     enabled: enabled && !!id,
   });
 }
 
-/**
- * Get Attendance Statistics
- */
+// Get Attendance Statistics
 export function useAttendanceStatistics(filters?: AttendanceFilters) {
   return useQuery({
     queryKey: attendanceKeys.statistics(),
@@ -120,14 +105,12 @@ export function useAttendanceStatistics(filters?: AttendanceFilters) {
         "/attendance/statistics",
         { params: filters }
       );
-      return response.data;
+      return response;
     },
   });
 }
 
-/**
- * Get Monthly Report
- */
+// Get Monthly Report
 export function useMonthlyReport(month?: string) {
   return useQuery({
     queryKey: attendanceKeys.report(month),
@@ -135,19 +118,14 @@ export function useMonthlyReport(month?: string) {
       const response = await api.get<ApiResponse<MonthlyReport>>("/attendance/report", {
         params: { month },
       });
-      return response.data;
+      return response;
     },
     enabled: !!month,
   });
 }
 
-/**
- * MUTATION HOOKS
- */
-
-/**
- * Check In
- */
+// MUTATION HOOKS
+// Check In
 export function useCheckIn() {
   const queryClient = useQueryClient();
 
@@ -157,7 +135,7 @@ export function useCheckIn() {
         "/attendance/check-in",
         data
       );
-      return response.data;
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: attendanceKeys.today() });
@@ -166,14 +144,12 @@ export function useCheckIn() {
       toast.success("Chấm công vào thành công!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error?.message || "Chấm công vào thất bại!");
+      toast.error(error.error?.message || "Chấm công vào thất bại!");
     },
   });
 }
 
-/**
- * Check Out
- */
+// Check Out
 export function useCheckOut() {
   const queryClient = useQueryClient();
 
@@ -183,7 +159,7 @@ export function useCheckOut() {
         "/attendance/check-out",
         data
       );
-      return response.data;
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: attendanceKeys.today() });
@@ -192,14 +168,12 @@ export function useCheckOut() {
       toast.success("Chấm công ra thành công!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error?.message || "Chấm công ra thất bại!");
+      toast.error(error.error?.message || "Chấm công ra thất bại!");
     },
   });
 }
 
-/**
- * Request Leave
- */
+// Request Leave
 export function useRequestLeave() {
   const queryClient = useQueryClient();
 
@@ -209,7 +183,7 @@ export function useRequestLeave() {
         "/attendance/leave",
         data
       );
-      return response.data;
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: attendanceKeys.my() });
@@ -217,14 +191,12 @@ export function useRequestLeave() {
       toast.success("Yêu cầu nghỉ phép đã được gửi!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error?.message || "Gửi yêu cầu nghỉ phép thất bại!");
+      toast.error(error.error?.message || "Gửi yêu cầu nghỉ phép thất bại!");
     },
   });
 }
 
-/**
- * Update Attendance (Admin)
- */
+// Update Attendance (Admin)
 export function useUpdateAttendance() {
   const queryClient = useQueryClient();
 
@@ -234,7 +206,7 @@ export function useUpdateAttendance() {
         `/attendance/${id}`,
         data
       );
-      return response.data;
+      return response;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: attendanceKeys.lists() });
@@ -242,14 +214,12 @@ export function useUpdateAttendance() {
       toast.success("Cập nhật chấm công thành công!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error?.message || "Cập nhật chấm công thất bại!");
+      toast.error(error.error?.message || "Cập nhật chấm công thất bại!");
     },
   });
 }
 
-/**
- * Approve/Reject Leave
- */
+// Approve/Reject Leave
 export function useApproveLeave() {
   const queryClient = useQueryClient();
 
@@ -259,7 +229,7 @@ export function useApproveLeave() {
         `/attendance/${id}/approve`,
         data
       );
-      return response.data;
+      return response;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: attendanceKeys.lists() });
@@ -269,28 +239,79 @@ export function useApproveLeave() {
       );
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error?.message || "Xử lý nghỉ phép thất bại!");
+      toast.error(error.error?.message || "Xử lý nghỉ phép thất bại!");
     },
   });
 }
 
-/**
- * Delete Attendance (Admin)
- */
+// Delete Attendance (Admin)
 export function useDeleteAttendance() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (id: number) => {
       const response = await api.delete<ApiResponse<void>>(`/attendance/${id}`);
-      return response.data;
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: attendanceKeys.lists() });
       toast.success("Xóa bản ghi chấm công thành công!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.error?.message || "Xóa bản ghi chấm công thất bại!");
+      toast.error(error.error?.message || "Xóa bản ghi chấm công thất bại!");
+    },
+  });
+}
+
+// Lock Attendance Month
+export function useLockAttendanceMonth() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (month: string) => {
+      const response = await api.post<ApiResponse<void>>("/attendance/lock-month", {
+        month,
+      });
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.statistics() });
+      toast.success("Chốt công tháng thành công!");
+    },
+    onError: (error: any) => {
+      toast.error(error.error?.message || "Chốt công tháng thất bại!");
+    },
+  });
+}
+
+// Import Attendance from File
+export function useImportAttendance() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      
+      const response = await api.post<ApiResponse<any>>("/attendance/import", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      return response;
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: attendanceKeys.lists() });
+      toast.success(
+        `Nhập thành công ${data.data.summary.validCount} bản ghi. ${
+          data.data.summary.invalidCount > 0
+            ? `${data.data.summary.invalidCount} bản ghi lỗi.`
+            : ""
+        }`
+      );
+    },
+    onError: (error: any) => {
+      toast.error(error.error?.message || "Nhập dữ liệu thất bại!");
     },
   });
 }

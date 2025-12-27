@@ -1,8 +1,7 @@
 "use client";
 
-import type { Metadata } from "next";
-import React from "react";
-import { useDashboardMetrics } from "@/hooks/api";
+import React, { useState } from "react";
+import { useDashboardStats } from "@/hooks/api";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
 import { RecentOrdersTable } from "@/components/dashboard/RecentOrdersTable";
@@ -10,108 +9,141 @@ import { LowStockAlertTable } from "@/components/dashboard/LowStockAlertTable";
 import { TopProductsTable } from "@/components/dashboard/TopProductsTable";
 import { SalesChannelChart } from "@/components/dashboard/SalesChannelChart";
 import { InventoryByTypeChart } from "@/components/dashboard/InventoryByTypeChart";
+import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
+import { AlertsActionsSection } from "@/components/dashboard/AlertsActionsSection";
+import { RecentActivitiesTimeline } from "@/components/dashboard/RecentActivitiesTimeline";
+import { useAuth } from "@/hooks";
 import {
   DollarSign,
   ShoppingCart,
-  Package,
-  AlertCircle,
-  TrendingUp,
-  TrendingDown,
+  BookOpen,
+  Factory,
 } from "lucide-react";
 
 export default function Dashboard() {
-  const { data: metrics, isLoading: metricsLoading } = useDashboardMetrics();
+  const { user } = useAuth();
+  const [selectedPeriod, setSelectedPeriod] = useState<"today" | "week" | "month" | "custom">("month");
+  const [selectedWarehouse, setSelectedWarehouse] = useState<number | null>(null);
+  const [customDateRange, setCustomDateRange] = useState<{ from: string; to: string } | null>(null);
 
-  console.log(metrics);
+  const isAdmin = user?.role?.roleKey === "admin";
+
+  // Map UI period to API period
+  const apiPeriod: "day" | "week" | "month" = selectedPeriod === "today" ? "day" : selectedPeriod === "custom" ? "day" : selectedPeriod;
+  
+  // Fetch tất cả dữ liệu dashboard trong một lệnh gọi được tối ưu hóa duy nhất.
+  const { data: statsResponse, isLoading } = useDashboardStats(apiPeriod, customDateRange);
+  const stats = statsResponse?.data as any;
+  const kpi = stats?.kpi;
+  const charts = stats?.charts;
+  const alerts = stats?.alerts;
+  const recent = stats?.recent;
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Tổng quan
-        </h1>
-        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-          Theo dõi tình hình kinh doanh và vận hành hệ thống
-        </p>
+      {/* Page Header with Filter - Flex Row */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        {/* Left: Header Text */}
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Tổng quan
+          </h1>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+            Theo dõi tình hình kinh doanh và vận hành hệ thống
+          </p>
+        </div>
+
+        {/* Right: Global Filter */}
+        <div className="w-full sm:w-auto sm:min-w-max">
+          <DashboardFilters
+            selectedPeriod={selectedPeriod}
+            onPeriodChange={setSelectedPeriod}
+            onDateRangeChange={(from, to) => setCustomDateRange({ from, to })}
+            selectedWarehouse={selectedWarehouse}
+            onWarehouseChange={setSelectedWarehouse}
+            isAdmin={isAdmin}
+          />
+        </div>
       </div>
 
-      {/* Metrics Grid - 4 cards */}
+      {/* Metrics Grid - 4 KPI Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
-          title="Doanh thu hôm nay"
-          value={metrics?.revenue_today || 0}
+          title="Doanh thu Thuần"
+          value={kpi?.revenue?.current || 0}
           type="currency"
           trend={
-            metrics?.revenue_today_trend
+            kpi?.revenue?.growth_percent
               ? {
-                  value: metrics.revenue_today_trend,
-                  label: "so với hôm qua",
+                  value: kpi.revenue.growth_percent,
+                  label: "so với kỳ trước",
                 }
               : undefined
           }
-          icon={<DollarSign className="h-6 w-6 text-blue-600 dark:text-blue-400" />}
-          iconBg="bg-blue-100 dark:bg-blue-900/30"
-          loading={metricsLoading}
-        />
-
-        <MetricCard
-          title="Đơn hàng hôm nay"
-          value={metrics?.orders_today || 0}
-          type="number"
-          trend={
-            metrics?.orders_today_trend
-              ? {
-                  value: metrics.orders_today_trend,
-                  label: "so với hôm qua",
-                }
-              : undefined
-          }
-          icon={<ShoppingCart className="h-6 w-6 text-green-600 dark:text-green-400" />}
+          icon={<DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />}
           iconBg="bg-green-100 dark:bg-green-900/30"
-          loading={metricsLoading}
+          loading={isLoading}
         />
 
         <MetricCard
-          title="Tổng giá trị tồn kho"
-          value={metrics?.total_inventory_value || 0}
+          title="Đơn hàng mới"
+          value={kpi?.orders?.pending || 0}
+          type="number"
+          icon={<ShoppingCart className="h-6 w-6 text-blue-600 dark:text-blue-400" />}
+          iconBg="bg-blue-100 dark:bg-blue-900/30"
+          suffix="đơn"
+          loading={isLoading}
+        />
+
+        <MetricCard
+          title="Công nợ Phải thu"
+          value={kpi?.debt?.receivables || 0}
           type="currency"
-          icon={<Package className="h-6 w-6 text-purple-600 dark:text-purple-400" />}
+          icon={<BookOpen className="h-6 w-6 text-orange-600 dark:text-orange-400" />}
+          iconBg="bg-orange-100 dark:bg-orange-900/30"
+          loading={isLoading}
+        />
+
+        <MetricCard
+          title="Lệnh SX Đang chạy"
+          value={kpi?.production?.active || 0}
+          type="number"
+          icon={<Factory className="h-6 w-6 text-purple-600 dark:text-purple-400" />}
           iconBg="bg-purple-100 dark:bg-purple-900/30"
-          loading={metricsLoading}
-        />
-
-        <MetricCard
-          title="Công nợ cần thu"
-          value={metrics?.total_debt || 0}
-          type="currency"
-          icon={<AlertCircle className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />}
-          iconBg="bg-yellow-100 dark:bg-yellow-900/30"
-          loading={metricsLoading}
+          suffix="lệnh"
+          loading={isLoading}
         />
       </div>
 
       {/* Revenue Chart - Full width */}
-      <div className="grid grid-cols-1">
-        <RevenueChart />
-      </div>
+      {charts?.revenue_trend && (
+        <div className="grid grid-cols-1">
+          <RevenueChart initialData={charts.revenue_trend} period={apiPeriod} />
+        </div>
+      )}
 
       {/* Charts Row - 2 columns */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <SalesChannelChart />
-        <InventoryByTypeChart />
+        {charts?.sales_channels && <SalesChannelChart initialData={charts.sales_channels} />}
+        {charts?.inventory_share && <InventoryByTypeChart initialData={charts.inventory_share} />}
       </div>
+
+      {/* Alerts & Actions Section - 2 columns */}
+      {alerts && <AlertsActionsSection initialLowStock={alerts.low_stock} initialOverdueDebts={alerts.overdue_debts} />}
 
       {/* Tables Row - 2 columns */}
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <RecentOrdersTable />
-        <TopProductsTable />
+        {recent?.orders && <RecentOrdersTable initialData={recent.orders} />}
+        {recent?.products && <TopProductsTable initialData={recent.products} />}
       </div>
 
       {/* Low Stock Alert - Full width */}
       <div className="grid grid-cols-1">
-        <LowStockAlertTable />
+        <LowStockAlertTable initialData={alerts?.low_stock} />
       </div>
+
+      {/* Recent Activities Timeline */}
+      {recent?.activities && <RecentActivitiesTimeline initialData={recent.activities} />}
     </div>
   );
 }

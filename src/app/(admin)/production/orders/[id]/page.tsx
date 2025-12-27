@@ -11,6 +11,7 @@ import {
   useCancelProductionOrder,
   useWastageReport,
   useDeleteProductionOrder,
+  useCalculateMaterials,
 } from "@/hooks/api";
 import Button from "@/components/ui/button/Button";
 import ConfirmDialog from "@/components/ui/modal/ConfirmDialog";
@@ -25,7 +26,7 @@ import {
   type CancelProductionInput,
   CompleteProductionInput,
 } from "@/lib/validations";
-import { ApiResponse, ProductionOrder, WastageReport as WastageReportType } from "@/types";
+import { ApiResponse, ProductionOrder, WastageReport as WastageReportType, MaterialShortage } from "@/types";
 import {
   ArrowLeft,
   Play,
@@ -33,16 +34,17 @@ import {
   XCircle,
   DollarSign,
   BarChart3,
-  Edit2,
   Trash2,
   Edit,
   Printer,
   Flag,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { PRODUCTION_STATUS_LABELS, PRODUCTION_STATUS_COLORS } from "@/lib/constants";
+import toast from "react-hot-toast";
 
 export default function ProductionOrderDetailPage() {
   const params = useParams();
@@ -53,6 +55,8 @@ export default function ProductionOrderDetailPage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showStartDialog, setShowStartDialog] = useState(false);
+  const [startNotes, setStartNotes] = useState("");
+  const [materialShortages, setMaterialShortages] = useState<MaterialShortage[]>([]);
 
   // Fetch data
   const { data, isLoading, error } = useProductionOrder(orderId);
@@ -71,6 +75,32 @@ export default function ProductionOrderDetailPage() {
   const completeProduction = useCompleteProduction();
   const cancelOrder = useCancelProductionOrder();
   const deleteOrder = useDeleteProductionOrder();
+  const calculateMaterialsAPI = useCalculateMaterials();
+
+  // Calculate material shortages for PENDING status
+  React.useEffect(() => {
+    if (order?.status === "pending" && order?.bom?.id && order?.plannedQuantity) {
+      calculateMaterialsAPI
+        .mutateAsync({
+          bomId: order.bom.id,
+          productionQuantity: Number(order.plannedQuantity),
+        })
+        .then((response) => {
+          const result = response as unknown as ApiResponse<any>;
+          if (result.data?.shortages) {
+            setMaterialShortages(result.data.shortages);
+          } else {
+            setMaterialShortages([]);
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to calculate materials:", error);
+          setMaterialShortages([]);
+        });
+    } else {
+      setMaterialShortages([]);
+    }
+  }, [order?.id, order?.status]);
 
   // Complete form
   const {
@@ -99,23 +129,95 @@ export default function ProductionOrderDetailPage() {
     setShowStartDialog(true);
   };
 
+  // Handle Print Export Receipt (Phiếu xuất kho)
+  const handlePrintExportReceipt = () => {
+    if (!order) return;
+    
+    // Tìm stock transaction từ materials
+    const stockTransactionId = order.materials?.[0]?.stockTransactionId;
+    
+    if (!stockTransactionId) {
+      toast.error("Không tìm thấy phiếu xuất kho");
+      return;
+    }
+
+    // Mở window in từ /inventory/transactions/[id]/print
+    const printWindow = window.open(
+      `/inventory/transactions/${stockTransactionId}/print`,
+      '_blank',
+      'width=1200,height=800'
+    );
+
+    if (!printWindow) {
+      toast.error("Không thể mở cửa sổ in. Vui lòng kiểm tra popup blocker.");
+    }
+  };
+
+  // Handle Print Import Receipt (Phiếu nhập kho)
+  const handlePrintImportReceipt = () => {
+    if (!order) return;
+
+    // Mở window in phiếu nhập kho (thành phẩm)
+    const printWindow = window.open(
+      `/reports/production-orders/${orderId}/import-receipt`,
+      '_blank',
+      'width=1200,height=800'
+    );
+
+    if (!printWindow) {
+      toast.error("Không thể mở cửa sổ in. Vui lòng kiểm tra popup blocker.");
+    }
+  };
+
+  // Handle Print Product Label (Nhãn sản phẩm)
+  const handlePrintProductLabel = () => {
+    if (!order) return;
+
+    // Mở window in nhãn sản phẩm
+    const printWindow = window.open(
+      `/reports/production-orders/${orderId}/product-labels`,
+      '_blank',
+      'width=800,height=600'
+    );
+
+    if (!printWindow) {
+      toast.error("Không thể mở cửa sổ in. Vui lòng kiểm tra popup blocker.");
+    }
+  };
+
   // Handle Confirm Start Production
   const handleConfirmStart = async () => {
     try {
-      await startProduction.mutateAsync({ id: orderId });
-      setShowStartDialog(false);
+      await startProduction.mutateAsync({
+        id: orderId,
+        data: startNotes ? { notes: startNotes } : undefined
+      }).then(() => {
+        setShowStartDialog(false);
+        setStartNotes("");
+      });
     } catch (error) {
-      console.error("Failed to start production:", error);
+      console.log("Start production error:");
     }
   };
 
   // Handle Complete Production
   const onCompleteSubmit = async (data: CompleteProductionInput) => {
     try {
-      await completeProduction.mutateAsync({ id: orderId, data });
+      // Filter out empty materials (chỉ gửi materials có actualQuantity)
+      const cleanData = {
+        ...data,
+        materials: data.materials?.filter(m => m.actualQuantity || m.wastage)
+      };
+
+      // Nếu không có materials nào, bỏ materials
+      if (!cleanData.materials || cleanData.materials.length === 0) {
+        delete cleanData.materials;
+      }
+
+      await completeProduction.mutateAsync({ id: orderId, data: cleanData });
       setShowCompleteModal(false);
     } catch (error) {
-      console.error("Failed to complete production:", error);
+      console.error("Lỗi khi complete lệnh sản xuất:", error);
     }
   };
 
@@ -246,6 +348,7 @@ export default function ProductionOrderDetailPage() {
               <Button
                 variant="outline"
                 size="smm"
+                onClick={() => handlePrintExportReceipt()}
                 title="In phiếu xuất kho cho nhân viên nhặt hàng"
               >
                 <Printer className="mr-2 h-5 w-5" />
@@ -259,6 +362,7 @@ export default function ProductionOrderDetailPage() {
               <Button
                 variant="outline"
                 size="smm"
+                onClick={() => handlePrintImportReceipt()}
                 title="In phiếu xác nhận thành phẩm nhập kho"
               >
                 <Printer className="mr-2 h-5 w-5" />
@@ -267,6 +371,7 @@ export default function ProductionOrderDetailPage() {
               <Button
                 variant="outline"
                 size="smm"
+                onClick={() => handlePrintProductLabel()}
                 title="In nhãn dán lên thành phẩm"
               >
                 <Flag className="mr-2 h-5 w-5" />
@@ -352,12 +457,12 @@ export default function ProductionOrderDetailPage() {
           {order.materials && order.materials.length > 0 && (
             <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
               <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-                Nguyên liệu sản xuất
+                {order.status === "pending" ? "Kiểm tra Khả dụng Kho" : "Nguyên liệu sản xuất"}
               </h2>
               <MaterialRequirements
                 materials={order.materials}
-                showActual={order.status !== "pending"}
-                showWastage={order.status === "completed"}
+                status={order.status as "pending" | "in_progress" | "completed"}
+                shortages={order.status === "pending" ? materialShortages : undefined}
               />
             </div>
           )}
@@ -386,10 +491,10 @@ export default function ProductionOrderDetailPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Chi phí dự toán
+                    Chi phí sản xuất
                   </p>
                   <p className="mt-1 text-xl font-bold text-gray-900 dark:text-white">
-                    {formatCurrency(order.productionCost || 0)}
+                    {Number(order.productionCost) === 0 ? "_" : formatCurrency(order.productionCost)}
                   </p>
                 </div>
                 <div className="rounded-full bg-blue-100 p-3 dark:bg-blue-900/30">
@@ -406,7 +511,7 @@ export default function ProductionOrderDetailPage() {
                       Tỷ lệ hiệu suất
                     </p>
                     <p className="mt-1 text-xl font-bold text-gray-900 dark:text-white">
-                      {(wastageReport.efficiencyRate * 100).toFixed(2)}%
+                      {Number(wastageReport.efficiencyRate).toFixed(2)}%
                     </p>
                   </div>
                   <div className="rounded-full bg-green-100 p-3 dark:bg-green-900/30">
@@ -422,27 +527,130 @@ export default function ProductionOrderDetailPage() {
       {/* Complete Production Modal */}
       {showCompleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
-            <h3 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
-              Hoàn thành sản xuất
-            </h3>
-            <form onSubmit={handleSubmitComplete(onCompleteSubmit)} className="space-y-4">
+          <div className="w-full max-w-3xl rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
+            {/* Header with close button */}
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Hoàn thành sản xuất
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowCompleteModal(false)}
+                className="rounded-lg p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+                aria-label="Đóng"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmitComplete(onCompleteSubmit)} className="space-y-4 max-h-[60vh] overflow-y-auto">
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Số lượng thực tế sản xuất <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  {...registerComplete("actualQuantity", { valueAsNumber: true })}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    step="0.01"
+                    {...registerComplete("actualQuantity", { valueAsNumber: true })}
+                    className="flex-1 rounded-md border border-gray-300 px-3 py-2 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                  />
+                  <span className="text-sm text-gray-500">{order?.finishedProduct?.unit}</span>
+                </div>
                 {errorsComplete.actualQuantity && (
                   <p className="mt-1 text-sm text-red-600">
                     {errorsComplete.actualQuantity.message}
                   </p>
                 )}
+                <p className="mt-1 text-xs text-gray-500">
+                  Kế hoạch: {order?.plannedQuantity} {order?.finishedProduct?.unit}
+                </p>
               </div>
+
+              {/* Materials Adjustment */}
+              {order?.materials && order.materials.length > 0 && (
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/50">
+                  <h4 className="mb-3 text-sm font-medium text-gray-900 dark:text-white">
+                    Nguyên liệu thực tế (Nếu có chỉnh sửa)
+                  </h4>
+                  <p className="mb-3 text-xs text-gray-600 dark:text-gray-400">
+                    Chỉ nhập nếu số lượng thực tế khác so với kế hoạch
+                  </p>
+
+                  <div className="space-y-2">
+                    {order.materials.map((material, index) => (
+                      <div
+                        key={material.id}
+                        className="rounded-md border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900"
+                      >
+                        <div className="mb-2 text-sm">
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {material.material?.productName}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Kế hoạch: {material.plannedQuantity} {material.material?.unit}
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
+                              Thực tế
+                            </label>
+                            <input
+                              type="hidden"
+                              {...registerComplete(`materials.${index}.materialId`, {
+                                valueAsNumber: true,
+                              })}
+                              value={material.materialId}
+                            />
+                            <input
+                              type="number"
+                              step="0.01"
+                              {...registerComplete(`materials.${index}.actualQuantity`, {
+                                valueAsNumber: true,
+                                required: false,
+                              })}
+                              placeholder="Để trống nếu không thay đổi"
+                              className="w-full rounded-md border border-gray-300 px-2 py-1 text-xs focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
+                              Hao hụt
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              {...registerComplete(`materials.${index}.wastage`, {
+                                valueAsNumber: true,
+                                required: false,
+                              })}
+                              placeholder="Để trống nếu không có"
+                              className="w-full rounded-md border border-gray-300 px-2 py-1 text-xs focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Material Notes */}
+                        <div className="mt-2">
+                          <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">
+                            Ghi chú nguyên liệu (tuỳ chọn)
+                          </label>
+                          <textarea
+                            {...registerComplete(`materials.${index}.notes`, {
+                              required: false,
+                            })}
+                            rows={2}
+                            placeholder="Ví dụ: Bị ẩm, hỏng bao..."
+                            className="w-full rounded-md border border-gray-300 px-2 py-1 text-xs focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -451,6 +659,7 @@ export default function ProductionOrderDetailPage() {
                 <textarea
                   {...registerComplete("notes")}
                   rows={3}
+                  placeholder="Ví dụ: Hỏng 2 cái do lỗi máy..."
                   className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                 />
               </div>
@@ -528,17 +737,58 @@ export default function ProductionOrderDetailPage() {
 
 
       {/* Start Production Confirmation Dialog */}
-      <ConfirmDialog
-        isOpen={showStartDialog}
-        onClose={() => setShowStartDialog(false)}
-        onConfirm={handleConfirmStart}
-        title="Bắt đầu sản xuất"
-        message={`Bắt đầu sản xuất lệnh "${order?.orderCode}"?\n\nNguyên liệu sẽ được xuất kho tự động.`}
-        confirmText="Bắt đầu"
-        cancelText="Hủy"
-        variant="info"
-        isLoading={startProduction.isPending}
-      />
+      {showStartDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
+            <h3 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
+              Bắt đầu sản xuất
+            </h3>
+            <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+              Bắt đầu sản xuất lệnh <span className="font-semibold">"{order?.orderCode}"</span>?
+            </p>
+            <p className="mb-4 text-xs text-blue-600 dark:text-blue-400">
+              ℹ️ Nguyên liệu sẽ được xuất kho tự động theo định mức của BOM.
+            </p>
+
+            <div className="mb-4">
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Ghi chú (tuỳ chọn)
+              </label>
+              <textarea
+                value={startNotes}
+                onChange={(e) => setStartNotes(e.target.value)}
+                placeholder="Ví dụ: Xuất kho lúc 7:30 sáng, đội ngày..."
+                rows={3}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                onClick={handleConfirmStart}
+                variant="success"
+                className="flex-1"
+                isLoading={startProduction.isPending}
+              >
+                <Play className="mr-2 h-5 w-5" />
+                Bắt đầu sản xuất
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowStartDialog(false);
+                  setStartNotes("");
+                }}
+                variant="outline"
+              >
+                Hủy
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Old Start Production Confirmation Dialog - REMOVED */}
+      {/* Use the new dialog above instead */}
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog

@@ -1,8 +1,3 @@
-/**
- * Attendance Calendar Component
- * Calendar view for attendance records
- */
-
 "use client";
 
 import React, { useMemo } from "react";
@@ -175,9 +170,9 @@ export default function AttendanceCalendar({
                 </div>
 
                 {/* Work Hours Indicator */}
-                {attendance?.work_hours !== undefined && attendance.work_hours > 0 && (
+                {attendance?.workHours !== undefined && attendance.workHours > 0 && (
                   <div className="mt-1 text-center text-xs font-medium">
-                    {attendance.work_hours.toFixed(1)}h
+                    {attendance.workHours.toFixed(1)}h
                   </div>
                 )}
 
@@ -190,12 +185,12 @@ export default function AttendanceCalendar({
                 {attendance && (
                   <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs shadow-lg group-hover:block dark:border-gray-700 dark:bg-gray-800">
                     <div className="text-gray-900 dark:text-white">
-                      {attendance.check_in_time?.substring(0, 5)} -{" "}
-                      {attendance.check_out_time?.substring(0, 5) || "?"}
+                      {attendance.checkInTime?.substring(0, 5)} -{" "}
+                      {attendance.checkOutTime?.substring(0, 5) || "?"}
                     </div>
-                    {attendance.work_hours && (
+                    {attendance.workHours && (
                       <div className="text-gray-600 dark:text-gray-400">
-                        {attendance.work_hours.toFixed(1)} giờ
+                        {attendance.workHours.toFixed(1)} giờ
                       </div>
                     )}
                   </div>

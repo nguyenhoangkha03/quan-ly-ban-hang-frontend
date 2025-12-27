@@ -2,26 +2,28 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import * as XLSX from "xlsx";
 import {
   useProducts,
   useDeleteProduct,
   useCategories,
   useSuppliers,
-  useRawMaterialStats,
-  type RawMaterialStats,
+  useWarehouses,
+  usePackagingStats,
 } from "@/hooks/api";
 import { Can } from "@/components/auth";
 import { ProductTable } from "@/components/products";
 import Button from "@/components/ui/button/Button";
 import Pagination from "@/components/tables/Pagination";
 import ConfirmDialog from "@/components/ui/modal/ConfirmDialog";
-import SearchableSelect, { SelectOption } from "@/components/ui/SearchableSelect";
-import { ApiResponse, Category, Product, Supplier, type ProductStatus } from "@/types";
-import { Download, Plus, AlertTriangle, Clock, XCircle, Package } from "lucide-react";
+import SearchableSelect from "@/components/ui/SearchableSelect";
+import { ApiResponse, Category, PackagingStats, Product, Supplier, Warehouse, type ProductStatus } from "@/types";
+import { Download, Plus, AlertTriangle, Clock, DollarSign, Package, Printer } from "lucide-react";
 import { useDebounce } from "@/hooks";
+import { handleExportExcelMaterial } from "@/lib/excel";
+import { handlePrintBarcodes } from "@/lib/barecode";
+import { formatCurrency } from "@/lib/utils";
 
-export default function ProductsPage() {
+export default function PackagingPage() {
   // Pagination & Filters
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
@@ -33,23 +35,26 @@ export default function ProductsPage() {
   >("all");
   const [categoryFilter, setCategoryFilter] = useState<number | "all">("all");
   const [supplierFilter, setSupplierFilter] = useState<number | "all">("all");
+  const [warehouseFilter, setWarehouseFilter] = useState<number | "all">("all");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
 
   // Fetch raw material stats
-  const { data: statsResponse, isLoading: statsLoading } = useRawMaterialStats();
+  const { data: statsResponse, isLoading: statsLoading } = usePackagingStats();
 
   // Fetch nhiên liệu với phân trang
   const { data, isLoading, error } = useProducts({
     page,
     limit,
-    productType: 'raw_material',
+    productType: 'packaging',
     ...(debouncedSearch && { search: debouncedSearch }),
     ...(statusFilter !== "all" && { status: statusFilter }),
     ...(categoryFilter !== "all" && { categoryId: categoryFilter }),
     ...(supplierFilter !== "all" && { supplierId: supplierFilter }),
+    ...(warehouseFilter !== "all" && { warehouseId: warehouseFilter }),
   });
   const response = data as unknown as ApiResponse<Product[]>;
+
   const { data: categoriesResponse } = useCategories({ 
     status: "active",
     limit: 1000,
@@ -60,14 +65,22 @@ export default function ProductsPage() {
     limit: 1000,
   });
   const suppliersTemp = suppliersResponse as unknown as ApiResponse<Supplier[]>;
+  const { data: warehousesResponse } = useWarehouses({ 
+    status: "active",
+    warehouseType: "raw_material",
+    limit: 1000,
+  });
+  const warehousesTemp = warehousesResponse as unknown as ApiResponse<Warehouse[]>;
+
   const deleteProduct = useDeleteProduct();
 
   const categories = categoriesTemp?.data || [];
   const suppliers = suppliersTemp?.data || [];
+  const warehouses = warehousesTemp?.data || [];
 
   const products = response?.data || [];
   const paginationMeta = response?.meta;
-  const stats = statsResponse as unknown as RawMaterialStats | undefined;
+  const stats = statsResponse as unknown as PackagingStats | undefined;
 
   // Reset lại page 1 khi thay đổi filter hoặc search
   useEffect(() => {
@@ -95,72 +108,11 @@ export default function ProductsPage() {
     setDeletingProduct(null);
   };
 
-  // Xuất Excel
-  const handleExportExcel = () => {
-    if (products.length === 0) {
-      alert("Không có dữ liệu để xuất!");
-      return;
-    }
-
-    // Prepare data for export
-    const exportData = products.map((product) => ({
-      SKU: product.sku,
-      "Tên sản phẩm": product.productName,
-      "Loại sản phẩm": "Nguyên liệu",
-      "Danh mục": product.category?.categoryName || "",
-      "Nhà cung cấp": product.supplier?.supplierName || "",
-      "Đơn vị": product.unit,
-      Barcode: product.barcode || "",
-      "Giá nhập": product.purchasePrice || 0,
-      "Giá bán lẻ": product.sellingPriceRetail || 0,
-      "Giá bán sỉ": product.sellingPriceWholesale || 0,
-      "Giá VIP": product.sellingPriceVip || 0,
-      "Tồn tối thiểu": product.minStockLevel || 0,
-      "Trạng thái":
-        product.status === "active"
-          ? "Hoạt động"
-          : product.status === "inactive"
-          ? "Tạm ngưng"
-          : "Ngừng kinh doanh",
-    }));
-
-    // Create worksheet
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
-
-    // Set column widths
-    const columnWidths = [
-      { wch: 15 }, // SKU
-      { wch: 30 }, // Tên sản phẩm
-      { wch: 15 }, // Loại sản phẩm
-      { wch: 20 }, // Danh mục
-      { wch: 20 }, // Nhà cung cấp
-      { wch: 10 }, // Đơn vị
-      { wch: 15 }, // Barcode
-      { wch: 12 }, // Giá nhập
-      { wch: 12 }, // Giá bán lẻ
-      { wch: 12 }, // Giá bán sỉ
-      { wch: 12 }, // Giá VIP
-      { wch: 12 }, // Tồn tối thiểu
-      { wch: 15 }, // Trạng thái
-    ];
-    worksheet["!cols"] = columnWidths;
-
-    // Create workbook
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Sản phẩm");
-
-    // Export file
-    const fileName = `Danh_sach_san_pham_${
-      new Date().toISOString().split("T")[0]
-    }.xlsx`;
-    XLSX.writeFile(workbook, fileName);
-  };
-
   if (error) {
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/10">
         <p className="text-red-800 dark:text-red-200">
-          Lỗi khi tải danh sách nguyên liệu:{" "}
+          Lỗi khi tải danh sách bao bì:{" "}
           {(error as any)?.message || "Unknown error"}
         </p>
       </div>
@@ -173,10 +125,10 @@ export default function ProductsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Quản lý Nguyên Liệu
+            Quản lý Bao Bì
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Quản lý thông tin nguyên liệu
+            Quản lý thông tin bao bì trong hệ thống
           </p>
         </div>
 
@@ -184,20 +136,31 @@ export default function ProductsPage() {
           {/* Export Excel */}
           <Button
             variant="outline"
-            size="sm"
-            onClick={handleExportExcel}
+            size="smm"
+            onClick={() => handleExportExcelMaterial(products)}
             disabled={products.length === 0}
           >
             <Download className="mr-2 h-5 w-5" />
             Xuất Excel
           </Button>
 
+          {/* Print Barcodes */}
+          <Button
+            variant="success"
+            size="smm"
+            onClick={() => handlePrintBarcodes(products)}
+            disabled={products.length === 0}
+          >
+            <Printer className="mr-2 h-5 w-5" />
+            In mã vạch
+          </Button>
+
           {/* Add Product */}
           <Can permission="create_product">
-            <Link href="/nguyen-lieu/create">
-              <Button variant="primary" size="sm">
+            <Link href="/material/create">
+              <Button variant="primary" size="smm">
                 <Plus className="mr-2 h-5 w-5" />
-                Thêm nguyên liệu
+                Thêm bao bì
               </Button>
             </Link>
           </Can>
@@ -216,7 +179,7 @@ export default function ProductsPage() {
                 <div className="flex items-center justify-between relative z-10">
                 <div className="flex-1">
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    Tổng nguyên liệu
+                      Tổng bao bì
                     </p>
                     <p className="mt-3 text-3xl font-bold text-blue-600 dark:text-blue-400 transition-all duration-300 group-hover:scale-110">
                     {stats?.totalRawMaterials || 0}
@@ -225,13 +188,13 @@ export default function ProductsPage() {
                 <div className="relative">
                     <div className="absolute inset-0 bg-blue-500 rounded-xl blur-md opacity-20 group-hover:opacity-40 transition-opacity" />
                     <div className="relative border-2 border-blue-500 rounded-xl p-3 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
-                    <Package className="h-7 w-7 text-blue-600 dark:text-blue-400" strokeWidth={2} />
+                      <Package className="h-7 w-7 text-blue-600 dark:text-blue-400" strokeWidth={2} />
                     </div>
                 </div>
                 </div>
                 <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-900">
                 <p className="text-xs text-gray-500 dark:text-gray-500">
-                    Tổng số mặt hàng trong kho
+                    Tổng số bao bì trong kho
                 </p>
                 </div>
             </>
@@ -330,9 +293,9 @@ export default function ProductsPage() {
             )}
         </div>
 
-        {/* Discontinued Card */}
-        <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-gradient-to-br from-white to-red-50 p-6 shadow-sm transition-all duration-300 hover:shadow-xl hover:scale-[1.02] dark:border-gray-800 dark:from-gray-900 dark:to-red-950">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-3xl -z-0" />
+        {/* Inventory Value Card */}
+        <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-gradient-to-br from-white to-emerald-50 p-6 shadow-sm transition-all duration-300 hover:shadow-xl hover:scale-[1.02] dark:border-gray-800 dark:from-gray-900 dark:to-emerald-950">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -z-0" />
             {statsLoading ? (
             <div className="h-24 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-800" />
             ) : (
@@ -340,36 +303,22 @@ export default function ProductsPage() {
                 <div className="flex items-center justify-between relative z-10">
                 <div className="flex-1">
                     <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    Ngừng kinh doanh
+                    Giá trị kho bao bì
                     </p>
-                    <p className={`mt-3 text-3xl font-bold transition-all duration-300 group-hover:scale-110 ${
-                    (stats?.discontinuedCount || 0) > 0 
-                        ? 'text-red-600 dark:text-red-400' 
-                        : 'text-green-600 dark:text-green-400'
-                    }`}>
-                    {stats?.discontinuedCount || 0}
+                    <p className="mt-3 text-3xl font-bold text-emerald-600 dark:text-emerald-400 transition-all duration-300 group-hover:scale-110">
+                    {formatCurrency(stats?.totalInventoryValue || 0)}
                     </p>
                 </div>
                 <div className="relative">
-                    <div className={`absolute inset-0 rounded-xl blur-md opacity-20 group-hover:opacity-40 transition-opacity ${
-                    (stats?.discontinuedCount || 0) > 0 ? 'bg-red-500' : 'bg-green-500'
-                    }`} />
-                    <div className={`relative border-2 rounded-xl p-3 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 ${
-                    (stats?.discontinuedCount || 0) > 0 
-                        ? 'border-red-500' 
-                        : 'border-green-500'
-                    }`}>
-                    <XCircle className={`h-7 w-7 ${
-                        (stats?.discontinuedCount || 0) > 0
-                        ? 'text-red-600 dark:text-red-400'
-                        : 'text-green-600 dark:text-green-400'
-                    }`} strokeWidth={2} />
+                    <div className="absolute inset-0 bg-emerald-500 rounded-xl blur-md opacity-20 group-hover:opacity-40 transition-opacity" />
+                    <div className="relative border-2 border-emerald-500 rounded-xl p-3 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
+                    <DollarSign className="h-7 w-7 text-emerald-600 dark:text-emerald-400" strokeWidth={2} />
                     </div>
                 </div>
                 </div>
-                <div className="mt-4 pt-4 border-t border-red-200 dark:border-red-900">
+                <div className="mt-4 pt-4 border-t border-emerald-200 dark:border-emerald-900">
                 <p className="text-xs text-gray-500 dark:text-gray-500">
-                    {(stats?.discontinuedCount || 0) > 0 ? 'Cần xử lý' : 'Không có mặt hàng ngừng'}
+                    Tổng: Tồn kho × Giá nhập
                 </p>
                 </div>
             </>
@@ -379,7 +328,7 @@ export default function ProductsPage() {
 
       {/* Filters */}
       <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
+        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
           {/* Search */}
           <div>
             <label
@@ -439,6 +388,26 @@ export default function ProductsPage() {
             />
           </div>
 
+          {/* Warehouse Filter */}
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Kho
+            </label>
+            <SearchableSelect
+              options={[
+                { value: "all", label: "Tất cả" },
+                ...warehouses.map((warehouse) => ({
+                  value: warehouse.id,
+                  label: warehouse.warehouseName,
+                })),
+              ]}
+              value={warehouseFilter}
+              onChange={(value) => setWarehouseFilter(value === "all" ? "all" : Number(value))}
+              placeholder="Chọn kho..."
+              isClearable={false}
+            />
+          </div>
+
           {/* Status Filter */}
           <div>
             <label
@@ -493,6 +462,7 @@ export default function ProductsPage() {
       {/* Product Table */}
       <ProductTable
         data={products}
+        urlProduct="material"
         name="Tên nguyên liệu"
         priceName="Giá nhập"
         isLoading={isLoading}
@@ -533,8 +503,8 @@ export default function ProductsPage() {
         isOpen={isDeleteDialogOpen}
         onClose={closeDeleteDialog}
         onConfirm={handleConfirmDelete}
-        title="Xóa sản phẩm"
-        message={`Bạn có chắc chắn muốn xóa sản phẩm "${deletingProduct?.productName}"? Hành động này không thể hoàn tác.`}
+        title="Xóa nguyên liệu"
+        message={`Bạn có chắc chắn muốn xóa nguyên liệu "${deletingProduct?.productName}"? Hành động này không thể hoàn tác.`}
         confirmText="Xóa"
         cancelText="Hủy"
         variant="danger"

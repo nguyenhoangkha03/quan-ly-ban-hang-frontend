@@ -16,7 +16,7 @@ import { ProductTable } from "@/components/products";
 import Button from "@/components/ui/button/Button";
 import Pagination from "@/components/tables/Pagination";
 import ConfirmDialog from "@/components/ui/modal/ConfirmDialog";
-import SearchableSelect from "@/components/ui/SearchableSelect";
+import SearchableSelect, { SelectOption } from "@/components/ui/SearchableSelect";
 import { ApiResponse, Category, Product, Supplier, type ProductStatus } from "@/types";
 import { Download, Plus, AlertTriangle, Clock, XCircle, Package } from "lucide-react";
 import { useDebounce } from "@/hooks";
@@ -184,7 +184,7 @@ export default function ProductsPage() {
           {/* Export Excel */}
           <Button
             variant="outline"
-            size="smm"
+            size="sm"
             onClick={handleExportExcel}
             disabled={products.length === 0}
           >
@@ -194,8 +194,8 @@ export default function ProductsPage() {
 
           {/* Add Product */}
           <Can permission="create_product">
-            <Link href="/nguyen-lieu/create">
-              <Button variant="primary" size="smm">
+            <Link href="/material/create">
+              <Button variant="primary" size="sm">
                 <Plus className="mr-2 h-5 w-5" />
                 Thêm nguyên liệu
               </Button>
@@ -493,7 +493,6 @@ export default function ProductsPage() {
       {/* Product Table */}
       <ProductTable
         data={products}
-        urlProduct="nguyen-lieu"
         name="Tên nguyên liệu"
         priceName="Giá nhập"
         isLoading={isLoading}
@@ -534,8 +533,8 @@ export default function ProductsPage() {
         isOpen={isDeleteDialogOpen}
         onClose={closeDeleteDialog}
         onConfirm={handleConfirmDelete}
-        title="Xóa nguyên liệu"
-        message={`Bạn có chắc chắn muốn xóa nguyên liệu "${deletingProduct?.productName}"? Hành động này không thể hoàn tác.`}
+        title="Xóa sản phẩm"
+        message={`Bạn có chắc chắn muốn xóa sản phẩm "${deletingProduct?.productName}"? Hành động này không thể hoàn tác.`}
         confirmText="Xóa"
         cancelText="Hủy"
         variant="danger"

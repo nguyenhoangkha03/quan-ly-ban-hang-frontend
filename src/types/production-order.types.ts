@@ -50,17 +50,18 @@ export interface ProductionOrder extends BaseEntity {
   completedAt?: string;
   cancelledAt?: string;
   materials?: ProductionOrderMaterial[];
-  materialAvailability: {
+  shortages?: MaterialShortage[]; // Added: Array of material shortages
+  materialAvailability?: {
     missingItems: {
       available: number;
       materialId: number;
       materialName: string;
-      missing: number
-      required: number
-      unit: string
-    }[]
-    status: string
-  }
+      missing: number;
+      required: number;
+      unit: string;
+    }[];
+    status: string;
+  };
 }
 
 // Production Order Filters
@@ -91,26 +92,29 @@ export interface MaterialShortage {
 
 // Wastage Report
 export interface WastageReport {
-  productionOrderId: number;
+  orderId: number;
   orderCode: string;
-  finishedProduct: string;
-  plannedQuantity: number;
-  actualQuantity: number;
-  quantityDifference: number;
-  materials: {
+  finishedProduct: {
+    name: string;
+    plannedQuantity: number;
+    actualQuantity: number;
+  };
+  efficiencyRate: number;
+  wastageDetails: {
     materialId: number;
     materialName: string;
+    materialSku: string;
     materialType: MaterialType;
     plannedQuantity: number;
     actualQuantity: number;
-    wastage: number;
+    wastageAmount: number;
     wastagePercentage: number;
-    unit: string;
     unitPrice: number;
-    wastageValue: number;
+    wastageCost: number;
+    unit: string;
   }[];
-  totalWastageValue: number;
-  efficiencyRate: number;
+  totalWastageCost: number;
+  productionCost: number;
 }
 
 // Production Timeline Event

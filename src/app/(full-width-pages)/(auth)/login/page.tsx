@@ -16,9 +16,7 @@ import { useLogin, useVerifyOTP, useResendOTP } from "@/hooks/api";
 import type { OTPRequiredResponse } from "@/types";
 
 export default function LoginPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectUrl = searchParams.get("redirect") || "/";
 
   const [showPassword, setShowPassword] = useState(false);
   const [otpRequired, setOTPRequired] = useState(false);
@@ -73,7 +71,7 @@ export default function LoginPage() {
 
       // Check if OTP is required
       if ("requireOTP" in result && result.requireOTP) {
-        const otpData = result as OTPRequiredResponse;
+        const otpData = result as unknown as OTPRequiredResponse;
         setOTPRequired(true);
         setOTPEmail(otpData.email);
         setOTPExpiresIn(otpData.expiresIn);
@@ -109,8 +107,8 @@ export default function LoginPage() {
   const handleResendOTP = async () => {
     try {
       const result = await resendOTPMutation.mutateAsync(otpEmail);
-      setOTPExpiresIn(result.expiresIn);
-      setTimeLeft(result.expiresIn);
+      setOTPExpiresIn((result as any).expiresIn);
+      setTimeLeft((result as any).expiresIn);
       setOTPCode("");
     } catch (error) {
       console.error("Resend OTP error:", error);

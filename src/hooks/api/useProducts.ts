@@ -7,6 +7,9 @@ import type {
   ProductFilters,
   ApiResponse,
   PaginationParams,
+  ProductStats,
+  RawMaterialStats,
+  PackagingStats,
 } from "@/types";
 import { toast } from "react-hot-toast";
 import { type ProductFormData } from "@/lib/validations";
@@ -48,39 +51,6 @@ export function useProduct(id: number, enabled = true) {
   });
 }
 
-// Get Product Statistics
-export interface ProductStats {
-  totalProducts: number;
-  byStatus: {
-    active: number;
-    inactive: number;
-    discontinued: number;
-  };
-  byType: {
-    rawMaterial: number;
-    packaging: number;
-    finished: number;
-    goods: number;
-  };
-  dataQuality: {
-    withoutSupplier: number;
-    withoutCategory: number;
-  };
-}
-
-// Raw Material Statistics
-export interface RawMaterialStats {
-  totalRawMaterials: number;
-  byStatus: {
-    active: number;
-    inactive: number;
-    discontinued: number;
-  };
-  lowStockCount: number;
-  expiringCount: number;
-  discontinuedCount: number;
-}
-
 export function useProductStats() {
   return useQuery({
     queryKey: productKeys.stats(),
@@ -96,6 +66,16 @@ export function useRawMaterialStats() {
     queryKey: [...productKeys.stats(), "raw-material"],
     queryFn: async () => {
       const response = await api.get<ApiResponse<RawMaterialStats>>("/products/stats/raw-materials");
+      return response.data;
+    },
+  });
+}
+
+export function usePackagingStats() {
+  return useQuery({
+    queryKey: [...productKeys.stats(), "packaging"],
+    queryFn: async () => {
+      const response = await api.get<ApiResponse<PackagingStats>>("/products/stats/packaging");
       return response.data;
     },
   });

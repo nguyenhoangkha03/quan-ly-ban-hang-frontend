@@ -54,6 +54,7 @@ export interface Product extends BaseEntity {
   images?: ProductImage[];
   videos?: ProductVideo[];
   inventory?: Inventory[];
+  currentQuantity?: number; // Added: Available quantity (from inventory)
   createdBy?: number;
   updatedBy?: number;
 }
@@ -93,6 +94,7 @@ export interface ProductFilters {
   packagingType?: PackagingType;
   categoryId?: number;
   supplierId?: number;
+  warehouseId?: number;
   status?: ProductStatus;
   lowStock?: boolean;
   expiringSoon?: boolean;
@@ -111,4 +113,51 @@ export interface ProductWithInventory extends Product {
 export interface CategoryTree extends Category {
   level?: number;
   children?: CategoryTree[];
+}
+
+// Get Product Statistics
+export interface ProductStats {
+  totalProducts: number;
+  byStatus: {
+    active: number;
+    inactive: number;
+    discontinued: number;
+  };
+  byType: {
+    rawMaterial: number;
+    packaging: number;
+    finished: number;
+    goods: number;
+  };
+  dataQuality: {
+    withoutSupplier: number;
+    withoutCategory: number;
+  };
+}
+
+// Raw Material Statistics
+export interface RawMaterialStats {
+  totalRawMaterials: number;
+  byStatus: {
+    active: number;
+    inactive: number;
+    discontinued: number;
+  };
+  lowStockCount: number;
+  expiringCount: number;
+  discontinuedCount: number;
+  totalInventoryValue: number;
+}
+
+export interface PackagingStats {
+  totalPackaging: number;
+  byStatus: {
+    active: number;
+    inactive: number;
+    discontinued: number;
+  };
+  lowStockCount: number;
+  expiringCount: number;
+  discontinuedCount: number;
+  totalInventoryValue: number;
 }

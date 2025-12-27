@@ -68,8 +68,6 @@ export interface AttendanceFilters {
   leaveType?: LeaveType;
   month?: string; // YYYY-MM
   year?: number;
-  page?: number;
-  limit?: number;
 }
 
 export interface AttendanceStatistics {

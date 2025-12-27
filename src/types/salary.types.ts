@@ -1,7 +1,3 @@
-//----------------------------------------------
-// Salary Types & DTOs
-//----------------------------------------------
-
 import { PaymentMethod } from "./sales.types";
 import { User } from "./user.types";
 
@@ -38,67 +34,18 @@ export interface Salary {
   creator?: User;
 }
 
-/**
- * DTO for calculating salary
- */
-export interface CalculateSalaryDto {
-  userId: number;
-  month: string; // Format: YYYYMM
-  basicSalary?: number;
-  allowance?: number;
-  bonus?: number;
-  advance?: number;
-  notes?: string;
-}
-
-/**
- * DTO for updating salary
- */
-export interface UpdateSalaryDto {
-  basicSalary?: number;
-  allowance?: number;
-  overtimePay?: number;
-  bonus?: number;
-  commission?: number;
-  deduction?: number;
-  advance?: number;
-  notes?: string;
-}
-
-/**
- * DTO for approving salary
- */
-export interface ApproveSalaryDto {
-  notes?: string;
-}
-
-/**
- * DTO for paying salary
- */
-export interface PaySalaryDto {
-  paymentDate: string; // Format: YYYY-MM-DD
-  paymentMethod: PaymentMethod;
-  notes?: string;
-}
-
-/**
- * Salary Filters for querying
- */
+// Salary Filters for querying
 export interface SalaryFilters {
-  page?: number;
-  limit?: number;
   userId?: number;
   month?: string; // YYYYMM
   status?: SalaryStatus;
+  roleId?: number;
+  warehouseId?: number;
   fromMonth?: string; // YYYYMM
   toMonth?: string; // YYYYMM
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
 }
 
-/**
- * Salary Summary (aggregated data)
- */
+// Salary Summary (aggregated data)
 export interface SalarySummary {
   totalSalaries: number; // Tổng số bảng lương
   totalBasicSalary: number; // Tổng lương cơ bản
@@ -115,9 +62,7 @@ export interface SalarySummary {
   toMonth: string;
 }
 
-/**
- * Salary Calculation Result (preview before save)
- */
+// Salary Calculation Result (preview before save)
 export interface SalaryCalculationResult {
   userId: number;
   month: string;
@@ -135,22 +80,15 @@ export interface SalaryCalculationResult {
   user?: User;
 }
 
-//----------------------------------------------
 // Helper Constants & Labels
-//----------------------------------------------
-
-/**
- * Salary Status Labels (Vietnamese)
- */
+// Salary Status Labels (Vietnamese)
 export const SALARY_STATUS_LABELS: Record<SalaryStatus, string> = {
   pending: "Chờ duyệt",
   approved: "Đã duyệt",
   paid: "Đã thanh toán",
 };
 
-/**
- * Payment Method Labels (Vietnamese)
- */
+// Payment Method Labels (Vietnamese)
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   cash: "Tiền mặt",
   transfer: "Chuyển khoản",
@@ -158,9 +96,7 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   credit: "Tín dụng",
 };
 
-/**
- * Salary Component Labels (Vietnamese)
- */
+// Salary Component Labels (Vietnamese)
 export const SALARY_COMPONENT_LABELS = {
   basicSalary: "Lương cơ bản",
   allowance: "Phụ cấp",
@@ -172,18 +108,14 @@ export const SALARY_COMPONENT_LABELS = {
   totalSalary: "Tổng lương",
 } as const;
 
-/**
- * Default salary calculation config
- */
+// Default salary calculation config
 export const SALARY_CONFIG = {
   OVERTIME_RATE: 1.5, // 150% for overtime
   COMMISSION_RATE: 0.02, // 2% commission on sales
   STANDARD_WORK_DAYS: 26, // Days per month
 } as const;
 
-/**
- * Format month from YYYYMM to display format
- */
+// Format month from YYYYMM to display format
 export function formatMonth(month: string): string {
   if (!month || month.length !== 6) return month;
   const year = month.substring(0, 4);
@@ -191,18 +123,14 @@ export function formatMonth(month: string): string {
   return `${mon}/${year}`;
 }
 
-/**
- * Format month from Date to YYYYMM
- */
+// Format month from Date to YYYYMM
 export function dateToMonth(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   return `${year}${month}`;
 }
 
-/**
- * Parse YYYYMM to Date (first day of month)
- */
+// Parse YYYYMM to Date (first day of month)
 export function monthToDate(month: string): Date {
   if (!month || month.length !== 6) return new Date();
   const year = parseInt(month.substring(0, 4));
@@ -210,9 +138,7 @@ export function monthToDate(month: string): Date {
   return new Date(year, mon, 1);
 }
 
-/**
- * Format currency (VND)
- */
+// Format currency (VND)
 export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",

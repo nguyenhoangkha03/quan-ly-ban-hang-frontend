@@ -43,6 +43,7 @@ export interface User extends BaseEntity {
   role?: Role;
   warehouseId?: number;
   warehouse?: WarehouseMinimal;
+  canEditProfile?: boolean;
   status: UserStatus;
   createdBy?: number;
   updatedBy?: number;
@@ -76,6 +77,9 @@ export interface CreateUserDto {
 export interface UpdateUserDto {
   email?: string;
   full_name?: string;
+  cccd?: string;
+  issued_at?: string;
+  issued_by?: string;
   phone?: string;
   address?: string;
   gender?: "male" | "female" | "other";
@@ -97,13 +101,10 @@ export interface UploadAvatarResponse {
 
 // User Filters
 export interface UserFilters {
-  search?: string;
   roleId?: number;
   warehouseId?: number;
   status?: UserStatus;
   gender?: Gender;
-  page?: number;
-  limit?: number;
 }
 
 // Change Password DTO
@@ -120,12 +121,22 @@ export interface LoginCredentials {
   remember_me?: boolean;
 }
 
-// Login Response (với OTP)
+// Login Response (with OTP)
 export interface LoginResponse {
-  user: User;
+  user: AuthUser;
   tokens: {
     accessToken: string;
-    refreshToken: string;
+    expiresIn: number;
+    // ❌ refreshToken không có ở đây nữa (lưu trong HttpOnly cookie)
+  };
+}
+
+// OTP Verification Response (trả về sau khi verify OTP)
+export interface OTPVerificationResponse {
+  user: AuthUser;
+  tokens: {
+    accessToken: string;
+    expiresIn: number;
   };
 }
 

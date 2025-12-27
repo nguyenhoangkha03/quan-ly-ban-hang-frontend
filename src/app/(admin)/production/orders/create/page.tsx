@@ -113,6 +113,7 @@ export default function CreateProductionOrderPage() {
             purchasePrice: mat.unitPrice,
             unit: mat.unit,
             notes: mat.notes || "",
+            currentQuantity: mat.currentQuantity || 0, // Added: from API response
           },
           plannedQuantity: mat.totalQuantityNeeded,
           actualQuantity: 0,

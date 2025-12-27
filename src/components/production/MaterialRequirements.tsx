@@ -10,6 +10,8 @@ interface MaterialRequirementsProps {
   shortages?: MaterialShortage[];
   showActual?: boolean;
   showWastage?: boolean;
+  showAvailability?: boolean;
+  status?: "pending" | "in_progress" | "completed";
 }
 
 export function MaterialRequirements({
@@ -17,8 +19,15 @@ export function MaterialRequirements({
   shortages = [],
   showActual = false,
   showWastage = false,
+  showAvailability = false,
+  status = "pending",
 }: MaterialRequirementsProps) {
   const hasShortages = shortages.length > 0;
+  
+  // Auto-determine visibility based on status
+  const effectiveShowAvailability = status === "pending" ? true : showAvailability;
+  const effectiveShowActual = status !== "pending" ? true : showActual;
+  const effectiveShowWastage = status === "completed" ? true : showWastage;
 
   // Group materials by type
   const rawMaterials = materials.filter((m) => m.materialType === "raw_material");
@@ -27,6 +36,8 @@ export function MaterialRequirements({
   const renderMaterialRow = (material: ProductionOrderMaterial) => {
     const shortage = shortages.find((s) => s.materialId === material.materialId);
     const isShortage = !!shortage;
+
+    console.log('material', material);
 
     return (
       <tr
@@ -68,30 +79,44 @@ export function MaterialRequirements({
             {material.material?.unit || ""}
           </span>
         </td>
-        {showActual && (
+        {effectiveShowAvailability && (
           <td className="px-4 py-3 text-right">
             <span className="font-medium text-gray-900 dark:text-white">
-              {formatNumber(material.actualQuantity)}
+              {material.material?.currentQuantity ? formatNumber(material.material.currentQuantity) : "—"}
             </span>
             <span className="ml-1 text-sm text-gray-500">
               {material.material?.unit || ""}
             </span>
           </td>
         )}
-        {showWastage && (
+        {effectiveShowActual && (
           <td className="px-4 py-3 text-right">
-            <span
-              className={`font-medium ${
-                material.wastage > 0
-                  ? "text-red-600 dark:text-red-400"
-                  : "text-gray-900 dark:text-white"
-              }`}
-            >
-              {formatNumber(material.wastage)}
+            <span className="font-medium text-gray-900 dark:text-white">
+              {formatNumber(material.actualQuantity || 0)}
             </span>
             <span className="ml-1 text-sm text-gray-500">
               {material.material?.unit || ""}
             </span>
+          </td>
+        )}
+        {effectiveShowWastage && (
+          <td className="px-4 py-3 text-right">
+            <div className="flex flex-col items-end">
+              <span
+                className={`font-medium ${
+                  material.wastage > 0
+                    ? "text-red-600 dark:text-red-400"
+                    : "text-gray-900 dark:text-white"
+                }`}
+              >
+                {formatNumber(material.wastage || 0)} {material.material?.unit || ""}
+              </span>
+              {material.wastage && material.wastage > 0 && material.plannedQuantity > 0 && (
+                <span className="text-xs text-red-600 dark:text-red-400">
+                  ({((material.wastage / material.plannedQuantity) * 100).toFixed(1)}%)
+                </span>
+              )}
+            </div>
           </td>
         )}
         <td className="px-4 py-3 text-right">
@@ -154,12 +179,17 @@ export function MaterialRequirements({
                 <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">
                   SL Kế hoạch
                 </th>
-                {showActual && (
+                {effectiveShowAvailability && (
                   <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">
-                    SL Thực tế
+                    {status === "pending" ? "Khả dụng kho" : "Tồn kho"}
                   </th>
                 )}
-                {showWastage && (
+                {effectiveShowActual && (
+                  <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                    Thực xuất
+                  </th>
+                )}
+                {effectiveShowWastage && (
                   <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">
                     Hao hụt
                   </th>

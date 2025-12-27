@@ -1,11 +1,6 @@
-/**
- * Salary List Page
- * Display and manage employee salaries
- */
-
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { Can } from "@/components/auth/Can";
 import {
@@ -13,52 +8,85 @@ import {
   useApproveSalary,
   useDeleteSalary,
 } from "@/hooks/api/useSalary";
-import { useUsers } from "@/hooks/api/useUsers";
+import { useUsers, useWarehouses, useRoles } from "@/hooks/api";
 import SalaryStatusBadge, {
   MonthDisplay,
-  CurrencyDisplay,
   PostedStatus,
 } from "@/components/salary/SalaryStatus";
 import { dateToMonth, formatCurrency } from "@/types/salary.types";
-import type { SalaryStatus, SalaryFilters } from "@/types/salary.types";
+import type { SalaryStatus, Salary } from "@/types/salary.types";
 import {
-  PlusIcon,
-  FunnelIcon,
-  CheckCircleIcon,
-  TrashIcon,
-  EyeIcon,
-  PencilIcon,
-  CalculatorIcon,
-  BanknotesIcon,
-} from "@heroicons/react/24/outline";
+  CheckCircle,
+  Trash2,
+  Eye,
+  Calculator,
+  Banknote,
+  X,
+  Search,
+  FileText,
+} from "lucide-react";
+import { useDebounce } from "@/hooks";
+import { ApiResponse, PaginationMeta, Role, User, Warehouse } from "@/types";
+import Pagination from "@/components/tables/Pagination";
+import SearchableSelect from "@/components/ui/SearchableSelect";
+import { MonthPicker } from "@/components/form/MonthPicker";
+import Button from "@/components/ui/button/Button";
+import { useRouter } from "next/navigation";
 
 export default function SalaryListPage() {
-  const [filters, setFilters] = useState<SalaryFilters>({
-    page: 1,
-    limit: 20,
-    month: dateToMonth(new Date()),
+  const router = useRouter();
+
+  // Pagination & Filters
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearch = useDebounce(searchTerm, 400);
+  const [monthFilter, setMonthFilter] = useState(dateToMonth(new Date()));
+  const [statusFilter, setStatusFilter] = useState<SalaryStatus | "all">("all");
+  const [userFilter, setUserFilter] = useState<number>(0);
+  const [roleFilter, setRoleFilter] = useState<number>(0);
+  const [warehouseFilter, setWarehouseFilter] = useState<number>(0);
+
+  const { data: salaryDataWrapper, isLoading } = useSalary({
+    page,
+    limit,
+    month: monthFilter,
+    ...(debouncedSearch && { search: debouncedSearch }),
+    ...(userFilter !== 0 && { userId: userFilter }),
+    ...(statusFilter !== "all" && { status: statusFilter }),
+    ...(roleFilter !== 0 && { roleId: roleFilter }),
+    ...(warehouseFilter !== 0 && { warehouseId: warehouseFilter }),
   });
+  const salaryData = salaryDataWrapper as unknown as ApiResponse<Salary[]>;
+  const salaries = salaryData?.data as unknown as Salary[] || [];
+  const paginationMeta = salaryData?.meta as unknown as PaginationMeta;
 
-  const [showFilters, setShowFilters] = useState(false);
-
-  const { data: salaryData, isLoading } = useSalary(filters);
   const { data: usersData } = useUsers({ limit: 1000 });
+  const users = usersData?.data as unknown as User[] || []
+  const { data: rolesData } = useRoles();
+  const roles = rolesData?.data as unknown as Role[] || [];
+  const { data: warehousesData } = useWarehouses();
+  const warehouses = warehousesData?.data as unknown as Warehouse[]  || [];
   const approveMutation = useApproveSalary();
   const deleteMutation = useDeleteSalary();
 
-  const salaries = useMemo(() => salaryData?.data || [], [salaryData]);
-  const meta = salaryData?.meta;
-  const users = useMemo(() => usersData?.data || [], [usersData]);
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, monthFilter, userFilter, statusFilter, roleFilter, warehouseFilter]);
 
   // Statistics
   const stats = useMemo(() => {
     const pending = salaries.filter((s) => s.status === "pending").length;
     const approved = salaries.filter((s) => s.status === "approved").length;
     const paid = salaries.filter((s) => s.status === "paid").length;
-    const totalAmount = salaries.reduce((sum, s) => sum + s.total_salary, 0);
+    const totalAmount = salaries.reduce((sum, s) => sum + s.totalSalary, 0);
 
     return { pending, approved, paid, totalAmount };
   }, [salaries]);
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
 
   const handleApprove = async (id: number) => {
     if (!confirm("Xác nhận phê duyệt bảng lương này?")) return;
@@ -71,173 +99,398 @@ export default function SalaryListPage() {
     await deleteMutation.mutateAsync(id);
   };
 
-  const handleFilterChange = (key: keyof SalaryFilters, value: any) => {
-    setFilters((prev) => ({ ...prev, [key]: value, page: 1 }));
+  // Check if any filters are active
+  const hasActiveFilters =
+    !!searchTerm ||
+    userFilter !== 0 ||
+    statusFilter !== "all" ||
+    roleFilter !== 0 ||
+    warehouseFilter !== 0;
+
+  // Clear all filters
+  const handleResetFilters = () => {
+    setSearchTerm("");
+    setMonthFilter(dateToMonth(new Date()));
+    setUserFilter(0);
+    setStatusFilter("all");
+    setRoleFilter(0);
+    setWarehouseFilter(0);
+    setPage(1);
   };
 
-  const clearFilters = () => {
-    setFilters({
-      page: 1,
-      limit: 20,
-      month: dateToMonth(new Date()),
-    });
+  // Get status label
+  const getStatusLabel = (status: SalaryStatus) => {
+    const labels: Record<SalaryStatus, string> = {
+      pending: "Chờ duyệt",
+      approved: "Đã duyệt",
+      paid: "Đã thanh toán",
+    };
+    return labels[status] || status;
   };
 
   return (
-    <div className="p-6">
+    <div className="w-full space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Quản lý lương
+            Quản lý Lương
           </h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Quản lý và theo dõi bảng lương nhân viên
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
-          >
-            <FunnelIcon className="w-5 h-5" />
-            Lọc
-          </button>
           <Can permission="create_salary">
-            <Link
-              href="/hr/salary/calculate"
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            <Button
+              onClick={() => router.push("/hr/salary/calculate")}
+              size="smm"
+              variant="primary"
             >
-              <CalculatorIcon className="w-5 h-5" />
+              <Calculator className="w-5 h-5" />
               Tính lương
-            </Link>
+            </Button>
           </Can>
         </div>
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <StatCard
-          title="Chờ duyệt"
-          value={stats.pending}
-          icon={<CalculatorIcon className="w-6 h-6" />}
-          color="yellow"
-        />
-        <StatCard
-          title="Đã duyệt"
-          value={stats.approved}
-          icon={<CheckCircleIcon className="w-6 h-6" />}
-          color="blue"
-        />
-        <StatCard
-          title="Đã thanh toán"
-          value={stats.paid}
-          icon={<BanknotesIcon className="w-6 h-6" />}
-          color="green"
-        />
-        <StatCard
-          title="Tổng tiền"
-          value={formatCurrency(stats.totalAmount)}
-          icon={<BanknotesIcon className="w-6 h-6" />}
-          color="purple"
-          isAmount
-        />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+        {/* Card 1: Chờ duyệt */}
+        <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-gradient-to-br from-white to-yellow-50 p-6 shadow-sm transition-all duration-300 hover:shadow-xl hover:scale-[1.02] cursor-pointer dark:border-gray-800 dark:from-gray-900 dark:to-yellow-950">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/10 rounded-full blur-3xl -z-0" />
+          <div className="flex items-center justify-between relative z-10">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Chờ Duyệt
+              </p>
+              <p className="mt-3 text-3xl font-bold text-yellow-600 dark:text-yellow-400 transition-all duration-300 group-hover:scale-110">
+                {stats.pending}
+              </p>
+            </div>
+            <div className="relative">
+              <div className="absolute inset-0 bg-yellow-500 rounded-xl blur-md opacity-20 group-hover:opacity-40 transition-opacity" />
+              <div className="relative border-2 border-yellow-500 rounded-xl p-3 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
+                <Calculator className="h-7 w-7 text-yellow-600 dark:text-yellow-400" strokeWidth={2} />
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-yellow-200 dark:border-yellow-900">
+            <p className="text-xs text-gray-500 dark:text-gray-500">
+              Chờ phê duyệt
+            </p>
+          </div>
+        </div>
+
+        {/* Card 2: Đã duyệt */}
+        <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-gradient-to-br from-white to-blue-50 p-6 shadow-sm transition-all duration-300 hover:shadow-xl hover:scale-[1.02] cursor-pointer dark:border-gray-800 dark:from-gray-900 dark:to-blue-950">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -z-0" />
+          <div className="flex items-center justify-between relative z-10">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Đã Duyệt
+              </p>
+              <p className="mt-3 text-3xl font-bold text-blue-600 dark:text-blue-400 transition-all duration-300 group-hover:scale-110">
+                {stats.approved}
+              </p>
+            </div>
+            <div className="relative">
+              <div className="absolute inset-0 bg-blue-500 rounded-xl blur-md opacity-20 group-hover:opacity-40 transition-opacity" />
+              <div className="relative border-2 border-blue-500 rounded-xl p-3 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
+                <CheckCircle className="h-7 w-7 text-blue-600 dark:text-blue-400" strokeWidth={2} />
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-blue-200 dark:border-blue-900">
+            <p className="text-xs text-gray-500 dark:text-gray-500">
+              Đã phê duyệt
+            </p>
+          </div>
+        </div>
+
+        {/* Card 3: Đã thanh toán */}
+        <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-gradient-to-br from-white to-green-50 p-6 shadow-sm transition-all duration-300 hover:shadow-xl hover:scale-[1.02] cursor-pointer dark:border-gray-800 dark:from-gray-900 dark:to-green-950">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full blur-3xl -z-0" />
+          <div className="flex items-center justify-between relative z-10">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Đã Thanh Toán
+              </p>
+              <p className="mt-3 text-3xl font-bold text-green-600 dark:text-green-400 transition-all duration-300 group-hover:scale-110">
+                {stats.paid}
+              </p>
+            </div>
+            <div className="relative">
+              <div className="absolute inset-0 bg-green-500 rounded-xl blur-md opacity-20 group-hover:opacity-40 transition-opacity" />
+              <div className="relative border-2 border-green-500 rounded-xl p-3 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
+                <Banknote className="h-7 w-7 text-green-600 dark:text-green-400" strokeWidth={2} />
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-green-200 dark:border-green-900">
+            <p className="text-xs text-gray-500 dark:text-gray-500">
+              Đã chi trả
+            </p>
+          </div>
+        </div>
+
+        {/* Card 4: Tổng tiền */}
+        <div className="group relative overflow-hidden rounded-xl border border-gray-200 bg-gradient-to-br from-white to-purple-50 p-6 shadow-sm transition-all duration-300 hover:shadow-xl hover:scale-[1.02] cursor-pointer dark:border-gray-800 dark:from-gray-900 dark:to-purple-950">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -z-0" />
+          <div className="flex items-center justify-between relative z-10">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                Tổng Tiền
+              </p>
+              <p className="mt-3 text-2xl font-bold text-purple-600 dark:text-purple-400 transition-all duration-300 group-hover:scale-110">
+                {formatCurrency(stats.totalAmount)}
+              </p>
+            </div>
+            <div className="relative">
+              <div className="absolute inset-0 bg-purple-500 rounded-xl blur-md opacity-20 group-hover:opacity-40 transition-opacity" />
+              <div className="relative border-2 border-purple-500 rounded-xl p-3 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
+                <Banknote className="h-7 w-7 text-purple-600 dark:text-purple-400" strokeWidth={2} />
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-purple-200 dark:border-purple-900">
+            <p className="text-xs text-gray-500 dark:text-gray-500">
+              Tổng bảng lương
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}
-      {showFilters && (
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-6">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            Bộ lọc
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Month Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Tháng
-              </label>
-              <input
-                type="month"
-                value={
-                  filters.month
-                    ? `${filters.month.substring(0, 4)}-${filters.month.substring(4, 6)}`
-                    : ""
-                }
-                onChange={(e) => {
-                  const value = e.target.value.replace("-", "");
-                  handleFilterChange("month", value);
-                }}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
-              />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
+        {/* Search Filter */}
+        <div>
+          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Tìm kiếm
+          </label>
+          <div className="relative">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <Search className="h-5 w-5 text-gray-400" />
             </div>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="block w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-3 text-sm placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500"
+              placeholder="Tìm theo tên, mã NV..."
+            />
+          </div>
+        </div>
 
-            {/* User Filter */}
-            <Can permission="view_salary">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Nhân viên
-                </label>
-                <select
-                  value={filters.userId || ""}
-                  onChange={(e) =>
-                    handleFilterChange(
-                      "userId",
-                      e.target.value ? parseInt(e.target.value) : undefined
-                    )
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
+        {/* Month Filter */}
+        <div>
+          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Tháng
+          </label>
+          <MonthPicker
+            value={monthFilter}
+            onChange={setMonthFilter}
+            placeholder="Chọn tháng"
+          />
+        </div>
+
+        {/* User Filter */}
+        <Can permission="view_salary">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Nhân viên
+            </label>
+            <SearchableSelect
+              options={[
+                { value: "", label: "Tất cả nhân viên" },
+                ...users.map((u) => ({
+                  value: String(u.id),
+                  label: u.fullName,
+                })),
+              ]}
+              value={userFilter === 0 ? "" : String(userFilter)}
+              onChange={(value) => {
+                if (value === "") {
+                  setUserFilter(0);
+                } else {
+                  setUserFilter(Number(value));
+                }
+              }}
+              placeholder="Tìm kiếm nhân viên..."
+              isClearable={false}
+            />
+          </div>
+        </Can>
+
+        {/* Status Filter */}
+        <div>
+          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Trạng thái
+          </label>
+          <select
+            value={statusFilter || ""}
+            onChange={(e) =>
+              setStatusFilter(
+                (e.target.value as SalaryStatus | "all") || "all"
+              )
+            }
+            className="block w-full rounded-lg border border-gray-300 bg-white py-2 px-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+          >
+            <option value="">Tất cả trạng thái</option>
+            <option value="pending">Chờ duyệt</option>
+            <option value="approved">Đã duyệt</option>
+            <option value="paid">Đã thanh toán</option>
+          </select>
+        </div>
+
+        {/* Role Filter */}
+        <div>
+          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Vai trò
+          </label>
+          <SearchableSelect
+            options={[
+              { value: "", label: "Tất cả vai trò" },
+              ...roles.map((r: any) => ({
+                value: String(r.id),
+                label: r.roleName,
+              })),
+            ]}
+            value={roleFilter === 0 ? "" : String(roleFilter)}
+            onChange={(value) => {
+              if (value === "") {
+                setRoleFilter(0);
+              } else {
+                setRoleFilter(Number(value));
+              }
+            }}
+            placeholder="Tìm kiếm vai trò..."
+            isClearable={false}
+          />
+        </div>
+
+        {/* Warehouse Filter */}
+        <div>
+          <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Kho
+          </label>
+          <SearchableSelect
+            options={[
+              { value: "", label: "Tất cả kho" },
+              ...warehouses.map((w: any) => ({
+                value: String(w.id),
+                label: `${w.warehouseName} (${w.warehouseCode})`,
+              })),
+            ]}
+            value={warehouseFilter === 0 ? "" : String(warehouseFilter)}
+            onChange={(value) => {
+              if (value === "") {
+                setWarehouseFilter(0);
+              } else {
+                setWarehouseFilter(Number(value));
+              }
+            }}
+            placeholder="Tìm kiếm kho..."
+            isClearable={false}
+          />
+        </div>
+      </div>
+
+      {/* Active Filters Display */}
+      {hasActiveFilters && (
+        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Bộ lọc:
+            </span>
+
+            {userFilter !== 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-700 dark:bg-blue-900/20 dark:text-blue-400">
+                Nhân viên: {users.find((u) => u.id === userFilter)?.fullName || `Nhân viên ${userFilter}`}
+                <button
+                  onClick={() => setUserFilter(0)}
+                  className="hover:text-blue-900 dark:hover:text-blue-300"
                 >
-                  <option value="">Tất cả</option>
-                  {users.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.full_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </Can>
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            )}
 
-            {/* Status Filter */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Trạng thái
-              </label>
-              <select
-                value={filters.status || ""}
-                onChange={(e) =>
-                  handleFilterChange(
-                    "status",
-                    (e.target.value as SalaryStatus) || undefined
-                  )
-                }
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm"
-              >
-                <option value="">Tất cả</option>
-                <option value="pending">Chờ duyệt</option>
-                <option value="approved">Đã duyệt</option>
-                <option value="paid">Đã thanh toán</option>
-              </select>
-            </div>
+            {statusFilter !== "all" && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-sm text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
+                Trạng thái: {getStatusLabel(statusFilter as SalaryStatus)}
+                <button
+                  onClick={() => setStatusFilter("all")}
+                  className="hover:text-amber-900 dark:hover:text-amber-300"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            )}
 
-            {/* Clear Button */}
-            <div className="flex items-end">
-              <button
-                onClick={clearFilters}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-sm"
-              >
-                Xóa bộ lọc
-              </button>
-            </div>
+            {searchTerm && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-3 py-1 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
+                Tìm: {searchTerm}
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="hover:text-green-900 dark:hover:text-green-300"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            )}
+
+            {roleFilter !== 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-3 py-1 text-sm text-purple-700 dark:bg-purple-900/20 dark:text-purple-400">
+                Vai trò: {roles.find((r: any) => r.id === roleFilter)?.roleName || `Vai trò ${roleFilter}`}
+                <button
+                  onClick={() => setRoleFilter(0)}
+                  className="hover:text-purple-900 dark:hover:text-purple-300"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            )}
+
+            {warehouseFilter !== 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-3 py-1 text-sm text-orange-700 dark:bg-orange-900/20 dark:text-orange-400">
+                Kho: {warehouses.find((w: any) => w.id === warehouseFilter)?.warehouseName || `Kho ${warehouseFilter}`}
+                <button
+                  onClick={() => setWarehouseFilter(0)}
+                  className="hover:text-orange-900 dark:hover:text-orange-300"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            )}
+
+            <button
+              onClick={handleResetFilters}
+              className="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-1 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+            >
+              <X className="h-3 w-3" />
+              Xóa tất cả
+            </button>
           </div>
         </div>
       )}
 
       {/* Table */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-              <tr>
+      <div className="overflow-auto rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+        {isLoading ? (
+          <div className="flex h-64 items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600"></div>
+          </div>
+        ) : salaries.length === 0 ? (
+          <div className="flex h-64 flex-col items-center justify-center text-gray-500 dark:text-gray-400">
+            <FileText className="mb-4 h-12 w-12" />
+            <p className="text-sm">Không tìm thấy dữ liệu lương nào</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-900">
+                <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Nhân viên
                 </th>
@@ -267,75 +520,57 @@ export default function SalaryListPage() {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={9} className="px-6 py-12 text-center">
-                    <div className="flex items-center justify-center">
-                      <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
+              {salaries.map((salary) => (
+                <tr
+                  key={salary.id}
+                  className="hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                >
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {salary.user?.fullName}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {salary.user?.employeeCode}
                     </div>
                   </td>
-                </tr>
-              ) : salaries.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={9}
-                    className="px-6 py-12 text-center text-gray-500 dark:text-gray-400"
-                  >
-                    Không có dữ liệu
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <MonthDisplay month={salary.month} />
                   </td>
-                </tr>
-              ) : (
-                salaries.map((salary) => (
-                  <tr
-                    key={salary.id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {salary.user?.full_name}
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        {salary.user?.employee_code}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <MonthDisplay month={salary.month} />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                      {formatCurrency(salary.basic_salary)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-green-600 dark:text-green-400">
-                      {formatCurrency(
-                        salary.allowance +
-                          salary.overtime_pay +
-                          salary.bonus +
-                          salary.commission
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-red-600 dark:text-red-400">
-                      {formatCurrency(salary.deduction + salary.advance)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                        {formatCurrency(salary.total_salary)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <SalaryStatusBadge status={salary.status} />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <PostedStatus isPosted={salary.is_posted} />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                      <div className="flex items-center justify-end gap-2">
-                        {/* View Details */}
-                        <Link
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                    {formatCurrency(salary.basicSalary)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-green-600 dark:text-green-400">
+                    {formatCurrency(
+                      salary.allowance +
+                        salary.overtimePay +
+                        salary.bonus +
+                        salary.commission
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-red-600 dark:text-red-400">
+                    {formatCurrency(salary.deduction + salary.advance)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      {formatCurrency(salary.totalSalary)}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <SalaryStatusBadge status={salary.status} />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <PostedStatus isPosted={salary.isPosted} />
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                    <div className="flex items-center justify-end gap-2">
+                      {/* View Details */}
+                      <Link
                           href={`/hr/salary/${salary.id}`}
                           className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
                           title="Xem chi tiết"
                         >
-                          <EyeIcon className="w-5 h-5" />
+                          <Eye className="w-5 h-5" />
                         </Link>
 
                         {/* Approve (only pending) */}
@@ -346,7 +581,7 @@ export default function SalaryListPage() {
                               className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
                               title="Phê duyệt"
                             >
-                              <CheckCircleIcon className="w-5 h-5" />
+                              <CheckCircle className="w-5 h-5" />
                             </button>
                           </Can>
                         )}
@@ -359,97 +594,47 @@ export default function SalaryListPage() {
                               className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                               title="Xóa"
                             >
-                              <TrashIcon className="w-5 h-5" />
+                              <Trash2 className="w-5 h-5" />
                             </button>
                           </Can>
                         )}
                       </div>
                     </td>
-                  </tr>
-                ))
-              )}
+                </tr>
+              ))}
             </tbody>
           </table>
-        </div>
-
-        {/* Pagination */}
-        {meta && meta.totalPages > 1 && (
-          <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              Hiển thị {(meta.page - 1) * meta.limit + 1} -{" "}
-              {Math.min(meta.page * meta.limit, meta.total)} / {meta.total} bản
-              ghi
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() =>
-                  setFilters((prev) => ({ ...prev, page: meta.page - 1 }))
-                }
-                disabled={meta.page === 1}
-                className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Trước
-              </button>
-              <span className="text-sm text-gray-700 dark:text-gray-300">
-                Trang {meta.page} / {meta.totalPages}
-              </span>
-              <button
-                onClick={() =>
-                  setFilters((prev) => ({ ...prev, page: meta.page + 1 }))
-                }
-                disabled={meta.page === meta.totalPages}
-                className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Sau
-              </button>
-            </div>
           </div>
         )}
       </div>
-    </div>
-  );
-}
 
-//----------------------------------------------
-// Stat Card Component
-//----------------------------------------------
-
-interface StatCardProps {
-  title: string;
-  value: number | string;
-  icon: React.ReactNode;
-  color: "yellow" | "blue" | "green" | "purple";
-  isAmount?: boolean;
-}
-
-function StatCard({ title, value, icon, color, isAmount }: StatCardProps) {
-  const colorClasses = {
-    yellow:
-      "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-600 dark:text-yellow-400",
-    blue: "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400",
-    green:
-      "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-600 dark:text-green-400",
-    purple:
-      "bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400",
-  };
-
-  return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-          {title}
-        </span>
-        <div className={`p-2 rounded-lg border ${colorClasses[color]}`}>
-          {icon}
+      {/* Pagination */}
+      {paginationMeta && paginationMeta.total > 0 && (
+        <div className="mt-6 flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="text-sm text-gray-700 dark:text-gray-300">
+            Hiển thị{" "}
+            <span className="font-medium">
+              {(paginationMeta.page - 1) * paginationMeta.limit + 1}
+            </span>{" "}
+            đến{" "}
+            <span className="font-medium">
+              {Math.min(
+                paginationMeta.page * paginationMeta.limit,
+                paginationMeta.total
+              )}
+            </span>{" "}
+            trong tổng số{" "}
+            <span className="font-medium">{paginationMeta.total}</span> bảng lương
+          </div>
+          {paginationMeta.totalPages > 1 && (
+            <Pagination
+              currentPage={paginationMeta.page}
+              totalPages={paginationMeta.totalPages}
+              onPageChange={handlePageChange}
+            />
+          )}
         </div>
-      </div>
-      <div
-        className={`${
-          isAmount ? "text-xl" : "text-2xl"
-        } font-bold text-gray-900 dark:text-gray-100`}
-      >
-        {value}
-      </div>
+      )}
     </div>
   );
 }

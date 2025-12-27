@@ -9,8 +9,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useUnreadCount } from "@/hooks/api/useNotifications";
 import { onEvent, offEvent } from "@/lib/socket";
 import NotificationDropdown from "./NotificationDropdown";
-import { BellIcon } from "@heroicons/react/24/outline";
-import { BellAlertIcon } from "@heroicons/react/24/solid";
+import { Bell } from "lucide-react";
 import type { Notification } from "@/types/notification.types";
 
 export default function NotificationBell() {
@@ -75,12 +74,12 @@ export default function NotificationBell() {
       >
         {/* Bell Icon */}
         {hasNewNotification ? (
-          <BellAlertIcon
+          <Bell
             className="w-6 h-6 animate-bounce text-blue-600 dark:text-blue-400"
             aria-hidden="true"
           />
         ) : (
-          <BellIcon className="w-6 h-6" aria-hidden="true" />
+          <Bell className="w-6 h-6" aria-hidden="true" />
         )}
 
         {/* Unread Badge */}
