@@ -10,6 +10,8 @@ export interface RevenueReportFilters {
   toDate?: string;
   groupBy?: ReportGroupBy;
   salesChannel?: SalesChannel;
+  warehouseId?: number;
+  staffId?: number;
   customerId?: number;
 }
 
@@ -30,13 +32,36 @@ export interface RevenueByRegion {
 export interface RevenueReport {
   summary: {
     totalRevenue: number;
+    netRevenue: number;
+    profit: number;
+    totalDiscount: number;
+    totalDebt: number;
     totalOrders: number;
     avgOrderValue: number;
-    growth: number; // percentage compared to previous period
+    growth: number;
   };
   chartData: RevenueDataPoint[];
   byChannel: RevenueByChannel[];
   byRegion?: RevenueByRegion[];
+  topProducts?: {
+    productId: number;
+    sku: string;
+    productName: string;
+    quantity: number;
+    revenue: number;
+    percentage: number;
+  }[];
+  orders?: {
+    id: number;
+    orderCode: string;
+    orderDate: string;
+    customerName: string;
+    staffName: string;
+    totalAmount: number;
+    discountAmount: number;
+    finalAmount: number;
+    paymentStatus: string;
+  }[];
 }
 
 //----------------------------------------------

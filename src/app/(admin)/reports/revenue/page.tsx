@@ -23,6 +23,7 @@ const ReactApexChart = dynamic(() => import("react-apexcharts"), {
 
 export default function RevenueReportPage() {
   const [filters, setFilters] = useState<RevenueReportFilters>({});
+  const [activeTab, setActiveTab] = useState<"orders" | "products" | "customers">("orders");
 
   const { data: report, isLoading } = useRevenueReport(filters);
 
@@ -147,6 +148,72 @@ export default function RevenueReportPage() {
 
   const channelChartSeries = report?.byChannel.map((c) => c.revenue) || [];
 
+  // Top Products Chart Options
+  const topProductsChartOptions: ApexOptions = {
+    chart: {
+      type: "bar",
+      height: 350,
+      fontFamily: "Outfit, sans-serif",
+      toolbar: {
+        show: true,
+        tools: {
+          download: true,
+          selection: false,
+          zoom: false,
+          zoomin: false,
+          zoomout: false,
+          pan: false,
+          reset: false,
+        },
+      },
+    },
+    colors: ["#3B82F6"],
+    dataLabels: {
+      enabled: false,
+    },
+    xaxis: {
+      categories: report?.topProducts?.map((p) => p.productName.substring(0, 20)) || [],
+      labels: {
+        style: {
+          colors: "#6B7280",
+          fontSize: "12px",
+        },
+      },
+    },
+    yaxis: {
+      labels: {
+        style: {
+          colors: "#6B7280",
+          fontSize: "12px",
+        },
+        formatter: (value) => formatCurrencyVND(value),
+      },
+    },
+    tooltip: {
+      y: {
+        formatter: (value) => formatCurrencyVND(value),
+      },
+    },
+    grid: {
+      borderColor: "#E5E7EB",
+    },
+    states: {
+      hover: {
+        filter: {
+          type: "darken",
+          value: 0.15,
+        },
+      },
+    },
+  };
+
+  const topProductsChartSeries = [
+    {
+      name: "Doanh số",
+      data: report?.topProducts?.map((p) => p.revenue) || [],
+    },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Breadcrumb */}
@@ -174,6 +241,7 @@ export default function RevenueReportPage() {
         onFilterChange={(newFilters) => setFilters(newFilters)}
         initialFilters={filters}
         showDateRange
+        showDatePresets
         showGroupBy
         showSalesChannel
       />
@@ -224,12 +292,40 @@ export default function RevenueReportPage() {
               </div>
             </div>
 
+            {/* Net Revenue */}
+            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+                <DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />
+              </div>
+              <div className="mt-4">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Thực thu (sau giảm giá)
+                </p>
+                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
+                  {formatCurrencyVND(report.summary.netRevenue)}
+                </p>
+              </div>
+            </div>
+
+            {/* Profit */}
+            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30">
+                <TrendingUp className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div className="mt-4">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Lợi nhuận ròng
+                </p>
+                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
+                  {formatCurrencyVND(report.summary.profit)}
+                </p>
+              </div>
+            </div>
+
             {/* Total Orders */}
             <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-              <div className="flex items-center justify-between">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-                  <ShoppingCart className="h-6 w-6 text-green-600 dark:text-green-400" />
-                </div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30">
+                <ShoppingCart className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
               </div>
               <div className="mt-4">
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -240,13 +336,29 @@ export default function RevenueReportPage() {
                 </p>
               </div>
             </div>
+          </div>
+
+          {/* Additional KPI Cards - Row 2 */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {/* Discount Amount */}
+            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/30">
+                <BarChart3 className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+              </div>
+              <div className="mt-4">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Tiền chiết khấu
+                </p>
+                <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
+                  {formatCurrencyVND(report.summary.totalDiscount)}
+                </p>
+              </div>
+            </div>
 
             {/* Average Order Value */}
             <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-              <div className="flex items-center justify-between">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30">
-                  <BarChart3 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                </div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cyan-100 dark:bg-cyan-900/30">
+                <BarChart3 className="h-6 w-6 text-cyan-600 dark:text-cyan-400" />
               </div>
               <div className="mt-4">
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -258,24 +370,17 @@ export default function RevenueReportPage() {
               </div>
             </div>
 
-            {/* Growth Rate */}
+            {/* Receivable Debt */}
             <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-              <div className="flex items-center justify-between">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/30">
-                  {report.summary.growth >= 0 ? (
-                    <TrendingUp className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
-                  ) : (
-                    <TrendingDown className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
-                  )}
-                </div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+                <BarChart3 className="h-6 w-6 text-red-600 dark:text-red-400" />
               </div>
               <div className="mt-4">
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Tăng trưởng
+                  Công nợ phải thu
                 </p>
                 <p className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">
-                  {report.summary.growth >= 0 ? "+" : ""}
-                  {formatPercentage(report.summary.growth)}
+                  {formatCurrencyVND(report.summary.totalDebt)}
                 </p>
               </div>
             </div>
@@ -407,6 +512,257 @@ export default function RevenueReportPage() {
                   </table>
                 </div>
               </ReportCard>
+            )}
+          </div>
+
+          {/* Top Products Chart */}
+          {report.topProducts && report.topProducts.length > 0 && (
+            <ReportCard title="Top 10 sản phẩm bán chạy">
+              <ReactApexChart
+                options={topProductsChartOptions}
+                series={topProductsChartSeries}
+                type="bar"
+                height={350}
+              />
+
+              {/* Top Products Table */}
+              <div className="mt-6 overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-800">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        SKU
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Tên sản phẩm
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Số lượng
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Doanh số
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Tỷ trọng
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
+                    {report.topProducts.map((product, idx) => (
+                      <tr key={idx}>
+                        <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                          {product.sku}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
+                          {product.productName}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-gray-500 dark:text-gray-400">
+                          {formatNumber(product.quantity)}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-medium text-gray-900 dark:text-white">
+                          {formatCurrencyVND(product.revenue)}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-gray-500 dark:text-gray-400">
+                          {formatPercentage(product.percentage)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </ReportCard>
+          )}
+
+          {/* Detailed Tables - Tabs Section */}
+          <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <div className="border-b border-gray-200 dark:border-gray-700">
+              <div className="flex gap-0">
+                <button
+                  onClick={() => setActiveTab("orders")}
+                  className={`flex-1 border-b-2 px-4 py-3 text-left text-sm font-medium transition-colors ${
+                    activeTab === "orders"
+                      ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                      : "border-transparent text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                  }`}
+                >
+                  Chi tiết đơn hàng
+                </button>
+                <button
+                  onClick={() => setActiveTab("products")}
+                  className={`flex-1 border-b-2 px-4 py-3 text-left text-sm font-medium transition-colors ${
+                    activeTab === "products"
+                      ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                      : "border-transparent text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                  }`}
+                >
+                  Chi tiết sản phẩm
+                </button>
+                <button
+                  onClick={() => setActiveTab("customers")}
+                  className={`flex-1 border-b-2 px-4 py-3 text-left text-sm font-medium transition-colors ${
+                    activeTab === "customers"
+                      ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                      : "border-transparent text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                  }`}
+                >
+                  Chi tiết khách hàng
+                </button>
+              </div>
+            </div>
+
+            {/* Tab 1: Orders */}
+            {activeTab === "orders" && (
+              <div className="overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-800">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Mã đơn
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Ngày bán
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Khách hàng
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Nhân viên
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Tổng tiền
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Giảm giá
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Thành tiền
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Trạng thái
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
+                    {report.orders && report.orders.length > 0 ? (
+                      report.orders.slice(0, 20).map((order, idx) => (
+                        <tr key={idx}>
+                          <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-blue-600 dark:text-blue-400">
+                            {order.orderCode}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-900 dark:text-white">
+                            {new Date(order.orderDate).toLocaleDateString("vi-VN")}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
+                            {order.customerName}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
+                            {order.staffName}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-gray-500 dark:text-gray-400">
+                            {formatCurrencyVND(order.totalAmount)}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-gray-500 dark:text-gray-400">
+                            {formatCurrencyVND(order.discountAmount)}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-medium text-gray-900 dark:text-white">
+                            {formatCurrencyVND(order.finalAmount)}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-sm">
+                            <span
+                              className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
+                                order.paymentStatus === "paid"
+                                  ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                                  : order.paymentStatus === "partial"
+                                    ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+                                    : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                              }`}
+                            >
+                              {order.paymentStatus === "paid"
+                                ? "Đã trả"
+                                : order.paymentStatus === "partial"
+                                  ? "Trả một phần"
+                                  : "Chưa trả"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={8} className="px-4 py-3 text-center text-sm text-gray-500 dark:text-gray-400">
+                          Không có dữ liệu
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Tab 2: Products */}
+            {activeTab === "products" && (
+              <div className="overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-800">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        SKU
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Tên sản phẩm
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Số lượng
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Doanh số
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                        Tỷ trọng
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-800">
+                    {report.topProducts && report.topProducts.length > 0 ? (
+                      report.topProducts.slice(0, 20).map((product, idx) => (
+                        <tr key={idx}>
+                          <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                            {product.sku}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
+                            {product.productName}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-gray-500 dark:text-gray-400">
+                            {formatNumber(product.quantity)}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-medium text-gray-900 dark:text-white">
+                            {formatCurrencyVND(product.revenue)}
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-gray-500 dark:text-gray-400">
+                            {formatPercentage(product.percentage)}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-3 text-center text-sm text-gray-500 dark:text-gray-400">
+                          Không có dữ liệu
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Tab 3: Customers */}
+            {activeTab === "customers" && (
+              <div className="overflow-hidden">
+                <div className="px-4 py-6 text-center">
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Đang cập nhật dữ liệu chi tiết khách hàng...
+                  </p>
+                </div>
+              </div>
             )}
           </div>
         </>
