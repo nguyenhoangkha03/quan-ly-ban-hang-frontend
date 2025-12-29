@@ -2,6 +2,8 @@ import type { BaseEntity } from "./common.types";
 import type { Customer } from "./customer.types";
 import type { User } from "./user.types";
 
+
+//types finance.types.ts
 // Receipt Type
 export type ReceiptType = "sales" | "debt_collection" | "refund" | "other";
 
