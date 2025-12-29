@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+//lib/validations/finance.schema.ts
 // Payment Receipt Schema (Phiếu thu)
 export const paymentReceiptSchema = z.object({
   receipt_code: z
