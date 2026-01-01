@@ -9,7 +9,7 @@ import React, { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import type { CreatePaymentVoucherDto, VoucherType, VoucherPaymentMethod } from "@/types";
+import type { CreatePaymentVoucherDto, VoucherType, VoucherPaymentMethod, Supplier } from "@/types";
 import { useSuppliers } from "@/hooks/api";
 import Button from "@/components/ui/button/Button";
 import { Calendar, DollarSign, FileText, Building2, CreditCard } from "lucide-react";
@@ -50,7 +50,8 @@ export default function VoucherForm({
   );
 
   const { data: suppliersData } = useSuppliers({ status: "active" });
-  const suppliers = suppliersData?.data || [];
+  const suppliers = suppliersData?.data as unknown as Supplier[];
+  // console.log(suppliers)
 
   const {
     register,
@@ -68,7 +69,7 @@ export default function VoucherForm({
       amount: initialData?.amount || 0,
       paymentMethod: initialData?.paymentMethod || "cash",
       bankName: initialData?.bankName || "",
-      paymentDate: initialData?.paymentDate || format(new Date(), "yyyy-MM-dd"),
+      paymentDate: initialData?.paymentDate ? initialData.paymentDate.slice(0, 10) : format(new Date(), "yyyy-MM-dd"),
       notes: initialData?.notes || "",
     },
   });
@@ -125,9 +126,9 @@ export default function VoucherForm({
             className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
           >
             <option value="">Chọn nhà cung cấp...</option>
-            {suppliers.map((supplier: any) => (
+            {suppliers.map((supplier) => (
               <option key={supplier.id} value={supplier.id}>
-                {supplier.supplier_name}
+                {supplier.supplierName}
               </option>
             ))}
           </select>
@@ -288,7 +289,7 @@ export default function VoucherForm({
             Hủy
           </Button>
         )}
-        <Button type="submit" variant="primary" loading={loading} className="flex-1">
+        <Button type="submit" variant="primary" className="flex-1">
           {initialData ? "Cập nhật" : "Tạo phiếu chi"}
         </Button>
       </div>

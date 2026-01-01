@@ -115,6 +115,7 @@ export default function PurchaseOrdersPage() {
   const response = responseWrapper as unknown as ApiResponse<PurchaseOrder[]>;
   const purchaseOrders = response?.data || [];
   const paginationMeta = response?.meta;
+  
 
   useEffect(() => {
     setPage(1);
@@ -620,6 +621,7 @@ export default function PurchaseOrdersPage() {
             <TableBody>
               {purchaseOrders.map((po) => {
                 const statusInfo = getStatusInfo(po.status);
+                // console.log(po)
 
                 return (
                   <TableRow key={po.id}>

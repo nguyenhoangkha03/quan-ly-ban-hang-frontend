@@ -1,10 +1,5 @@
 "use client";
 
-/**
- * Payment Vouchers List Page
- * Danh sách phiếu chi
- */
-
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -15,7 +10,7 @@ import {
   usePrintVoucher,
   useExportVouchers,
 } from "@/hooks/api";
-import type { VoucherType, VoucherPaymentMethod } from "@/types";
+import type { VoucherType, VoucherPaymentMethod, ApiResponse, PaymentVoucher } from "@/types";
 import VoucherStatus, {
   VoucherTypeBadge,
   PaymentMethodBadge,
@@ -34,6 +29,7 @@ import {
   Clock,
   Printer,
   Trash2,
+  EyeIcon,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
@@ -48,30 +44,31 @@ export default function PaymentVouchersPage() {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
 
-  // Data Fetching
-  const { data, isLoading } = usePaymentVouchers({
+  const { data: voucherWrapper, isLoading } = usePaymentVouchers({
     voucherType: voucherTypeFilter !== "all" ? voucherTypeFilter : undefined,
     paymentMethod: paymentMethodFilter !== "all" ? paymentMethodFilter : undefined,
     fromDate: fromDate || undefined,
     toDate: toDate || undefined,
     search: searchTerm || undefined,
   });
+  const data = voucherWrapper as unknown as ApiResponse<PaymentVoucher[]>; 
 
   const { data: statsData } = usePaymentVoucherStatistics({
     fromDate: fromDate || undefined,
     toDate: toDate || undefined,
   });
 
-  const vouchers = data?.data?.vouchers || [];
+  // const vouchers = data?.data
+  const vouchers = data?.data
   const statistics = statsData?.data;
+  // console.log(vouchers)
 
-  // Mutations
   const approveVoucher = useApprovePaymentVoucher();
   const deleteVoucher = useDeletePaymentVoucher();
   const printVoucher = usePrintVoucher();
   const exportVouchers = useExportVouchers();
 
-  // Handlers
+
   const handleApprove = async (id: number, voucherCode: string) => {
     if (
       !window.confirm(
@@ -105,6 +102,7 @@ export default function PaymentVouchersPage() {
     });
   };
 
+
   const handleResetFilters = () => {
     setSearchTerm("");
     setVoucherTypeFilter("all");
@@ -116,8 +114,8 @@ export default function PaymentVouchersPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+      <div className="flex gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex-col">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             Phiếu Chi
           </h1>
@@ -136,7 +134,7 @@ export default function PaymentVouchersPage() {
               Export Excel
             </Button>
           </Can>
-          <Can permission="finance.create">
+          <Can permission="create_payment_voucher">
             <Button
               variant="primary"
               onClick={() => router.push("/finance/vouchers/create")}
@@ -391,7 +389,7 @@ export default function PaymentVouchersPage() {
 
                         {/* Approve (if pending) */}
                         {!voucher.approvedAt && (
-                          <Can permission="finance.approve">
+                          <Can permission="approve_payment">
                             <button
                               onClick={() =>
                                 handleApprove(voucher.id, voucher.voucherCode)
@@ -407,7 +405,7 @@ export default function PaymentVouchersPage() {
 
                         {/* Delete (if pending) */}
                         {!voucher.approvedAt && (
-                          <Can permission="finance.delete">
+                          <Can permission="delete_payment_voucher">
                             <button
                               onClick={() =>
                                 handleDelete(voucher.id, voucher.voucherCode)
@@ -420,6 +418,15 @@ export default function PaymentVouchersPage() {
                             </button>
                           </Can>
                         )}
+                        <Can permission="view_payment_vouchers">
+                          <button
+                            onClick={() => router.push(`/finance/vouchers/${voucher.id}`)}
+                            className="rounded p-1 text-blue-600 hover:bg-blue-100 dark:text-red-400 dark:hover:bg-red-900/30"
+                            title="Xem chi tiết"
+                          >
+                            <EyeIcon className="h-4 w-4"/>
+                          </button>
+                        </Can>
                       </div>
                     </td>
                   </tr>

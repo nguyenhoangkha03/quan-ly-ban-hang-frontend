@@ -49,11 +49,11 @@ export function usePaymentVouchers(
     queryKey: paymentVoucherKeys.list(filters),
     queryFn: async () => {
       const response = await api.get<
-        ApiResponse<{ vouchers: PaymentVoucher[]; meta: PaginationMeta }>
+        ApiResponse<PaymentVoucher[]>
       >("/payment-vouchers", {
         params: filters,
       });
-      return response.data;
+      return response;
     },
   });
 }

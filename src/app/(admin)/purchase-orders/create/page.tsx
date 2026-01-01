@@ -39,6 +39,7 @@ export default function CreatePurchaseOrderPage() {
   const suppliers = (suppliersResponse?.data as unknown as Supplier[]) || [];
   const warehouses = (warehousesResponse?.data as unknown as Warehouse[]) || [];
   const allProducts = (productsResponse?.data as unknown as Product[]) || [];
+  
 
   const {
     register,
