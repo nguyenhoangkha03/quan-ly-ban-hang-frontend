@@ -1,76 +1,68 @@
 import type { BaseEntity } from "./common.types";
 import type { Customer } from "./customer.types";
-import type { User } from "./user.types"; // User ở đây là Nhân viên (Admin)
+import type { User } from "./user.types"; 
 
-// --- ENUMS ---
-export type ReconciliationType = "monthly" | "quarterly" | "yearly";
-export type ReconciliationStatus = "pending" | "confirmed" | "disputed";
+// --- ENUMS (Logic Mới) ---
+// Trạng thái giờ được tính động dựa trên số dư (closingBalance)
+// <= 0: paid, > 0: unpaid
+export type ReconciliationStatus = "paid" | "unpaid";
 
-// --- ENTITY (Dữ liệu hiển thị - Output từ Server) ---
+// --- SUB-TYPES (Chi tiết giao dịch) ---
+export interface DebtTransactionDetail {
+  id: number;
+  date: string; // ISO Date
+  code: string; // Mã phiếu
+  type: "INVOICE" | "PAYMENT"; // Hóa đơn hoặc Thanh toán
+  typeLabel: string; 
+  amount: number;
+  isIncrease: boolean; // TRUE = Tăng nợ, FALSE = Giảm nợ
+}
+
+// --- ENTITY (Output từ Server - Khớp với mapToDTO mới) ---
 export interface DebtReconciliation extends BaseEntity {
+  id: number;
   reconciliationCode: string;
-  reconciliationType: ReconciliationType;
-  period: string; // Ví dụ: "202412"
+  period: string; // VD: "2025" (Theo năm)
   
-  // 1. Đối tượng (Khách hàng/NCC)
+  // 1. Đối tượng
   customerId?: number;
-  customer?: Customer; // Để hiện tên khách hàng: customer.customerName
-  
+  customer?: Customer;
   supplierId?: number;
-  supplier?: any; // Supplier Type
+  supplier?: any; 
   
-  // 2. Số liệu (Backend trả về, FE chỉ hiển thị)
-  openingBalance: number;
-  transactionsAmount: number;
-  paymentAmount: number;
-  closingBalance: number;
+  assignedUser?: User; // ✅ MỚI: Người phụ trách (Sales/Accountant)
+
+  // 2. Số liệu (Backend tính toán Real-time)
+  openingBalance: number;     // Nợ đầu kỳ (Lũy kế các năm trước)
   
-  // 3. Trạng thái & Sai lệch
-  status: ReconciliationStatus;
-  discrepancyAmount: number;
-  discrepancyReason?: string | null;
-  reconciliationDate: string; // ISO String
+  transactionsAmount: number; // (+) Tổng mua trong năm
   
-  // 4. Thông tin xác nhận (Phía khách hàng xác nhận)
-  confirmedByName?: string | null;
-  confirmedByEmail?: string | null;
-  confirmedAt?: string | null;
+  // Các khoản giảm trừ
+  paymentAmount: number;      // (-) Thanh toán
+  returnAmount: number;       // (-) Trả hàng (MỚI)
+  adjustmentAmount: number;   // (-) Điều chỉnh (MỚI)
+
+  closingBalance: number;     // (=) Nợ cần thu cuối kỳ
   
+  // 3. Trạng thái & Meta
+  status: ReconciliationStatus; // 'paid' | 'unpaid'
   notes?: string | null;
-  
-  // 5. Audit (Nhân viên thao tác)
-  createdBy: number;
-  creator?: User; // Để hiện: "Tạo bởi: Nguyễn Văn A"
-  
-  approvedBy?: number;
-  approver?: User; // Để hiện: "Duyệt bởi: Trần Thị B"
-  approvedAt?: string | null;
+  updatedAt: string;            // Dùng để hiện "Cập nhật lần cuối..."
+
+  // 4. Chi tiết (Chỉ có khi gọi getById)
+  transactions?: DebtTransactionDetail[];
 }
 
-// --- STATS (Thống kê cho Dashboard Admin) ---
-export interface DebtReconciliationSummary {
-  totalReconciliations: number;
-  byStatus: {
-    pending: number;
-    confirmed: number;
-    disputed: number;
-  };
-  totalDiscrepancy: number;
-}
-
-// --- FILTERS (Bộ lọc Admin) ---
+// --- FILTERS (Input cho getAll) ---
 export interface DebtReconciliationParams {
   page?: number;
   limit?: number;
-  search?: string; // Tìm theo mã phiếu, tên khách, tên nhân viên tạo
+  search?: string;
   
-  customerId?: number; // Lọc theo khách cụ thể
-  supplierId?: number;
-  
-  reconciliationType?: ReconciliationType;
+  // Lọc theo trạng thái mới
   status?: ReconciliationStatus;
-  period?: string;
   
+  // Lọc theo thời gian cập nhật
   fromDate?: string;
   toDate?: string;
   
@@ -78,42 +70,34 @@ export interface DebtReconciliationParams {
   sortOrder?: "asc" | "desc";
 }
 
-// --- DTOs (Dữ liệu gửi lên Server - Input) ---
-// 👇 Đây là phần bạn đang thiếu để hooks hoạt động
+// --- DTOs (Input cho API) ---
 
-// 1. Tạo mới
+// 1. Tạo / Tính toán (Sync)
+// Logic mới đơn giản hơn: Chỉ cần biết tính cho Ai và Năm nào
 export interface CreateDebtReconciliationDto {
-  reconciliationType: ReconciliationType;
-  period: string;
   customerId?: number;
   supplierId?: number;
-  reconciliationDate: string | Date; // Hook có thể gửi Date hoặc ISO string
+  
+  period?: string; // "2025" (Nếu không gửi, Backend tự lấy năm nay)
   notes?: string;
+  
+  assignedUserId?: number;
 }
 
-// 2. Cập nhật (Sửa ghi chú)
-export interface UpdateDebtReconciliationDto {
-  notes?: string | null;
-  // Các trường khác nếu backend cho phép sửa
-}
 
-// 3. Xác nhận
-export interface ConfirmReconciliationDto {
-  confirmedByName: string;
-  confirmedByEmail: string;
-  notes?: string | null;
-  discrepancyReason?: string | null;
-}
-
-// 4. Báo cáo sai lệch
-export interface DisputeReconciliationDto {
-  reason: string; // Backend chờ body: { reason: "..." }
-  notes?: string;
-}
-
-// 5. Gửi Email
+// 2. Gửi Email (Nếu dùng)
 export interface SendReconciliationEmailDto {
   recipientName: string;
   recipientEmail: string;
   message?: string;
+}
+
+// 3. Stats (Nếu cần hiển thị Dashboard)
+export interface DebtReconciliationSummary {
+  totalReconciliations: number;
+  byStatus: {
+    paid: number;
+    unpaid: number;
+  };
+  totalDiscrepancy: number;
 }
